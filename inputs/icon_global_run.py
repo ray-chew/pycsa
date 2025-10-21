@@ -40,4 +40,4 @@ params.refine = False
 params.verbose = False
 
 params.plot = False
-params.plot_output = False
+params.plot_output = True

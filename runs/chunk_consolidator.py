@@ -43,10 +43,25 @@ print("Collection done; writing output...")
 print("==========\n")
 assert (cnt) == chunk_end
 
+# %%
+from IPython import get_ipython
+
+ipython = get_ipython()
+
+if ipython is not None:
+    ipython.run_line_magic("load_ext", "autoreload")
+
+def autoreload():
+    if ipython is not None:
+        ipython.run_line_magic("autoreload", "2")
+
+# %%
+from pycsam.src import io
+autoreload()
 params.path_output = out_path
 global_writer = io.nc_writer(params, '')
 
-for cnt, item in tqdm(enumerate(global_dat)):
-    global_writer.duplicate(cnt, item)
+# for cnt, item in tqdm(enumerate(global_dat)):
+global_writer.duplicate_all(global_dat)
 
 # %%

@@ -238,9 +238,6 @@ class analysis(object):
         self.kks = fobj.m_i / (fobj.Ni)
         self.lls = fobj.m_j / (fobj.Nj)
 
-        self.dk = np.diff(self.kks).mean()
-        self.dl = np.diff(self.lls).mean()
-
         wla = self.wlat
         wlo = self.wlon
 
@@ -250,6 +247,9 @@ class analysis(object):
         kks = kks / wlo
         lls = lls / wla
 
+        self.dk = np.diff(self.kks).mean()
+        self.dl = np.diff(self.lls).mean()
+        
         self.kks, self.lls = np.meshgrid(kks, lls)
 
 

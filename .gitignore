@@ -10,6 +10,7 @@
 *.bat
 *.log
 *.egg-info
+*.swp
 
 /docs/build/*
 .VSCodeCounter/*
@@ -18,4 +19,5 @@
 /poster/*
 *submission/*
 manuscript/*
+first_revision/*
 outputs/*

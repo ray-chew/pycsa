@@ -1,10 +1,10 @@
 <p align="center">
   <a href="https://ray-chew.github.io/pyCSA/index.html">
-  <img alt="CSAM Logo" src="https://ray-chew.github.io/pyCSA/_static/logo.png">
+  <img alt="CSA Logo" src="https://ray-chew.github.io/pyCSA/_static/logo.png">
   </a>
 </p>
 
-<h2 align="center">Constrained Spectral Approximation Method</h2>
+<h2 align="center">Constrained Spectral Approximation</h2>
 
 
 <p align="center">
@@ -20,7 +20,7 @@
 </p>
 
 
-The Constrained Spectral Approximation Method (CSAM) is a physically sound and robust method for approximating the spectrum of subgrid-scale orography. It operates under the following constraints:
+The Constrained Spectral Approximation (CSA) method is a physically sound and robust method for approximating the spectrum of subgrid-scale orography. It operates under the following constraints:
 
 * Utilises a limited number of spectral modes (no more than 100)
 * Significantly reduces the complexity of physical terrain by over 500 times

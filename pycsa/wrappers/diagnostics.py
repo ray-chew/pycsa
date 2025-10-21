@@ -1,5 +1,5 @@
 """
-Diagnostic wrapper module to ease setting up the CSAM building blocks
+Diagnostic wrapper module to ease setting up the CSA building blocks
 """
 
 import numpy as np
@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 class delaunay_metrics(object):
-    """Helper class for evaluation of the CSAM on a Delaunay triangulated domain."""
+    """Helper class for evaluation of the CSA on a Delaunay triangulated domain."""
 
     def __init__(self, params, tri, writer=None):
         """
@@ -67,7 +67,7 @@ class delaunay_metrics(object):
         Returns
         -------
         float
-            the relative error of the CSAM on the Delaunay triangles against the FFT-computed reference
+            the relative error of the CSA on the Delaunay triangles against the FFT-computed reference
         """
         self.update_pair(triangle_pair, store_error=False)
         self.rel_err = self.__get_rel_diff(self.uw_sum, self.uw_ref)
@@ -214,7 +214,7 @@ class delaunay_metrics(object):
 
 
 class diag_plotter(object):
-    """Helper class to plot CSAM-computed data"""
+    """Helper class to plot CSA-computed data"""
 
     def __init__(self, params, nhi, nhj):
         """
@@ -256,7 +256,7 @@ class diag_plotter(object):
         sols : tuple
             contains the data for plotting:
                | (:class:`src.var.topo_cell` instance,
-               | computed CSAM spectrum,
+               | computed CSA spectrum,
                | computed idealised pseudo-momentum fluxes,
                | the reconstructed physical data)
 
@@ -266,7 +266,7 @@ class diag_plotter(object):
         v_extent : list, optional
             ``[z_min, z_max]`` the vertical extent of the physical reconstruction, by default None
         dfft_plot : bool, optional
-            toggles whether a spectrum is the full FFT spectral space or the dense truncated CSAM spectrum, By default False, i.e. plot CSAM spectrum.
+            toggles whether a spectrum is the full FFT spectral space or the dense truncated CSA spectrum, By default False, i.e. plot CSA spectrum.
         output_fig : bool, optional
             toggles writing figure output, by default True
         fs : tuple, optional
@@ -294,8 +294,8 @@ class diag_plotter(object):
         if ir_args is None:
             if type(rect_idx) is int:
                 idxs_tag = "Cell %i" % rect_idx
-                tag = "CSAM"
-                fn = "plots_CSAM_%i" % rect_idx
+                tag = "CSA"
+                fn = "plots_CSA_%i" % rect_idx
             elif len(rect_idx) == 2:
                 idxs_tag = "(%i,%i)" % (rect_idx[0], rect_idx[1])
                 tag = "FFT" if dfft_plot else "FA LSFF"

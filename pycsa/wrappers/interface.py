@@ -1,5 +1,5 @@
 """
-Interface wrapper module to ease setting up the CSAM building blocks
+Interface wrapper module to ease setting up the CSA building blocks
 """
 
 
@@ -381,7 +381,7 @@ class first_appx(object):
             contains the data for plotting:
 
                | (:class:`src.var.topo_cell` instance,
-               | computed CSAM spectrum,
+               | computed CSA spectrum,
                | computed idealised pseudo-momentum fluxes,
                | the reconstructed physical data)
 
@@ -461,7 +461,7 @@ class second_appx(object):
             contains the data for plotting:
 
                | (:class:`src.var.topo_cell` instance,
-               | computed CSAM spectrum,
+               | computed CSA spectrum,
                | computed idealised pseudo-momentum fluxes,
                | the reconstructed physical data)
 

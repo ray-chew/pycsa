@@ -1,7 +1,7 @@
 """
 Integration test for idealised isosceles triangle case.
 
-This test runs the full CSAM pipeline on synthetic terrain with an isosceles
+This test runs the full CSA pipeline on synthetic terrain with an isosceles
 triangular domain and compares results against baseline values from the
 published JAMES paper.
 """
@@ -117,7 +117,7 @@ class TestIdealisedIsosceles:
         return cell, triangle, terrain['sz']
 
     def test_spectral_approximation(self, isosceles_cell, synthetic_terrain, baseline_results):
-        """Test that CSAM pipeline runs and produces consistent results."""
+        """Test that CSA pipeline runs and produces consistent results."""
         cell, triangle, sz = isosceles_cell
         terrain = synthetic_terrain
 
@@ -152,7 +152,7 @@ class TestIdealisedIsosceles:
             cell, lmbda=lmbda_reg, iter_solve=False
         )
 
-        # Run CSAM (first approximation + mode selection + second approximation)
+        # Run CSA (first approximation + mode selection + second approximation)
         first_guess = interface.get_pmf(nhi, nhj, U, V)
 
         # First approximation on quadrilateral domain
@@ -185,43 +185,43 @@ class TestIdealisedIsosceles:
         cell_sa.wlat = np.diff(cell_sa.lat).mean()
         cell_sa.wlon = np.diff(cell_sa.lon).mean()
 
-        freqs_csam, _, _ = second_guess.sappx(
+        freqs_csa, _, _ = second_guess.sappx(
             cell_sa, lmbda=lmbda_sg, updt_analysis=True, scale=1.0, iter_solve=False
         )
 
         # Clean up NaN values
         freqs_plsff = np.nan_to_num(freqs_plsff)
         freqs_rlsff = np.nan_to_num(freqs_rlsff)
-        freqs_csam = np.nan_to_num(freqs_csam)
+        freqs_csa = np.nan_to_num(freqs_csa)
         freqs_ref = np.nan_to_num(freqs_ref)
 
         # Compute L2 errors against reference
         err_plsff = np.linalg.norm(freqs_plsff - freqs_ref)
         err_rlsff = np.linalg.norm(freqs_rlsff - freqs_ref)
-        err_csam = np.linalg.norm(freqs_csam - freqs_ref)
+        err_csa = np.linalg.norm(freqs_csa - freqs_ref)
 
         # Compare against baseline with reasonable tolerance
         # The baseline L2 errors are: [0, 164291.57, 115.71, 85.68, 111.37, 164291.57]
-        # Where indices are: [ref, pLSFF, rLSFF, optCSAM, subCSAM, quad]
-        # We're running subCSAM (n_modes=14), so compare against baseline[4] = 111.37
+        # Where indices are: [ref, pLSFF, rLSFF, optCSA, subCSA, quad]
+        # We're running subCSA (n_modes=14), so compare against baseline[4] = 111.37
 
         # For now, just check that computations run and produce reasonable values
         assert err_plsff > 1000, "Pure LSFF should have large error (overfits)"
         assert err_rlsff > 0, "Regularized LSFF should have some error"
-        assert err_csam > 0, "CSAM should have some error"
-        assert err_csam < err_plsff, "CSAM should perform better than pure LSFF"
+        assert err_csa > 0, "CSA should have some error"
+        assert err_csa < err_plsff, "CSA should perform better than pure LSFF"
 
         # Check that we're in the right ballpark (within factor of 2)
-        assert 50 < err_csam < 250, f"CSAM L2 error {err_csam:.2f} should be ~111 (baseline)"
+        assert 50 < err_csa < 250, f"CSA L2 error {err_csa:.2f} should be ~111 (baseline)"
 
         # Amplitude sums should be positive
         sum_plsff = freqs_plsff.sum()
         sum_rlsff = freqs_rlsff.sum()
-        sum_csam = freqs_csam.sum()
+        sum_csa = freqs_csa.sum()
 
         assert sum_plsff > 0, "Pure LSFF amplitude sum should be positive"
         assert sum_rlsff > 0, "Regularized LSFF amplitude sum should be positive"
-        assert sum_csam > 0, "CSAM amplitude sum should be positive"
+        assert sum_csa > 0, "CSA amplitude sum should be positive"
 
     def test_mode_count(self, synthetic_terrain, baseline_results):
         """Test that the correct number of unique modes are generated."""

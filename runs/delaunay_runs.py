@@ -1,15 +1,10 @@
 # %%
-import sys
-import os
-
-# set system path to find local modules
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import numpy as np
-
-from src import io, var, utils, physics, delaunay
-from wrappers import interface, diagnostics
-from vis import plotter, cart_plot
 import time
+
+from pycsa.core import io, var, utils, physics, delaunay
+from pycsa.wrappers import interface, diagnostics
+from pycsa.plotting import plotter, cart_plot
 
 from IPython import get_ipython
 

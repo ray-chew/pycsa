@@ -1,10 +1,5 @@
 # %%
-# import sys
-
-# set system path to find local modules
-# sys.path.append("..")
-
-import numpy as np
+# import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 

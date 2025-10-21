@@ -1,5 +1,5 @@
 [project]
-name = "pyCSAM"
+name = "pyCSA"
 version = "0.95.1"
 
 dependencies = [
@@ -16,13 +16,20 @@ dependencies = [
     "scipy==1.12.0",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
 # Packaging
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-package-dir = {"pycsam" = ""}
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pycsa*"]
 
 
 [tool.towncrier]
@@ -59,3 +66,20 @@ showcontent = true
 directory = "fixed"
 name = "Fixed"
 showcontent = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "integration: integration tests (run full pipelines)",
+    "unit: unit tests (fast, isolated tests)",
+    "slow: slow tests (mark tests that take >10s)",
+]

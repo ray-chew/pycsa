@@ -1,14 +1,9 @@
 # %%
-import sys
-
-# setting path
-sys.path.append("..")
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src import io, var, utils, delaunay
-from vis import cart_plot, plotter
+from pycsa.core import io, var, utils, delaunay
+from pycsa.plotting import cart_plot, plotter
 
 from copy import deepcopy
 

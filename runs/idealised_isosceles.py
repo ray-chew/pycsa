@@ -1,16 +1,8 @@
 # %%
-import sys
-import os
-
-# set system path to find local modules
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src import var, utils
-from wrappers import interface
-from vis import plotter
+from pycsa import var, utils, interface, plotter
 from copy import deepcopy
 
 from IPython import get_ipython
@@ -268,7 +260,7 @@ fig.colorbar(axs[1, -1].get_children()[0], ax=axs[1, :], fraction=0.046, pad=0.0
 axs[1, 0].set_ylabel("$m$", fontsize=12)
 
 # plt.tight_layout()
-plt.savefig("../manuscript/idealized_plots.pdf", bbox_inches="tight")
+plt.savefig("outputs/baseline_results/idealized_plots.pdf", bbox_inches="tight")
 plt.show()
 
 
@@ -285,7 +277,7 @@ plotter.error_bar_abs_plot(
     fontsize=14,
     fs=(3.5, 2.5),
     output_fig=True,
-    fn="../manuscript/l2_errs.pdf",
+    fn="outputs/baseline_results/l2_errs.pdf",
 )
 plotter.error_bar_abs_plot(
     selected_sums,
@@ -296,7 +288,7 @@ plotter.error_bar_abs_plot(
     fontsize=14,
     fs=(4.5, 2.5),
     output_fig=True,
-    fn="../manuscript/powers.pdf",
+    fn="outputs/baseline_results/powers.pdf",
 )
 
 
@@ -353,7 +345,7 @@ for cnt, idx in enumerate([1, 5]):
 axs[2].set_ylabel("$m$", fontsize=12)
 
 plt.tight_layout()
-plt.savefig("../manuscript/overfitting_issue.pdf", bbox_inches="tight")
+plt.savefig("outputs/baseline_results/overfitting_issue.pdf", bbox_inches="tight")
 plt.show()
 
 # %%

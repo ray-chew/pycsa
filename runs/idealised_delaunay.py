@@ -4,14 +4,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from copy import deepcopy
 
-import sys
-import os
-
-# set system path to find local modules
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-from src import utils, var
-from wrappers import interface, diagnostics
+from pycsa.core import utils, var
+from pycsa.wrappers import interface, diagnostics
 
 from IPython import get_ipython
 

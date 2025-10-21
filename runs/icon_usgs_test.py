@@ -1,16 +1,11 @@
 # %%
-import sys
-
-# set system path to find local modules
-sys.path.append("..")
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from src import io, var, utils, fourier, physics
-from wrappers import interface
-from vis import plotter, cart_plot
+from pycsa.core import io, var, utils, fourier, physics
+from pycsa.wrappers import interface
+from pycsa.plotting import plotter, cart_plot
 
 # %%
 

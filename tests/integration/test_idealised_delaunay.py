@@ -1,7 +1,7 @@
 """
 Integration test for idealised Delaunay case with Perlin noise terrain.
 
-Tests CSAM on synthetic terrain generated using Perlin noise,
+Tests CSA on synthetic terrain generated using Perlin noise,
 which provides more realistic multi-scale topography than pure sinusoids.
 """
 
@@ -18,7 +18,7 @@ except ImportError:
 @pytest.mark.integration
 @pytest.mark.skipif(not NOISE_AVAILABLE, reason="noise package not available")
 class TestIdealisedDelaunay:
-    """Test CSAM on Perlin noise synthetic terrain."""
+    """Test CSA on Perlin noise synthetic terrain."""
 
     @pytest.fixture
     def perlin_terrain(self):
@@ -82,11 +82,11 @@ class TestIdealisedDelaunay:
         # Check mean is close to zero (normalized)
         assert np.abs(world.mean()) < 1.0, "Terrain mean not centered at zero"
 
-    def test_csam_on_perlin_terrain(self, perlin_terrain):
-        """Test CSAM pipeline on Perlin noise terrain."""
+    def test_csa_on_perlin_terrain(self, perlin_terrain):
+        """Test CSA pipeline on Perlin noise terrain."""
         world, res_x, res_y, scale_fac = perlin_terrain
 
-        # CSAM parameters
+        # CSA parameters
         U, V = 10.0, 0.0
         nhi, nhj = 24, 48
 
@@ -115,7 +115,7 @@ class TestIdealisedDelaunay:
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
 
-        # Run CSAM
+        # Run CSA
         run = interface.get_pmf(nhi, nhj, U, V)
         ampls, uw, recon = run.sappx(cell, lmbda=1e-3, iter_solve=False)
 
@@ -134,11 +134,11 @@ class TestIdealisedDelaunay:
         assert recon is not None, "Reconstruction not computed"
         assert recon.shape == cell.topo.shape, "Reconstruction shape mismatch"
 
-    def test_csam_on_cosine_terrain(self, cosine_terrain):
-        """Test CSAM on simple cosine terrain (should recover mode perfectly)."""
+    def test_csa_on_cosine_terrain(self, cosine_terrain):
+        """Test CSA on simple cosine terrain (should recover mode perfectly)."""
         bg, res_x, res_y, scale_fac = cosine_terrain
 
-        # CSAM parameters
+        # CSA parameters
         U, V = 10.0, 0.0
         nhi, nhj = 12, 24
 
@@ -167,7 +167,7 @@ class TestIdealisedDelaunay:
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
 
-        # Run CSAM with regularization
+        # Run CSA with regularization
         run = interface.get_pmf(nhi, nhj, U, V)
         ampls, uw, recon = run.sappx(cell, lmbda=1e-4, iter_solve=False)
 
@@ -189,7 +189,7 @@ class TestIdealisedDelaunay:
         """Test mode selection (top-N modes) on Perlin terrain."""
         world, res_x, res_y, scale_fac = perlin_terrain
 
-        # CSAM parameters
+        # CSA parameters
         U, V = 10.0, 0.0
         nhi, nhj = 24, 48
         n_modes = 20
@@ -294,7 +294,7 @@ class TestIdealisedDelaunay:
         """Test that reconstruction quality is reasonable for known terrain."""
         bg, res_x, res_y, scale_fac = cosine_terrain
 
-        # CSAM parameters
+        # CSA parameters
         U, V = 10.0, 0.0
         nhi, nhj = 24, 48
 
@@ -322,7 +322,7 @@ class TestIdealisedDelaunay:
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
 
-        # Run CSAM
+        # Run CSA
         run = interface.get_pmf(nhi, nhj, U, V)
         ampls, uw, recon = run.sappx(cell, lmbda=1e-4, iter_solve=False)
 

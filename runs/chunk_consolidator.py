@@ -2,8 +2,8 @@
 import numpy as np
 from tqdm import tqdm
 
-from pycsam.src import io, var
-from pycsam.inputs.icon_global_run import params
+from pycsa.src import io, var
+from pycsa.inputs.icon_global_run import params
 
 chunk_start = 0
 n_cells     = 20480
@@ -56,7 +56,7 @@ def autoreload():
         ipython.run_line_magic("autoreload", "2")
 
 # %%
-from pycsam.src import io
+from pycsa.src import io
 autoreload()
 params.path_output = out_path
 global_writer = io.nc_writer(params, '')

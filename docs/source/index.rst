@@ -1,4 +1,4 @@
-CSAM's Home
+CSA's Home
 ===========
 
 .. toctree::
@@ -19,7 +19,7 @@ CSAM's Home
    
 
 
-This page documents the codebase for the Constrained Spectral Approximation Method (CSAM). CSAM is a physically sound and robust method for approximating the spectrum of subgrid-scale orography. It operates under the following constraints:
+This page documents the codebase for the Constrained Spectral Approximation Method (CSA). CSA is a physically sound and robust method for approximating the spectrum of subgrid-scale orography. It operates under the following constraints:
 
 * Utilises a limited number of spectral modes (no more than 100)
 * Significantly reduces the complexity of physical terrain by over 500 times

@@ -132,8 +132,8 @@ freqs_arr = np.zeros((num_experiments, nhi, nhj))
 dat_arr = np.array([None] * num_experiments, dtype=object)
 
 
-#### helper function to run the CSAM algorithm
-def csam_run(cell, n_modes, lmbda_fg, lmbda_sg):
+#### helper function to run the CSA algorithm
+def csa_run(cell, n_modes, lmbda_fg, lmbda_sg):
     first_guess = interface.get_pmf(nhi, nhj, U, V)
 
     cell.get_masked(mask=np.ones_like(cell.topo).astype("bool"))
@@ -194,11 +194,11 @@ freqs_arr[5], _, dat_arr[5] = pure_lsff.recompute_rhs(
 #### regularised lsff run
 freqs_arr[2], _, dat_arr[2] = reg_lsff.sappx(cell, lmbda=lmbda_reg, iter_solve=False)
 
-#### optimal CSAM run
-freqs_arr[3], _, dat_arr[3] = csam_run(cell, sz, lmbda_fg, lmbda_sg)
+#### optimal CSA run
+freqs_arr[3], _, dat_arr[3] = csa_run(cell, sz, lmbda_fg, lmbda_sg)
 
-#### suboptimal CSAM run
-freqs_arr[4], _, dat_arr[4] = csam_run(cell, n_modes, lmbda_fg, lmbda_sg)
+#### suboptimal CSA run
+freqs_arr[4], _, dat_arr[4] = csa_run(cell, n_modes, lmbda_fg, lmbda_sg)
 
 freqs_arr = np.array([np.nan_to_num(freq) for freq in freqs_arr])
 
@@ -228,7 +228,7 @@ selected_errs = []
 selected_sums = []
 selected_sum_errs = []
 
-phys_lbls = ["reference", "pLSFF", "optCSAM", "subCSAM"]
+phys_lbls = ["reference", "pLSFF", "optCSA", "subCSA"]
 spec_lbls = ["", "", "", ""]
 
 for cnt, idx in enumerate(idxs):

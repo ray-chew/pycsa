@@ -1,9 +1,9 @@
 # %%
 import numpy as np
 
-from pycsam.src import io, var, utils
-from pycsam.wrappers import interface, diagnostics
-from pycsam.vis import cart_plot
+from pycsa.src import io, var, utils
+from pycsa.wrappers import interface, diagnostics
+from pycsa.vis import cart_plot
 
 # from IPython import get_ipython
 
@@ -209,7 +209,7 @@ def parallel_wrapper(grid, params, reader, writer):
 # %%
 
 # autoreload()
-from pycsam.inputs.icon_global_run import params
+from pycsa.inputs.icon_global_run import params
 
 from dask.distributed import Client
 # import dask.bag as db

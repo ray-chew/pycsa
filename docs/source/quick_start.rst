@@ -1,6 +1,6 @@
 Quickstart
 ==========
-A quick and dirty guide to using the CSAM codebase
+A quick and dirty guide to using the CSA codebase
 
 Requirements
 ^^^^^^^^^^^^
@@ -13,9 +13,9 @@ To run the code, make sure the following packages are installed, preferably in a
 
 Overview
 ^^^^^^^^
-The CSAM codebase is structured modularly, see :numref:`structure` for a graphical overview.
+The CSA codebase is structured modularly, see :numref:`structure` for a graphical overview.
 
-The package :mod:`wrappers` provides interfaces to the core code components in :mod:`src` and :mod:`vis`. For example, it defines the First and Second Approximation steps in the CSAM algorithm and applies the tapering of the physical data. Refer to the :doc:`APIs <api>` for more details.
+The package :mod:`wrappers` provides interfaces to the core code components in :mod:`src` and :mod:`vis`. For example, it defines the First and Second Approximation steps in the CSA algorithm and applies the tapering of the physical data. Refer to the :doc:`APIs <api>` for more details.
 
 Helper functions and data structures are provided for the processing of user-defined topographies (:mod:`src.var.topo`), grids (:mod:`src.var.grid`), and input parameters (:mod:`src.var.params`).
 
@@ -24,8 +24,8 @@ These *building blocks* are the assembled for different kinds of experiments in 
 .. graphviz::
     :align: center
     :name: structure
-    :alt: CSAM program structure
-    :caption: CSAM program structure
+    :alt: CSA program structure
+    :caption: CSA program structure
 
     digraph {    
         graph [
@@ -209,4 +209,4 @@ Alternatively, the run script could be executed via ``ipython``.
 
 .. note::
 
-    The development of the CSAM codebase frontend is currently ongoing. The current design approach of the program structure aims to simplify debugging and diagnostics using an ``ipython`` environment.
+    The development of the CSA codebase frontend is currently ongoing. The current design approach of the program structure aims to simplify debugging and diagnostics using an ``ipython`` environment.

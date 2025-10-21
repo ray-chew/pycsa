@@ -18,9 +18,9 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
 
-project = "CSAM"
-copyright = "2024, Ray Chew, Stamen Dolaptchiev, Maja-Sophie Wedel, Ulrich Achatz"
-author = "Ray Chew, Stamen Dolaptchiev, Maja-Sophie Wedel, Ulrich Achatz"
+project = "CSA"
+copyright = "2024, Ray Chew"
+author = "Ray Chew"
 
 # The full version, including alpha/beta/rc tags
 release = "v0.95.1"

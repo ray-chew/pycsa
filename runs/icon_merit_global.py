@@ -1,30 +1,10 @@
-# %%
 import numpy as np
 
-from pycsa.src import io, var, utils
+from pycsa.core import io, var, utils
 from pycsa.wrappers import interface, diagnostics
-from pycsa.vis import cart_plot
-
-# from IPython import get_ipython
-
-# ipython = get_ipython()
-
-# if ipython is not None:
-#     ipython.run_line_magic("load_ext", "autoreload")
-# else:
-#     print(ipython)
-
-# def autoreload():
-#     if ipython is not None:
-#         ipython.run_line_magic("autoreload", "2")
-
-# from sys import exit
-
-# if __name__ != "__main__":
-#     exit(0)
+from pycsa.plotting import cart_plot
 
 
-# %%
 def do_cell(c_idx,
             grid,
             params,
@@ -39,66 +19,32 @@ def do_cell(c_idx,
     lat_verts = grid.clat_vertices[c_idx]
     lon_verts = grid.clon_vertices[c_idx]
 
-    # if ( (lon_verts.max() - lon_verts.min()) > 180.0 ):
-    #     lon_verts[np.argmin(lon_verts)] += 360.0
-
-    # clon = utils.rescale(grid.clon[c_idx], rng=[lon_verts.min(),lon_verts.max()])
-    # clat = utils.rescale(grid.clat[c_idx], rng=[lat_verts.min(),lat_verts.max()])
-
-    # check = utils.gen_triangle(lon_verts, lat_verts)
-
-    # print("is center in triangle:", check.vec_get_mask((clon, clat)))
-
-    # lat_expand = 0.0
-    # lat_extent = [lat_verts.min() - lat_expand,lat_verts.min() - lat_expand,lat_verts.max() + lat_expand]
-
-    # lon_expand = 0.0
-    # lon_extent = [lon_verts.min() - lon_expand,lon_verts.min() - lon_expand,lon_verts.max() + lon_expand]
-
-    # lat_extent = lat_verts
-    # lon_extent = lon_verts
-    # we only keep the topography that is inside this lat-lon extent.
-
+    # Determine lat/lon extents with appropriate expansion for data loading
     lat_extent, lon_extent = utils.handle_latlon_expansion(lat_verts, lon_verts)
-
-    # lat_verts = np.array(lat_verts)
-    # lon_verts = np.array(lon_verts)
     lat_verts, lon_verts = utils.handle_latlon_expansion(lat_verts, lon_verts, lat_expand = 0.0, lon_expand = 0.0)
 
     params.lat_extent = lat_extent
     params.lon_extent = lon_extent
 
 
+    # Load topography data for this cell
     reader = reader.read_merit_topo(None, params, is_parallel=True)
     reader.get_topo(topo)
-    # reader.close_all()
     topo.topo[np.where(topo.topo < -500.0)] = -500.0
-
     topo.gen_mgrids()
 
-
-# %%
-
+    # Set up cell center and vertices
     clon = np.array([grid.clon[c_idx]])
     clat = np.array([grid.clat[c_idx]])
-    # clon = np.array([clon])
-    # clat = np.array([clat])
-    # clon_vertices = np.array([grid.clon_vertices[c_idx]])
-    # clat_vertices = np.array([grid.clat_vertices[c_idx]])
     clon_vertices = np.array([lon_verts])
     clat_vertices = np.array([lat_verts])
 
-
     ncells = 1
     nv = clon_vertices[0].size
-    # -- create the triangles
-    # clon_vertices = np.where(clon_vertices < -180.0, clon_vertices + 360.0, clon_vertices)
-    # clon_vertices = np.where(clon_vertices > 180.0, clon_vertices - 360.0, clon_vertices)
 
-    # if ( (clon_vertices.max() - clon_vertices.min()) > 180.0 ):
+    # Handle dateline crossing
     if reader.split_EW:
         clon_vertices[clon_vertices < 0.0] += 360.0
-
 
     triangles = np.zeros((ncells, nv, 2))
 
@@ -107,13 +53,11 @@ def do_cell(c_idx,
         triangles[i, :, 1] = np.array(clat_vertices[i, :])
 
     if params.plot or params.plot_output:
-
         output_fn = params.path_output + str(c_idx) + ".png"
         cart_plot.lat_lon_icon(topo, triangles, ncells=ncells, clon=clon, clat=clat, title=c_idx, fn = output_fn, output_fig = True)
 
-# %%
+    # Initialize cell objects for CSA algorithm
     tri_idx = 0
-    # initialise cell object
     cell = var.topo_cell()
     tri = var.obj()
 
@@ -205,17 +149,9 @@ def parallel_wrapper(grid, params, reader, writer):
     return lambda ii : do_cell(ii, grid, params, reader, writer)
 
 
-
-# %%
-
-# autoreload()
 from pycsa.inputs.icon_global_run import params
-
 from dask.distributed import Client
-# import dask.bag as db
 import dask
-
-# dask.config.set(scheduler='synchronous') 
 
 if __name__ == '__main__':
     if params.self_test():
@@ -223,9 +159,8 @@ if __name__ == '__main__':
 
     grid = var.grid()
 
-    # read grid
+    # Read ICON grid
     reader = io.ncdata(padding=params.padding, padding_tol=(60 - params.padding))
-    # reader.read_dat(params.path_compact_grid, grid)
     reader.read_dat(params.path_icon_grid, grid)
 
     clat_rad = np.copy(grid.clat)
@@ -252,17 +187,12 @@ if __name__ == '__main__':
 
         lazy_results = []
 
-        # with ProgressBar():
-        #     b = db.from_sequence(range(chunk), npartitions=100)
-        #     results = b.map(pw_run)
-        #     results = results.compute()
         if chunk+chunk_sz > n_cells:
             chunk_end = n_cells
         else:
             chunk_end = chunk+chunk_sz
 
         for c_idx in range(chunk, chunk_end):
-            # pw_run(c_idx)
             lazy_result = dask.delayed(pw_run)(c_idx)
             lazy_results.append(lazy_result)
 

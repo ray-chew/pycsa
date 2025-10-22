@@ -1,4 +1,4 @@
-from ..src import var
+from pycsa.core import var
 
 paths = var.obj()
 

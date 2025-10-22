@@ -7,7 +7,7 @@ User input data for the run script :mod:`runs.delaunay_runs` for the studies:
 """
 
 import numpy as np
-from src import var, utils
+from pycsa.core import var, utils
 from inputs import local_paths
 
 params = var.params()

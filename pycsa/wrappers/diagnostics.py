@@ -232,7 +232,7 @@ class diag_plotter(object):
         self.nhi = nhi
         self.nhj = nhj
 
-        self.output_dir = "../manuscript/"
+        self.output_dir = "./outputs/"
 
     def show(
         self,

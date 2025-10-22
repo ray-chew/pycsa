@@ -7,7 +7,7 @@ User input data for the run script :mod:`runs.delaunay_runs` for the studies:
 """
 
 import numpy as np
-from src import var, utils
+from pycsa import var, utils
 from inputs import local_paths
 
 params = var.params()
@@ -68,7 +68,7 @@ elif run_case == "FLUX_SDY":
     params.dfft_first_guess = False
     params.nhi = 32
     params.nhj = 64
-    params.rect_set = np.sort([158])
+    params.rect_set = np.sort([210])
 
     params.recompute_rhs = True
     params.plot = True
@@ -83,6 +83,8 @@ if len(run_case) > 0:
 dfft_tag = "dfft" if params.dfft_first_guess else "lsff"
 params.run_case = run_case
 params.fn_tag = "selected_alaska%s_%s_fa" % (suffix_tag, dfft_tag)
+params.path_etopo = "./data/etopo_15s/"
+params.etopo_cg = 1  # Coarse-graining factor for ETOPO 15" data
 
 params.lat_extent = [48.0, 64.0, 64.0]
 params.lon_extent = [-148.0, -148.0, -112.0]

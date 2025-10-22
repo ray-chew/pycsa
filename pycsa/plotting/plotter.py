@@ -549,6 +549,6 @@ class plot_3d(object):
         plt.tight_layout()
         if output_fig:
             plt.savefig(
-                "../manuscript/%s.pdf" % output_fn, dpi=200, bbox_inches="tight"
+                "./outputs/%s.pdf" % output_fn, dpi=200, bbox_inches="tight"
             )
         plt.show()

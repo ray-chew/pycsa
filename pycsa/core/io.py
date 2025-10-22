@@ -618,36 +618,60 @@ class ncdata(object):
         def get_topo(self, cell):
             """Main method to load ETOPO topography data"""
 
-            # Check if region spans across dateline (>180 degrees)
-            if ((self.lon_verts.max() - self.lon_verts.min()) > 180.0):
+            # Compute longitude span
+            lon_span = self.lon_verts.max() - self.lon_verts.min()
+
+            # A true dateline crossing is when lon_max < lon_min (e.g., [170, -170])
+            # In that case, we need to wrap around. Otherwise, it's just a normal range.
+            crosses_dateline = self.lon_verts[1] < self.lon_verts[0]
+
+            # Determine loading strategy
+            if lon_span >= 360.0:
+                # Full global extent: load all tiles
+                self.split_EW = False
+                lon_idx_rng = list(range(0, len(self.fn_lon) - 1))
+                if self.verbose:
+                    print(f"Full global extent detected (span={lon_span}°)")
+                    print(f"Loading all {len(lon_idx_rng)} longitude tiles")
+
+            elif crosses_dateline:
+                # True dateline crossing (e.g., [170, -170])
+                # Convert to [0, 360) representation to compute tile indices
                 self.split_EW = True
 
-            if self.split_EW:
+                # Convert negative longitudes to [0, 360) for proper wraparound
                 min_lon = max(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)) - 360.0
                 max_lon = min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts))
-            else:
-                min_lon = self.lon_verts.min()
-                max_lon = self.lon_verts.max()
 
-            lat_min_idx = self.__compute_idx(self.lat_verts.min(), "min", "lat")
-            lat_max_idx = self.__compute_idx(self.lat_verts.max(), "max", "lat")
-
-            if not self.split_EW:
-                lon_min_idx = self.__compute_idx(min_lon, "min", "lon")
-                lon_max_idx = self.__compute_idx(max_lon, "max", "lon")
-            else:
                 lon_min_idx = self.__compute_idx(min_lon, "max", "lon")
                 lon_max_idx = self.__compute_idx(max_lon, "min", "lon")
 
-            if ((self.lon_verts.max() - self.lon_verts.min()) > 180.0):
-                lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon) - 1)) + list(range(0, lon_min_idx + 1))
+                lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon) - 1)) + list(range(0, lon_min_idx))
+                if self.verbose:
+                    print(f"Dateline crossing detected: [{self.lon_verts[0]}, {self.lon_verts[1]}]")
+                    print(f"  Computed min_lon={min_lon}, max_lon={max_lon}")
+                    print(f"  lon_min_idx={lon_min_idx}, lon_max_idx={lon_max_idx}")
+                    print(f"  Loading tiles: {lon_idx_rng}")
+
             else:
+                # Normal case: straightforward longitude range (including large spans like [-90, 180])
+                self.split_EW = False
+                min_lon = self.lon_verts.min()
+                max_lon = self.lon_verts.max()
+
+                lon_min_idx = self.__compute_idx(min_lon, "min", "lon")
+                lon_max_idx = self.__compute_idx(max_lon, "max", "lon")
+
                 if lon_min_idx == lon_max_idx:
                     lon_max_idx += 1
                 lon_idx_rng = list(range(lon_min_idx, lon_max_idx))
 
+            # Latitude indices (same for all cases)
+            lat_min_idx = self.__compute_idx(self.lat_verts.min(), "min", "lat")
+            lat_max_idx = self.__compute_idx(self.lat_verts.max(), "max", "lat")
             lat_idx_rng = list(range(lat_max_idx, lat_min_idx))
 
+            # Get filenames and load data
             fns, lon_cnt, lat_cnt = self.__get_fns(lat_idx_rng, lon_idx_rng)
 
             self.__load_topo(cell, fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng)
@@ -752,6 +776,9 @@ class ncdata(object):
                 # Load lat data
                 ############################################
                 lat = test["lat"]
+
+                # Extract latitude data based on requested extent
+                # Always use the precise extraction based on lat_verts, don't try to be clever
                 lat_min_idx = np.argmin(np.abs((lat - np.sign(lat) * 1e-4) - self.lat_verts.min()))
                 lat_max_idx = np.argmin(np.abs((lat + np.sign(lat) * 1e-4) - self.lat_verts.max()))
 
@@ -780,7 +807,8 @@ class ncdata(object):
 
                 else:
                     # ETOPO uses 'z' for elevation, map to 'topo'
-                    topo = test["z"][lat_low:lat_high, lon_low:lon_high]
+                    # Convert masked array to regular array to avoid issues
+                    topo = test["z"][lat_low:lat_high, lon_low:lon_high].data
 
                     curr_lon = lon[lon_low:lon_high].data.tolist()
 
@@ -807,7 +835,7 @@ class ncdata(object):
                         lon_sz_old = 0
 
                         n_row += 1
-                        lat_sz_old = np.copy(lat_sz)
+                        lat_sz_old += np.copy(lat_sz)  # FIX: Add to offset, don't replace!
 
                 test.close()
 
@@ -821,22 +849,44 @@ class ncdata(object):
                 # Apply coarse-graining if specified
                 iint = self.etopo_cg
 
-                if iint > 1:
-                    cell.lat = utils.sliding_window_view(
-                        np.sort(cell.lat), (iint,), (iint,)
-                    ).mean(axis=-1)
-                    cell.lon = utils.sliding_window_view(
-                        np.sort(cell.lon), (iint,), (iint,)
-                    ).mean(axis=-1)
+                # Convert lists to numpy arrays
+                lat_arr = np.array(cell.lat)
+                lon_arr = np.array(cell.lon)
 
-                    cell.topo = utils.sliding_window_view(
-                        cell.topo, (iint, iint), (iint, iint)
-                    ).mean(axis=(-1, -2))[::-1, :]
+                # Sort latitude and longitude indices to reorder topo array
+                lat_sort_idx = np.argsort(lat_arr)
+                lon_sort_idx = np.argsort(lon_arr)
+
+                lat_sorted = lat_arr[lat_sort_idx]
+                lon_sorted = lon_arr[lon_sort_idx]
+
+                # Reorder topo array rows and columns to match sorted lat/lon
+                # Use np.ix_ for proper 2D indexing
+                topo_sorted = cell.topo[np.ix_(lat_sort_idx, lon_sort_idx)]
+
+                if iint > 1:
+                    # Apply coarse-graining using sliding window
+                    try:
+                        cell.lat = utils.sliding_window_view(
+                            lat_sorted, (iint,), (iint,)
+                        ).mean(axis=-1)
+                        cell.lon = utils.sliding_window_view(
+                            lon_sorted, (iint,), (iint,)
+                        ).mean(axis=-1)
+
+                        cell.topo = utils.sliding_window_view(
+                            topo_sorted, (iint, iint), (iint, iint)
+                        ).mean(axis=(-1, -2))
+                    except (ValueError, MemoryError) as e:
+                        # If coarse-graining fails, fall back to no coarse-graining
+                        print(f"Warning: Coarse-graining failed ({e}), using full resolution")
+                        cell.lat = lat_sorted
+                        cell.lon = lon_sorted
+                        cell.topo = topo_sorted
                 else:
-                    # No coarse-graining, just sort and reverse latitude
-                    cell.lat = np.sort(cell.lat)
-                    cell.lon = np.sort(cell.lon)
-                    cell.topo = cell.topo[::-1, :]
+                    cell.lat = lat_sorted
+                    cell.lon = lon_sorted
+                    cell.topo = topo_sorted
 
         def __get_lon_idxs(self, lon, lon_idx_rng, n_col):
             """Get longitude indices for data extraction"""
@@ -851,6 +901,8 @@ class ncdata(object):
             ]
 
             if len(lon_in_file) == 0:
+                # No user-requested extent falls within this tile's bounds
+                # Extract entire tile (this handles full global and wraparound cases)
                 lon_high = np.argmin(np.abs(lon - r_lon_bound))
                 lon_low = np.argmin(np.abs(lon - l_lon_bound))
             else:

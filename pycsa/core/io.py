@@ -576,6 +576,330 @@ class ncdata(object):
 
             return dir_tag
 
+    class read_etopo_topo(object):
+        """Subclass to read ETOPO 2022 15 arc-second topographic data"""
+
+        def __init__(self, cell, params, verbose=False, is_parallel=False):
+            """Populates ``cell`` object instance with arguments from ``params``
+
+            Parameters
+            ----------
+            cell : :class:`src.var.topo` or :class:`src.var.topo_cell`
+                instance of an object with topography attribute
+            params : :class:`src.var.params`
+                user-defined run parameters
+            verbose : bool, optional
+                prints loading progression, by default False
+            is_parallel : bool, optional
+                flag for parallel processing, by default False
+            """
+            self.dir = params.path_etopo
+            self.verbose = verbose
+            self.opened_dfs = []
+
+            # ETOPO 2022 tiles are at 15 degree intervals
+            self.fn_lon = np.array([
+                -180, -165, -150, -135, -120, -105, -90, -75, -60, -45, -30, -15,
+                0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180
+            ])
+            self.fn_lat = np.array([90, 75, 60, 45, 30, 15, 0, -15, -30, -45, -60, -75, -90])
+
+            self.lat_verts = np.array(params.lat_extent)
+            self.lon_verts = np.array(params.lon_extent)
+
+            self.etopo_cg = params.etopo_cg if hasattr(params, 'etopo_cg') else 1
+            self.split_EW = False
+
+            if not is_parallel:
+                self.get_topo(cell)
+
+            self.is_parallel = is_parallel
+
+        def get_topo(self, cell):
+            """Main method to load ETOPO topography data"""
+
+            # Check if region spans across dateline (>180 degrees)
+            if ((self.lon_verts.max() - self.lon_verts.min()) > 180.0):
+                self.split_EW = True
+
+            if self.split_EW:
+                min_lon = max(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)) - 360.0
+                max_lon = min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts))
+            else:
+                min_lon = self.lon_verts.min()
+                max_lon = self.lon_verts.max()
+
+            lat_min_idx = self.__compute_idx(self.lat_verts.min(), "min", "lat")
+            lat_max_idx = self.__compute_idx(self.lat_verts.max(), "max", "lat")
+
+            if not self.split_EW:
+                lon_min_idx = self.__compute_idx(min_lon, "min", "lon")
+                lon_max_idx = self.__compute_idx(max_lon, "max", "lon")
+            else:
+                lon_min_idx = self.__compute_idx(min_lon, "max", "lon")
+                lon_max_idx = self.__compute_idx(max_lon, "min", "lon")
+
+            if ((self.lon_verts.max() - self.lon_verts.min()) > 180.0):
+                lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon) - 1)) + list(range(0, lon_min_idx + 1))
+            else:
+                if lon_min_idx == lon_max_idx:
+                    lon_max_idx += 1
+                lon_idx_rng = list(range(lon_min_idx, lon_max_idx))
+
+            lat_idx_rng = list(range(lat_max_idx, lat_min_idx))
+
+            fns, lon_cnt, lat_cnt = self.__get_fns(lat_idx_rng, lon_idx_rng)
+
+            self.__load_topo(cell, fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng)
+
+        def __compute_idx(self, vert, typ, direction):
+            """Given a point ``vert``, look up which ETOPO NetCDF file contains this point."""
+            if direction == "lon":
+                fn_int = self.fn_lon
+            else:
+                fn_int = self.fn_lat
+
+            where_idx = np.argmin(np.abs(fn_int - vert))
+
+            if self.verbose:
+                print(fn_int, where_idx)
+
+            if typ == "min":
+                if ((vert - fn_int[where_idx]) < 0.0):
+                    if direction == "lon":
+                        where_idx -= 1
+                    else:
+                        where_idx += 1
+            elif typ == "max":
+                if ((vert - fn_int[where_idx]) > 0.0):
+                    if direction == "lon":
+                        if not self.split_EW:
+                            where_idx += 1
+                    else:
+                        where_idx -= 1
+
+                if (where_idx == (len(fn_int) - 1)) and self.split_EW:
+                    where_idx -= 1
+
+            where_idx = int(where_idx)
+
+            if self.verbose:
+                print("where_idx, vert, fn_int[where_idx] for typ:")
+                print(where_idx, vert, fn_int[where_idx], typ)
+                print("")
+
+            return where_idx
+
+        def __get_fns(self, lat_idx_rng, lon_idx_rng):
+            """Construct the full filenames required for loading topographic data"""
+            fns = []
+
+            for lat_cnt, lat_idx in enumerate(lat_idx_rng):
+                l_lat_bound = self.fn_lat[lat_idx]
+                l_lat_tag = self.__get_NSEW(l_lat_bound, "lat")
+
+                for lon_cnt, lon_idx in enumerate(lon_idx_rng):
+                    l_lon_bound = self.fn_lon[lon_idx]
+                    l_lon_tag = self.__get_NSEW(l_lon_bound, "lon")
+
+                    # ETOPO filename format: ETOPO_2022_v1_15s_N00E000_surface.nc
+                    name = "ETOPO_2022_v1_15s_%s%.2d%s%.3d_surface.nc" % (
+                        l_lat_tag,
+                        np.abs(l_lat_bound),
+                        l_lon_tag,
+                        np.abs(l_lon_bound),
+                    )
+
+                    fns.append(name)
+
+            return fns, lon_cnt, lat_cnt
+
+        def __load_topo(self, cell, fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng, init=True, populate=True):
+            """
+            Assembles a contiguous array in ``cell.topo`` containing the regional topography.
+
+            This method runs recursively:
+                1. First run determines the shape of each block array and initializes the full regional array.
+                2. Second run populates the array with the actual topography data.
+            """
+            if (cell.topo is None) and (init):
+                self.__load_topo(cell, fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng, init=False, populate=False)
+
+            if not populate:
+                n_col = 0
+                n_row = 0
+                nc_lon = 0
+                nc_lat = 0
+            else:
+                n_col = 0
+                n_row = 0
+                lon_sz_old = 0
+                lat_sz_old = 0
+                cell.lat = []
+                cell.lon = []
+
+            cnt_lat = 0
+            cnt_lon = 0
+
+            for cnt, fn in enumerate(fns):
+                ############################################
+                # Open data file
+                ############################################
+                test = nc.Dataset(self.dir + fn, "r")
+                self.opened_dfs.append(test)
+
+                ############################################
+                # Load lat data
+                ############################################
+                lat = test["lat"]
+                lat_min_idx = np.argmin(np.abs((lat - np.sign(lat) * 1e-4) - self.lat_verts.min()))
+                lat_max_idx = np.argmin(np.abs((lat + np.sign(lat) * 1e-4) - self.lat_verts.max()))
+
+                lat_high = np.max((lat_min_idx, lat_max_idx))
+                lat_low = np.min((lat_min_idx, lat_max_idx))
+
+                ############################################
+                # Load lon data
+                ############################################
+                lon = test["lon"]
+                lon_low, lon_high = self.__get_lon_idxs(lon, lon_idx_rng, n_col)
+
+                if not populate:
+                    if n_row == 0:
+                        nc_lon += lon_high - lon_low
+                        cnt_lon += 1
+
+                    if n_col == 0:
+                        nc_lat += lat_high - lat_low
+                        cnt_lat += 1
+
+                    n_col += 1
+                    if n_col == (lon_cnt + 1):
+                        n_col = 0
+                        n_row += 1
+
+                else:
+                    # ETOPO uses 'z' for elevation, map to 'topo'
+                    topo = test["z"][lat_low:lat_high, lon_low:lon_high]
+
+                    curr_lon = lon[lon_low:lon_high].data.tolist()
+
+                    if n_col == 0:
+                        curr_lat = lat[lat_low:lat_high].data.tolist()
+                        cell.lat += curr_lat
+
+                    if n_row == 0:
+                        cell.lon += curr_lon
+
+                    lon_sz = lon_high - lon_low
+                    lat_sz = lat_high - lat_low
+
+                    cell.topo[
+                        lat_sz_old : lat_sz_old + lat_sz,
+                        lon_sz_old : lon_sz_old + lon_sz,
+                    ] = topo
+
+                    n_col += 1
+                    lon_sz_old += np.copy(lon_sz)
+
+                    if n_col == (lon_cnt + 1):
+                        n_col = 0
+                        lon_sz_old = 0
+
+                        n_row += 1
+                        lat_sz_old = np.copy(lat_sz)
+
+                test.close()
+
+            if not populate:
+                cell.topo = np.zeros((nc_lat, nc_lon))
+            else:
+                if self.split_EW:
+                    cell.lon = np.array(cell.lon)
+                    cell.lon[cell.lon < 0.0] += 360.0
+
+                # Apply coarse-graining if specified
+                iint = self.etopo_cg
+
+                if iint > 1:
+                    cell.lat = utils.sliding_window_view(
+                        np.sort(cell.lat), (iint,), (iint,)
+                    ).mean(axis=-1)
+                    cell.lon = utils.sliding_window_view(
+                        np.sort(cell.lon), (iint,), (iint,)
+                    ).mean(axis=-1)
+
+                    cell.topo = utils.sliding_window_view(
+                        cell.topo, (iint, iint), (iint, iint)
+                    ).mean(axis=(-1, -2))[::-1, :]
+                else:
+                    # No coarse-graining, just sort and reverse latitude
+                    cell.lat = np.sort(cell.lat)
+                    cell.lon = np.sort(cell.lon)
+                    cell.topo = cell.topo[::-1, :]
+
+        def __get_lon_idxs(self, lon, lon_idx_rng, n_col):
+            """Get longitude indices for data extraction"""
+            l_lon_bound = self.fn_lon[lon_idx_rng[n_col]]
+            r_lon_bound = self.fn_lon[lon_idx_rng[n_col] + 1]
+
+            lon_rng = r_lon_bound - l_lon_bound
+
+            lon_in_file = self.lon_verts[
+                ((self.lon_verts - l_lon_bound) >= 0) &
+                ((self.lon_verts - l_lon_bound) <= lon_rng)
+            ]
+
+            if len(lon_in_file) == 0:
+                lon_high = np.argmin(np.abs(lon - r_lon_bound))
+                lon_low = np.argmin(np.abs(lon - l_lon_bound))
+            else:
+                if not self.split_EW:
+                    if lon_in_file.max() == self.lon_verts.max():
+                        lon_high = np.argmin(np.abs(lon - lon_in_file.max()))
+                    else:
+                        lon_high = np.argmin(np.abs(lon - r_lon_bound))
+
+                    if lon_in_file.min() == self.lon_verts.min():
+                        lon_low = np.argmin(np.abs(lon - lon_in_file.min()))
+                    else:
+                        lon_low = np.argmin(np.abs(lon - l_lon_bound))
+                else:
+                    if lon_in_file.max() == min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)):
+                        lon_high = np.argmin(np.abs(lon - r_lon_bound))
+                        lon_low = np.argmin(np.abs(lon - lon_in_file.min()))
+                    else:
+                        lon_high = np.argmin(np.abs(lon - r_lon_bound))
+
+                    if lon_in_file.min() == (max(self.lon_verts[self.lon_verts < 0.0] + 360.0) - 360.0):
+                        lon_high = np.argmin(np.abs(lon - lon_in_file.max()))
+                        lon_low = np.argmin(np.abs(lon - l_lon_bound))
+                    else:
+                        lon_low = np.argmin(np.abs(lon - l_lon_bound))
+
+            return lon_low, lon_high
+
+        def close_all(self):
+            """Close all opened NetCDF files"""
+            for df in self.opened_dfs:
+                df.close()
+
+        @staticmethod
+        def __get_NSEW(vert, typ):
+            """Method to determine `NSEW` in ETOPO filename"""
+            if typ == "lat":
+                if vert >= 0.0:
+                    dir_tag = "N"
+                else:
+                    dir_tag = "S"
+            if typ == "lon":
+                if vert >= 0.0:
+                    dir_tag = "E"
+                else:
+                    dir_tag = "W"
+
+            return dir_tag
+
 
 class writer(object):
     """

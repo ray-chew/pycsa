@@ -17,7 +17,7 @@ from cartopy.mpl.ticker import (
 )
 
 
-def lat_lon(topo, fs=(10, 6), int=1):
+def lat_lon(topo, fs=(10, 6), int=1, colorbar_margins=None):
     """
     Does a simple Plate-Carre projection of a lat-lon topography data.
 
@@ -30,6 +30,7 @@ def lat_lon(topo, fs=(10, 6), int=1):
     int : int, optional
         for high-resolution datasets, do we only plot every `int` pixel? By default 1, i.e., everything is plotted.
     """
+
 
     fig = plt.figure(figsize=fs)
     ax = plt.axes(projection=ccrs.PlateCarree())
@@ -44,7 +45,9 @@ def lat_lon(topo, fs=(10, 6), int=1):
         cmap="GnBu",
     )
 
-    cax = fig.add_axes([0.99, 0.22, 0.025, 0.55])
+    if colorbar_margins is None:
+        colorbar_margins = [0.99, 0.22, 0.025, 0.55]
+    cax = fig.add_axes(colorbar_margins)
     fig.colorbar(im, cax=cax)
 
     gl = ax.gridlines(

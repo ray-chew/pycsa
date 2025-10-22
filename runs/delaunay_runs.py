@@ -51,7 +51,8 @@ if not params.enable_merit:
     reader.read_dat(params.path_compact_topo, topo)
     reader.read_topo(topo, topo, lon_verts, lat_verts)
 else:
-    reader.read_merit_topo(topo, params)
+    # reader.read_merit_topo(topo, params)
+    reader.read_etopo_topo(topo, params)
     topo.topo[np.where(topo.topo < -500.0)] = -500.0
 
 topo.gen_mgrids()
@@ -84,7 +85,7 @@ cart_plot.lat_lon_delaunay(
     fs=(12, 7),
     highlight_indices=params.rect_set,
     output_fig=True,
-    fn="../manuscript/delaunay.pdf",
+    fn="./outputs/delaunay.pdf",
     int=1,
     raster=True,
 )
@@ -412,7 +413,7 @@ if params.run_case == "DFFT_FA" or params.run_case == "LSFF_FA":
         ylim=[-15, 15],
         title="| FFT LRE | - | LSFF LRE |",
         output_fig=True,
-        fn="../manuscript/dfft_vs_lsff.pdf",
+        fn="./outputs/dfft_vs_lsff.pdf",
         fontsize=12,
     )
 
@@ -427,7 +428,7 @@ if params.run_case == "ITER_REF":
         ylim=[-100, 100],
         output_fig=True,
         title="percentage LRE",
-        fn="../manuscript/lre_bar_ir.pdf",
+        fn="./outputs/lre_bar_ir.pdf",
         fontsize=12,
         comparison=np.array(rel_errs_orig) * 100,
     )
@@ -454,7 +455,7 @@ if params.run_case == "R2B4" or params.run_case == "R2B4_STRW":
         ylim=[-100, 100],
         output_fig=True,
         title="percentage LRE",
-        fn="../manuscript/lre_bar_%s.pdf" % params.run_case,
+        fn="./outputs/lre_bar_%s.pdf" % params.run_case,
         fontsize=12,
     )
     plotter.error_bar_plot(
@@ -467,7 +468,7 @@ if params.run_case == "R2B4" or params.run_case == "R2B4_STRW":
         ylim=[-100, 100],
         output_fig=True,
         title="percentage MRE",
-        fn="../manuscript/mre_bar_%s.pdf" % params.run_case,
+        fn="./outputs/mre_bar_%s.pdf" % params.run_case,
         fontsize=12,
     )
 
@@ -491,7 +492,7 @@ if (
         fs=(12, 8),
         highlight_indices=params.rect_set,
         output_fig=True,
-        fn="../manuscript/error_delaunay_%s.pdf" % params.run_case,
+        fn="./outputs/error_delaunay_%s.pdf" % params.run_case,
         iint=1,
         errors=errors,
         alpha_max=0.6,

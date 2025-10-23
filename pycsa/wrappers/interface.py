@@ -31,7 +31,12 @@ class get_pmf(object):
         debug : bool, optional
             debug flag, by default False
         """
-        self.fobj = fourier.f_trans(nhi, nhj)
+        # Initialize buffer pool for memory-efficient array reuse
+        from pycsa.core.buffer_pool import BufferPool
+        self.buffer_pool = BufferPool()
+
+        # Initialize Fourier transformer with buffer pool
+        self.fobj = fourier.f_trans(nhi, nhj, buffer_pool=self.buffer_pool)
 
         self.U = U
         self.V = V
@@ -59,6 +64,8 @@ class get_pmf(object):
             lmbda,
             kwargs.get("iter_solve", True),
             kwargs.get("save_coeffs", False),
+            buffer_pool=self.buffer_pool,
+            use_sparse=kwargs.get("use_sparse", False),
         )
 
         if kwargs.get("save_am", False):
@@ -70,7 +77,8 @@ class get_pmf(object):
         if kwargs.get("refine", False):
             cell.topo_m -= data_recons
             am, data_recons = lin_reg.do(
-                self.fobj, cell, lmbda, kwargs.get("iter_solve", True)
+                self.fobj, cell, lmbda, kwargs.get("iter_solve", True),
+                buffer_pool=self.buffer_pool
             )
 
             self.fobj.get_freq_grid(am)

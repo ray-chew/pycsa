@@ -1,4 +1,32 @@
 import numpy as np
+try:
+    import numba as nb
+    NUMBA_AVAILABLE = True
+except ImportError:
+    NUMBA_AVAILABLE = False
+
+
+# Numba-optimized functions for hot computational loops
+if NUMBA_AVAILABLE:
+    @nb.njit(parallel=True, fastmath=True, cache=True)
+    def _compute_trig_terms(tt_sum_flat, bcos_out, bsin_out):
+        """Numba-optimized computation of sin and cos terms.
+
+        Computes both sin and cos in a single pass with SIMD vectorization.
+        This is faster than calling np.sin and np.cos separately.
+        """
+        two_pi = 2.0 * np.pi
+        n = tt_sum_flat.shape[0]
+        m = tt_sum_flat.shape[1]
+
+        for i in nb.prange(n):
+            for j in range(m):
+                arg = two_pi * tt_sum_flat[i, j]
+                bcos_out[i, j] = np.cos(arg)
+                bsin_out[i, j] = np.sin(arg)
+else:
+    # Fallback if Numba not available
+    _compute_trig_terms = None
 
 
 class f_trans(object):
@@ -139,12 +167,11 @@ class f_trans(object):
         self.__get_IJ(cell)
         self.__prepare_terms(cell)
 
-        self.term1 = np.expand_dims(self.term1, -1)
-        self.term1 = np.repeat(self.term1, self.nhar_j, -1)
-        self.term2 = np.expand_dims(self.term2, 1)
-        self.term2 = np.repeat(self.term2, self.nhar_i, 1)
-
-        tt_sum = self.term1 + self.term2
+        # Optimized: Use broadcasting instead of expand_dims + repeat
+        # Old approach created large intermediate arrays
+        # New approach: term1[:, :, None] broadcasts with term2[:, None, :]
+        # This is equivalent but avoids memory allocation and copying
+        tt_sum = self.term1[:, :, np.newaxis] + self.term2[:, np.newaxis, :]
 
         del self.term1
         del self.term2
@@ -154,8 +181,18 @@ class f_trans(object):
         else:
             tt_sum = tt_sum.reshape(tt_sum.shape[0], -1)
 
-        bcos = np.cos(2.0 * np.pi * (tt_sum))
-        bsin = np.sin(2.0 * np.pi * (tt_sum))
+        # Compute both sin and cos - use Numba if available for speedup
+        if NUMBA_AVAILABLE and _compute_trig_terms is not None:
+            # Numba-optimized path: pre-allocate and compute in-place
+            bcos = np.empty_like(tt_sum)
+            bsin = np.empty_like(tt_sum)
+            _compute_trig_terms(tt_sum, bcos, bsin)
+        else:
+            # NumPy fallback path
+            two_pi_tt = 2.0 * np.pi * tt_sum
+            bcos = np.cos(two_pi_tt)
+            bsin = np.sin(two_pi_tt)
+            del two_pi_tt
 
         del tt_sum
 

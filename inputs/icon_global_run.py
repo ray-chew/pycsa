@@ -1,4 +1,3 @@
-import numpy as np
 from pycsa.core import var, utils
 from pycsa import local_paths
 
@@ -24,10 +23,10 @@ params.tri_set = [13, 104, 105, 106]
 params.merit_cg = 100
 
 # Setup the Fourier parameters and object.
-params.nhi = 24
-params.nhj = 48
+params.nhi = 32
+params.nhj = 64
 
-params.n_modes = 50
+params.n_modes = 100
 params.padding = 10
 
 params.U, params.V = 10.0, 0.0

@@ -148,6 +148,7 @@ class ncdata(object):
             self.dir = params.path_merit
             self.verbose = verbose
             self.opened_dfs = []
+            self.file_cache = {}  # Cache for opened NetCDF files: {filepath: Dataset}
 
             self.fn_lon = np.array(
                 [
@@ -178,8 +179,28 @@ class ncdata(object):
 
             if not is_parallel:
                 self.get_topo(cell)
-            
+
             self.is_parallel = is_parallel
+
+        def _get_cached_file(self, filepath):
+            """
+            Get a cached NetCDF file handle, or open and cache it if not already open.
+            This dramatically speeds up parallel processing by avoiding repeated file opens.
+            """
+            if filepath not in self.file_cache:
+                if self.verbose:
+                    print(f"Opening and caching: {filepath}")
+                self.file_cache[filepath] = nc.Dataset(filepath, "r")
+            return self.file_cache[filepath]
+
+        def close_cached_files(self):
+            """Close all cached NetCDF files."""
+            for filepath, ds in self.file_cache.items():
+                try:
+                    ds.close()
+                except Exception as e:
+                    print(f"Warning: Error closing {filepath}: {e}")
+            self.file_cache.clear()
 
         def get_topo(self, cell):
 
@@ -342,11 +363,13 @@ class ncdata(object):
             for cnt, fn in enumerate(fns):
                 ############################################
                 #
-                # Open data file
+                # Open data file (using cache for performance)
                 #
                 ############################################
-                test = nc.Dataset(dirs[cnt] + fn, "r")
-                self.opened_dfs.append(test)
+                filepath = dirs[cnt] + fn
+                test = self._get_cached_file(filepath)
+                if test not in self.opened_dfs:
+                    self.opened_dfs.append(test)
 
                 ############################################
                 #
@@ -450,9 +473,9 @@ class ncdata(object):
                         lon_sz_old = 0
 
                         n_row += 1
-                        lat_sz_old = np.copy(lat_sz)         
+                        lat_sz_old = np.copy(lat_sz)
 
-                test.close()
+                # Note: Files are kept open in cache for reuse (closed via close_cached_files())
 
             if not populate:
                 cell.topo = np.zeros((nc_lat, nc_lon))
@@ -482,11 +505,11 @@ class ncdata(object):
             # Note: MERIT is always on n_row = 0 and REMA on n_row = 1
 
                 merit_path = dirs[cnt_lon] + fns[cnt_lon]
-                merit_dat  = nc.Dataset(merit_path, "r")
+                merit_dat  = self._get_cached_file(merit_path)
                 merit_lon  = merit_dat["lon"]
 
                 rema_path = dirs[cnt_lon + lon_cnt + 1] + fns[cnt_lon + lon_cnt + 1]
-                rema_dat  = nc.Dataset(rema_path, "r")
+                rema_dat  = self._get_cached_file(rema_path)
                 rema_lon  = rema_dat["lon"]
 
                 merit_lon_low, merit_lon_high = self.__get_lon_idxs(merit_lon, lon_idx_rng, n_col)
@@ -502,8 +525,7 @@ class ncdata(object):
 
                 new_lon = np.linspace(new_min, new_max, new_sz)
 
-                merit_dat.close()
-                rema_dat.close()
+                # Files kept open in cache (no close needed)
 
                 return new_lon
 
@@ -541,13 +563,18 @@ class ncdata(object):
                         lon_low = np.argmin(np.abs(lon - l_lon_bound))
 
                 else:
-                    if lon_in_file.max() == min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)):
+                    # Handle dateline crossing cases
+                    negative_lons = self.lon_verts[self.lon_verts < 0.0]
+
+                    # Check if we have negative longitudes before using min/max
+                    if len(negative_lons) > 0 and lon_in_file.max() == min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)):
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
                         lon_low = np.argmin(np.abs(lon - lon_in_file.min()))
                     else:
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
-                    
-                    if lon_in_file.min() == (max(self.lon_verts[self.lon_verts < 0.0] + 360.0) - 360.0):
+
+                    # Check if we have negative longitudes before using max
+                    if len(negative_lons) > 0 and lon_in_file.min() == (max(negative_lons + 360.0) - 360.0):
                         lon_high = np.argmin(np.abs(lon - lon_in_file.max()))
                         lon_low = np.argmin(np.abs(lon - l_lon_bound))
                     else:
@@ -596,6 +623,7 @@ class ncdata(object):
             self.dir = params.path_etopo
             self.verbose = verbose
             self.opened_dfs = []
+            self.file_cache = {}  # Cache for opened NetCDF files: {filepath: Dataset}
 
             # ETOPO 2022 tiles are at 15 degree intervals
             self.fn_lon = np.array([
@@ -615,15 +643,41 @@ class ncdata(object):
 
             self.is_parallel = is_parallel
 
+        def _get_cached_file(self, filepath):
+            """
+            Get a cached NetCDF file handle, or open and cache if not already open.
+            This dramatically speeds up parallel processing by avoiding repeated file opens.
+            """
+            if filepath not in self.file_cache:
+                if self.verbose:
+                    print(f"Opening and caching: {filepath}")
+                self.file_cache[filepath] = nc.Dataset(filepath, "r")
+            return self.file_cache[filepath]
+
+        def close_cached_files(self):
+            """Close all cached NetCDF files."""
+            for filepath, ds in self.file_cache.items():
+                try:
+                    ds.close()
+                except Exception as e:
+                    print(f"Warning: Error closing {filepath}: {e}")
+            self.file_cache.clear()
+
         def get_topo(self, cell):
             """Main method to load ETOPO topography data"""
 
             # Compute longitude span
             lon_span = self.lon_verts.max() - self.lon_verts.min()
 
-            # A true dateline crossing is when lon_max < lon_min (e.g., [170, -170])
-            # In that case, we need to wrap around. Otherwise, it's just a normal range.
-            crosses_dateline = self.lon_verts[1] < self.lon_verts[0]
+            # A true dateline crossing occurs when:
+            # 1. We have longitudes on both sides of ±180° (some positive, some negative)
+            # 2. AND the span wraps around (e.g., 170° to -170° = 340° wrap, not 20°)
+            # The key is to check if converting all to [0, 360) would reduce the span
+            lon_verts_360 = np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)
+            span_360 = lon_verts_360.max() - lon_verts_360.min()
+
+            # If converting to [0, 360) reduces the span significantly, it's a true dateline crossing
+            crosses_dateline = (span_360 < lon_span) and (lon_span > 180.0)
 
             # Determine loading strategy
             if lon_span >= 360.0:
@@ -636,20 +690,28 @@ class ncdata(object):
 
             elif crosses_dateline:
                 # True dateline crossing (e.g., [170, -170])
-                # Convert to [0, 360) representation to compute tile indices
+                # Work in [0, 360) representation to compute tile indices
                 self.split_EW = True
 
-                # Convert negative longitudes to [0, 360) for proper wraparound
-                min_lon = max(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)) - 360.0
-                max_lon = min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts))
+                # Use [0, 360) representation for proper wraparound
+                min_lon = lon_verts_360.min()
+                max_lon = lon_verts_360.max()
 
-                lon_min_idx = self.__compute_idx(min_lon, "max", "lon")
-                lon_max_idx = self.__compute_idx(max_lon, "min", "lon")
+                # Find tile indices in [0, 360) space, then convert back
+                # Western tiles: from max_lon (e.g., ~170°) to 180°
+                # Eastern tiles: from -180° to min_lon (e.g., ~-170° = 190° in [0,360))
 
-                lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon) - 1)) + list(range(0, lon_min_idx))
+                # Compute indices using the [0, 360) values
+                lon_min_idx = self.__compute_idx(min_lon, "min", "lon")
+                lon_max_idx = self.__compute_idx(max_lon, "max", "lon")
+
+                # For dateline crossing, we need tiles from max_lon to 180° and from -180° to min_lon
+                # In tile index space: from lon_max_idx to end, plus from start to lon_min_idx
+                lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon))) + list(range(0, lon_min_idx + 1))
+
                 if self.verbose:
-                    print(f"Dateline crossing detected: [{self.lon_verts[0]}, {self.lon_verts[1]}]")
-                    print(f"  Computed min_lon={min_lon}, max_lon={max_lon}")
+                    print(f"Dateline crossing detected: [{self.lon_verts.min():.2f}, {self.lon_verts.max():.2f}]")
+                    print(f"  In [0,360): [{min_lon:.2f}, {max_lon:.2f}]")
                     print(f"  lon_min_idx={lon_min_idx}, lon_max_idx={lon_max_idx}")
                     print(f"  Loading tiles: {lon_idx_rng}")
 
@@ -718,6 +780,10 @@ class ncdata(object):
             """Construct the full filenames required for loading topographic data"""
             fns = []
 
+            # Initialize to avoid UnboundLocalError if ranges are empty
+            lon_cnt = 0
+            lat_cnt = 0
+
             for lat_cnt, lat_idx in enumerate(lat_idx_rng):
                 l_lat_bound = self.fn_lat[lat_idx]
                 l_lat_tag = self.__get_NSEW(l_lat_bound, "lat")
@@ -767,10 +833,12 @@ class ncdata(object):
 
             for cnt, fn in enumerate(fns):
                 ############################################
-                # Open data file
+                # Open data file (using cache for performance)
                 ############################################
-                test = nc.Dataset(self.dir + fn, "r")
-                self.opened_dfs.append(test)
+                filepath = self.dir + fn
+                test = self._get_cached_file(filepath)
+                if test not in self.opened_dfs:
+                    self.opened_dfs.append(test)
 
                 ############################################
                 # Load lat data
@@ -837,7 +905,7 @@ class ncdata(object):
                         n_row += 1
                         lat_sz_old += np.copy(lat_sz)  # FIX: Add to offset, don't replace!
 
-                test.close()
+                # Note: Files are kept open in cache for reuse (closed via close_cached_files())
 
             if not populate:
                 cell.topo = np.zeros((nc_lat, nc_lon))
@@ -891,7 +959,13 @@ class ncdata(object):
         def __get_lon_idxs(self, lon, lon_idx_rng, n_col):
             """Get longitude indices for data extraction"""
             l_lon_bound = self.fn_lon[lon_idx_rng[n_col]]
-            r_lon_bound = self.fn_lon[lon_idx_rng[n_col] + 1]
+
+            # Handle wraparound at dateline: index 24 (180°) wraps to index 0 (-180°)
+            # since both map to the same W180 tile
+            r_idx = lon_idx_rng[n_col] + 1
+            if r_idx >= len(self.fn_lon):
+                r_idx = 1  # Skip index 0 (-180°), go to index 1 (-165°) for proper bounds
+            r_lon_bound = self.fn_lon[r_idx]
 
             lon_rng = r_lon_bound - l_lon_bound
 
@@ -917,13 +991,18 @@ class ncdata(object):
                     else:
                         lon_low = np.argmin(np.abs(lon - l_lon_bound))
                 else:
-                    if lon_in_file.max() == min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)):
+                    # Handle dateline crossing cases
+                    negative_lons = self.lon_verts[self.lon_verts < 0.0]
+
+                    # Check if we have negative longitudes before using min/max
+                    if len(negative_lons) > 0 and lon_in_file.max() == min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)):
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
                         lon_low = np.argmin(np.abs(lon - lon_in_file.min()))
                     else:
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
 
-                    if lon_in_file.min() == (max(self.lon_verts[self.lon_verts < 0.0] + 360.0) - 360.0):
+                    # Check if we have negative longitudes before using max
+                    if len(negative_lons) > 0 and lon_in_file.min() == (max(negative_lons + 360.0) - 360.0):
                         lon_high = np.argmin(np.abs(lon - lon_in_file.max()))
                         lon_low = np.argmin(np.abs(lon - l_lon_bound))
                     else:
@@ -945,7 +1024,11 @@ class ncdata(object):
                 else:
                     dir_tag = "S"
             if typ == "lon":
-                if vert >= 0.0:
+                # Special case: 180° uses W180 in ETOPO naming convention
+                # (since 180°E and 180°W are the same meridian, ETOPO uses W)
+                if vert == 180.0:
+                    dir_tag = "W"
+                elif vert >= 0.0:
                     dir_tag = "E"
                 else:
                     dir_tag = "W"

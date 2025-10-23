@@ -150,8 +150,9 @@ def parallel_wrapper(grid, params, reader, writer):
 
 
 from pycsa.inputs.icon_global_run import params
-from dask.distributed import Client
+from dask.distributed import Client, progress
 import dask
+from tqdm import tqdm
 
 if __name__ == '__main__':
     if params.self_test():
@@ -170,16 +171,32 @@ if __name__ == '__main__':
 
     n_cells = grid.clat.size
 
-    # NetCDF-4 reader does not work well with multithreading
-    # Use only 1 thread per worker! (At least on my laptop)
-    client = Client(threads_per_worker=1, n_workers=2)
+    # Configure Dask for parallel processing
+    # Use processes (not threads) to avoid NetCDF file locking issues
+    # Each worker gets 1 thread to avoid GIL contention
+    import multiprocessing
+    n_workers = min(multiprocessing.cpu_count() - 2, 20)  # Leave 2 cores for system
+    print(f"Initializing Dask with {n_workers} workers...")
 
-    print(n_cells)
+    client = Client(
+        threads_per_worker=1,
+        n_workers=n_workers,
+        processes=True,
+        memory_limit='4GB'  # Per worker
+    )
+    print(f"Dask dashboard available at: {client.dashboard_link}")
+
+    print(f"Total cells to process: {n_cells}")
 
     chunk_sz = 10
     chunk_start = 20400
-    for chunk in range(chunk_start, n_cells, chunk_sz):
-    # writer object
+
+    # Progress tracking
+    total_chunks = (n_cells - chunk_start + chunk_sz - 1) // chunk_sz
+    print(f"\nProcessing {n_cells - chunk_start} cells in {total_chunks} chunks of {chunk_sz}...")
+
+    for chunk_idx, chunk in enumerate(tqdm(range(chunk_start, n_cells, chunk_sz), desc="Processing chunks")):
+        # Writer object for this chunk
         sfx = "_" + str(chunk+chunk_sz)
         writer = io.nc_writer(params, sfx)
 
@@ -200,3 +217,13 @@ if __name__ == '__main__':
 
         for item in results:
             writer.duplicate(item.c_idx, item)
+
+    # Cleanup: close all cached NetCDF files and shut down Dask client
+    print("\nCleaning up...")
+    if hasattr(reader, 'close_cached_files'):
+        reader.close_cached_files()
+        print("✓ Closed cached topography files")
+
+    client.close()
+    print("✓ Shut down Dask client")
+    print("Processing complete!")

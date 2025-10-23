@@ -34,7 +34,7 @@ class f_trans(object):
     Fourier transformer class
     """
 
-    def __init__(self, nhar_i, nhar_j):
+    def __init__(self, nhar_i, nhar_j, buffer_pool=None):
         """
         Initalises a discrete spectral space with the corresponding Fourier coefficients spanning ``nhar_i`` and ``nhar_j``.
 
@@ -44,9 +44,12 @@ class f_trans(object):
             number of spectral modes in the first horizontal direction
         nhar_j : int
             number of spectral modes in the second horizontal direction
+        buffer_pool : BufferPool, optional
+            Buffer pool for memory-efficient array reuse
         """
         self.nhar_i = nhar_i
         self.nhar_j = nhar_j
+        self.buffer_pool = buffer_pool
 
         self.m_i = None
         self.m_j = None

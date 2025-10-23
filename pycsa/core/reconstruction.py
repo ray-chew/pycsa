@@ -17,14 +17,8 @@ def recon_2D(recons_z, cell):
     array-like
         2D reconstructed topography, values outside the mask are set to zero.
     """
-    lon, lat = cell.lon, cell.lat
-
+    # Vectorized implementation - replaces nested Python loops with NumPy indexing
     recons_z_2D = np.zeros(np.shape(cell.topo))
-    c = 0
-    for i in range(len(lat)):
-        for j in range(len(lon)):
-            if cell.mask[i, j] == 1:
-                recons_z_2D[i, j] = recons_z[c]
-                c = c + 1
+    recons_z_2D[cell.mask] = recons_z
 
     return recons_z_2D

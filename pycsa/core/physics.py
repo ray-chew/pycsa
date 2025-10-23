@@ -59,25 +59,25 @@ class ideal_pmf(object):
         om = -kks * U - lls * V
         omsq = om**2
 
-        mms = (N**2 * (kks**2 + lls**2) / omsq) - (kks**2 + lls**2)
-        # ampls[np.where(mms <= 0.0)] = 0.0
-        mms[np.isnan(mms)] = 0.0
-        mms = np.sqrt(mms)
+        # Compute mms safely: avoid divide-by-zero and sqrt of negatives.
+        # We intentionally silence expected divide/invalid warnings and map singularities to 0.
+        base = (kks**2 + lls**2)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            frac = np.divide(N**2 * base, omsq, out=np.zeros_like(omsq), where=omsq > 0)
+            mms = frac - base
+            # Clip negatives to zero before sqrt to avoid invalid warnings
+            mms = np.sqrt(np.clip(mms, 0.0, None))
 
-        # wave-action density
-        Ag = -0.5 * ((ampls) ** 2 * N**2 / om)
-        Ag[np.isinf(Ag)] = 0.0
-        Ag[np.isnan(Ag)] = 0.0
+        # wave-action density (Ag): safe division with zeros where om == 0
+        with np.errstate(divide="ignore", invalid="ignore"):
+            Ag = -0.5 * np.divide((ampls**2) * N**2, om, out=np.zeros_like(om), where=om != 0)
+        Ag = np.nan_to_num(Ag, nan=0.0, posinf=0.0, neginf=0.0)
 
-        # group velocity in z-direction
-        cgz = (
-            self.N
-            * (kks**2 + lls**2) ** 0.5
-            * mms
-            / (kks**2 + lls**2 + mms**2) ** (3 / 2)
-        )
-
-        cgz[np.isnan(cgz)] = 0.0
+        # group velocity in z-direction, computed safely
+        denom = (base + mms**2) ** 1.5
+        with np.errstate(divide="ignore", invalid="ignore"):
+            cgz = self.N * np.sqrt(base) * np.divide(mms, denom, out=np.zeros_like(denom), where=denom > 0)
+        cgz = np.nan_to_num(cgz, nan=0.0, posinf=0.0, neginf=0.0)
 
         uw_pmf = Ag * kks * cgz
 

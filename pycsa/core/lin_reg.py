@@ -122,10 +122,19 @@ def do(fobj, cell, lmbda=0.0, iter_solve=True, save_coeffs=False, buffer_pool=No
             E_tilda_lm_sparse = E_tilda_lm_sparse + trace * eye(E_tilda_lm_sparse.shape[0])
 
         # Solve with sparse solver (direct solver for sparse SPD matrices)
-        a_m = spsolve(E_tilda_lm_sparse, h_tilda_l_sparse.toarray().flatten())
+        # Convert RHS to dense array if it's sparse, otherwise use as-is
+        if hasattr(h_tilda_l_sparse, 'toarray'):
+            rhs = h_tilda_l_sparse.toarray().flatten()
+        else:
+            rhs = np.asarray(h_tilda_l_sparse).flatten()
+        a_m = spsolve(E_tilda_lm_sparse, rhs)
 
         # Reconstruct (sparse @ dense is efficient)
-        data_recons = (coeff_sparse @ a_m).toarray().flatten()
+        recons_result = coeff_sparse @ a_m
+        if hasattr(recons_result, 'toarray'):
+            data_recons = recons_result.toarray().flatten()
+        else:
+            data_recons = np.asarray(recons_result).flatten()
 
     else:
         # ============================================================

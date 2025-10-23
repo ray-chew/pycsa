@@ -328,18 +328,22 @@ if __name__ == '__main__':
         # Even though typical cells need ~450 MB, some complex cells can spike higher
         n_workers = min(24, total_cores // 4)  # Use 1/4 of cores with generous memory
         memory_per_worker = '10GB'
-        chunk_sz = 1  # Process cells one at a time per worker for better parallelism
+        processing_batch_size = 500  # Submit 500 cells at once to keep 24 workers busy
+        netcdf_chunk_size = 1000  # 1000 cells per NetCDF file (~21 files total)
         print(f"HIGH-PERFORMANCE MODE: {total_cores} cores detected")
-        print(f"  Using {n_workers} workers × {memory_per_worker} = ~{n_workers * 10} GB total")
-        print(f"  Chunk size: {chunk_sz} cell(s) per chunk")
+        print(f"  Workers: {n_workers} × {memory_per_worker} = ~{n_workers * 10} GB total")
+        print(f"  Processing batch: {processing_batch_size} cells (keep workers busy)")
+        print(f"  NetCDF chunk: {netcdf_chunk_size} cells per file (~{n_cells // netcdf_chunk_size + 1} files)")
     else:
         # Standard laptop/workstation
         n_workers = min(6, max(1, total_cores // 4))
-        memory_per_worker = '8GB'
-        chunk_sz = 6
+        memory_per_worker = '10GB'
+        processing_batch_size = 50  # Submit 50 cells at once
+        netcdf_chunk_size = 100  # 100 cells per NetCDF file (~205 files total)
         print(f"STANDARD MODE: {total_cores} cores detected")
-        print(f"  Using {n_workers} workers × {memory_per_worker}")
-        print(f"  Chunk size: {chunk_sz} cells per chunk")
+        print(f"  Workers: {n_workers} × {memory_per_worker}")
+        print(f"  Processing batch: {processing_batch_size} cells")
+        print(f"  NetCDF chunk: {netcdf_chunk_size} cells per file (~{n_cells // netcdf_chunk_size + 1} files)")
 
     client = Client(
         threads_per_worker=1,
@@ -360,57 +364,86 @@ if __name__ == '__main__':
 
     print(f"Total cells to process: {n_cells}")
 
-    # chunk_sz is set above based on available cores
-    chunk_start = 17  # Start from beginning (can be modified for restart)
+    cell_start = 0  # Start from beginning (can be modified for restart)
 
     # Progress tracking
-    total_chunks = (n_cells - chunk_start + chunk_sz - 1) // chunk_sz
-    print(f"\nProcessing {n_cells - chunk_start} cells in {total_chunks} chunks of {chunk_sz}...")
+    total_netcdf_chunks = (n_cells - cell_start + netcdf_chunk_size - 1) // netcdf_chunk_size
+    print(f"\nProcessing {n_cells - cell_start} cells:")
+    print(f"  NetCDF chunks: {total_netcdf_chunks} files ({netcdf_chunk_size} cells each)")
+    print(f"  Processing batches: {processing_batch_size} cells per Dask batch\n")
 
-    for chunk_idx, chunk in enumerate(tqdm(range(chunk_start, n_cells, chunk_sz), desc="Processing chunks")):
-        # Create subdirectory for this chunk
-        chunk_output_dir = base_output_dir / f"chunk_{chunk:05d}"
+    # Statistics
+    total_land_cells = 0
+    total_ocean_cells = 0
+
+    # Outer loop: NetCDF file creation (one file per netcdf_chunk_size cells)
+    for netcdf_chunk_idx, netcdf_chunk_start in enumerate(tqdm(
+        range(cell_start, n_cells, netcdf_chunk_size),
+        desc="NetCDF chunks",
+        total=total_netcdf_chunks
+    )):
+        netcdf_chunk_end = min(netcdf_chunk_start + netcdf_chunk_size, n_cells)
+
+        # Create subdirectory for this NetCDF chunk's plots
+        chunk_output_dir = base_output_dir / f"cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
         chunk_output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Writer object for this chunk
-        sfx = "_" + str(chunk+chunk_sz)
+        # Writer object for this NetCDF chunk
+        # Better naming: cells_0000-0999.nc instead of ambiguous _1000.nc
+        sfx = f"_cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
         writer = io.nc_writer(params, sfx)
 
         pw_run = parallel_wrapper(grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad)
 
-        lazy_results = []
+        # Inner loop: Process cells in batches to keep workers busy
+        for batch_start in range(netcdf_chunk_start, netcdf_chunk_end, processing_batch_size):
+            batch_end = min(batch_start + processing_batch_size, netcdf_chunk_end)
 
-        if chunk+chunk_sz > n_cells:
-            chunk_end = n_cells
-        else:
-            chunk_end = chunk+chunk_sz
+            # Submit batch to Dask (workers process these in parallel)
+            lazy_results = []
+            for c_idx in range(batch_start, batch_end):
+                lazy_result = dask.delayed(pw_run)(c_idx)
+                lazy_results.append(lazy_result)
 
-        for c_idx in range(chunk, chunk_end):
-            lazy_result = dask.delayed(pw_run)(c_idx)
-            lazy_results.append(lazy_result)
+            # Compute batch
+            results = dask.compute(*lazy_results)
 
-        results = dask.compute(*lazy_results)
+            # Write batch results to current NetCDF file
+            for item in results:
+                writer.duplicate(item.c_idx, item)
+                if item.is_land:
+                    total_land_cells += 1
+                else:
+                    total_ocean_cells += 1
 
-        for item in results:
-            writer.duplicate(item.c_idx, item)
-
-        # Cleanup after each chunk to prevent memory accumulation
-        # Close any cached ETOPO NetCDF files
+        # Cleanup after each NetCDF chunk to prevent memory accumulation
         if hasattr(reader, 'close_cached_files'):
             reader.close_cached_files()
-            print(f"  Chunk {chunk_idx}: Closed cached ETOPO files")
 
-        # Force garbage collection between chunks
+        # Force garbage collection between NetCDF chunks
         import gc
         gc.collect()
-        print(f"  Chunk {chunk_idx}: Completed, memory cleaned")
+
+        print(f"\n  NetCDF chunk {netcdf_chunk_idx}: Cells {netcdf_chunk_start}-{netcdf_chunk_end-1} complete")
+        print(f"    Land: {total_land_cells}, Ocean: {total_ocean_cells}, Total: {total_land_cells + total_ocean_cells}")
 
     # Cleanup: close all cached NetCDF files and shut down Dask client
-    print("\nCleaning up...")
+    print("\n" + "="*80)
+    print("PROCESSING COMPLETE")
+    print("="*80)
+    print(f"Total cells processed: {total_land_cells + total_ocean_cells}")
+    print(f"  Land cells: {total_land_cells}")
+    print(f"  Ocean cells: {total_ocean_cells}")
+    print(f"\nNetCDF files created: {total_netcdf_chunks}")
+    print(f"  Location: {params.path_output}datasets/")
+    print(f"  Pattern: icon_etopo_global_cells_XXXXX-XXXXX.nc")
+    print(f"\nTo merge into single file, run:")
+    print(f"  python3 -m runs.merge_netcdf_chunks")
+    print("="*80)
+
     if hasattr(reader, 'close_cached_files'):
         reader.close_cached_files()
-        print("✓ Closed cached topography files")
+        print("\n✓ Closed cached topography files")
 
     client.close()
     print("✓ Shut down Dask client")
-    print("Processing complete!")

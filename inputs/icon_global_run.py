@@ -1,6 +1,6 @@
 import numpy as np
 from pycsa.core import var, utils
-from inputs import local_paths
+from pycsa import local_paths
 
 params = var.params()
 

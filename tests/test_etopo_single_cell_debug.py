@@ -25,7 +25,7 @@ from pycsa.wrappers import interface
 # CONFIGURE WHICH CELLS TO DEBUG HERE
 # =============================================================================
 CELL_INDICES = [
-    0,      # FileNotFoundError: E180 tile (N90E180)
+    1086,      # FileNotFoundError: E180 tile (N90E180)
     # 1027,   # FileNotFoundError: E180 tile (N90E180)
     # 1219,   # FileNotFoundError: E180 tile (N75E180)
 ]

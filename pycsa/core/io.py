@@ -707,7 +707,16 @@ class ncdata(object):
 
                 # For dateline crossing, we need tiles from max_lon to 180° and from -180° to min_lon
                 # In tile index space: from lon_max_idx to end, plus from start to lon_min_idx
-                lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon))) + list(range(0, lon_min_idx + 1))
+                # Special case: if both indices are the same, we only need that tile and the one before/after dateline
+                if lon_min_idx == lon_max_idx:
+                    # Both are in the same tile (likely tile 23 which is E165-W180)
+                    # Just load that tile, no wraparound needed
+                    lon_idx_rng = [lon_min_idx]
+                    if lon_min_idx == len(self.fn_lon) - 2:  # If it's the last tile (E165)
+                        # Also include the W180 tile (index 0 maps to -180, but we need index at 180)
+                        lon_idx_rng = [lon_min_idx, len(self.fn_lon) - 1]  # E165 and W180 tiles
+                else:
+                    lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon))) + list(range(0, lon_min_idx + 1))
 
                 if self.verbose:
                     print(f"Dateline crossing detected: [{self.lon_verts.min():.2f}, {self.lon_verts.max():.2f}]")

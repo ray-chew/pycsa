@@ -173,7 +173,7 @@ def do_cell(c_idx,
         Result structure for NetCDF output
     """
 
-    print(c_idx)
+    print(f"[START] Processing cell {c_idx}")
 
     topo = var.topo_cell()
 
@@ -231,10 +231,11 @@ def do_cell(c_idx,
     simplex_lon = tri.tri_lon_verts[tri_idx]
 
     if not utils.is_land(cell, simplex_lat, simplex_lon, topo):
-        print("--> skipping ocean cell")
+        print(f"[OCEAN] Cell {c_idx} is ocean, skipping")
         return writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], 0)
     else:
         is_land = 1
+        print(f"[LAND] Cell {c_idx} is land, processing...")
 
     # Traditional first approximation (not DFFT first guess)
     cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(simplex_lat, simplex_lon)
@@ -261,7 +262,7 @@ def do_cell(c_idx,
             chunk_output_dir, params
         )
 
-    print("--> analysis done")
+    print(f"[DONE] Cell {c_idx} analysis complete")
 
     # Explicit memory cleanup to help Dask workers
     del topo, cell_fa, cell_sa, ampls_fa, ampls_sa, uw_fa, uw_sa, dat_2D_fa, dat_2D_sa
@@ -313,24 +314,54 @@ if __name__ == '__main__':
     # Configure Dask for parallel processing
     # Use processes (not threads) to avoid NetCDF file locking issues
     # Each worker gets 1 thread to avoid GIL contention
-    # MEMORY OPTIMIZATION: Fewer workers with more memory each for ETOPO full resolution
+
     import multiprocessing
-    n_workers = 6  # Reduced from 20 to give each worker more memory
-    print(f"Initializing Dask with {n_workers} workers...")
-    print(f"Memory optimization: 6 workers × 10GB = ~60GB total")
+    import os
+
+    # Determine optimal configuration based on available resources
+    # Check if we're on a high-performance node
+    total_cores = os.cpu_count() or 1
+
+    if total_cores >= 64:
+        # High-performance node (e.g., 128 cores, 256 GB RAM)
+        # Strategy: Conservative - use 10GB per worker for safety
+        # Even though typical cells need ~450 MB, some complex cells can spike higher
+        n_workers = min(24, total_cores // 4)  # Use 1/4 of cores with generous memory
+        memory_per_worker = '10GB'
+        chunk_sz = 1  # Process cells one at a time per worker for better parallelism
+        print(f"HIGH-PERFORMANCE MODE: {total_cores} cores detected")
+        print(f"  Using {n_workers} workers × {memory_per_worker} = ~{n_workers * 10} GB total")
+        print(f"  Chunk size: {chunk_sz} cell(s) per chunk")
+    else:
+        # Standard laptop/workstation
+        n_workers = min(6, max(1, total_cores // 4))
+        memory_per_worker = '8GB'
+        chunk_sz = 6
+        print(f"STANDARD MODE: {total_cores} cores detected")
+        print(f"  Using {n_workers} workers × {memory_per_worker}")
+        print(f"  Chunk size: {chunk_sz} cells per chunk")
 
     client = Client(
         threads_per_worker=1,
         n_workers=n_workers,
         processes=True,
-        memory_limit='10GB'  # Increased from 4GB for ETOPO CG=4 data volumes
+        memory_limit=memory_per_worker,
+        silence_logs='ERROR',  # Suppress memory warnings (only show errors)
     )
-    print(f"Dask dashboard available at: {client.dashboard_link}")
+    print(f"Dask dashboard: {client.dashboard_link}")
+
+    # Configure task retries - set to 0 to fail fast on OOM instead of infinite retries
+    import dask
+    dask.config.set({'distributed.scheduler.allowed-failures': 0})
+
+    # Also suppress distributed worker memory warnings
+    import logging
+    logging.getLogger('distributed.worker.memory').setLevel(logging.ERROR)
 
     print(f"Total cells to process: {n_cells}")
 
-    chunk_sz = 10
-    chunk_start = 0  # Start from beginning (can be modified for restart)
+    # chunk_sz is set above based on available cores
+    chunk_start = 17  # Start from beginning (can be modified for restart)
 
     # Progress tracking
     total_chunks = (n_cells - chunk_start + chunk_sz - 1) // chunk_sz
@@ -362,6 +393,17 @@ if __name__ == '__main__':
 
         for item in results:
             writer.duplicate(item.c_idx, item)
+
+        # Cleanup after each chunk to prevent memory accumulation
+        # Close any cached ETOPO NetCDF files
+        if hasattr(reader, 'close_cached_files'):
+            reader.close_cached_files()
+            print(f"  Chunk {chunk_idx}: Closed cached ETOPO files")
+
+        # Force garbage collection between chunks
+        import gc
+        gc.collect()
+        print(f"  Chunk {chunk_idx}: Completed, memory cleaned")
 
     # Cleanup: close all cached NetCDF files and shut down Dask client
     print("\nCleaning up...")

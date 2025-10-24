@@ -440,6 +440,7 @@ def get_lat_lon_segments(
     topo_mask=None,
     mask=None,
     load_topo=False,
+    use_center=True,
 ):
     """
     Populates an empty :class:`cell <src.var.topo_cell>` object given the vertices and underlying topography.
@@ -466,6 +467,9 @@ def get_lat_lon_segments(
         2D Boolean mask to select for data points inside the non-quadrilateral grid cell, by default None
     load_topo : bool, optional
         explicitly replaces the topography attribute in the cell ``cell.topo`` with the data given in ``topo``, by default False
+    use_center : bool, optional
+        If True (default), use center of domain as projection origin (minimizes distortion)
+        If False, use corner of domain as projection origin (OLD behavior for testing)
     """
     lat_max = get_closest_idx(lat_verts.max(), topo.lat) + padding
     lat_min = get_closest_idx(lat_verts.min(), topo.lat) - padding
@@ -476,9 +480,15 @@ def get_lat_lon_segments(
     cell.lat = np.copy(topo.lat[lat_min:lat_max])
     cell.lon = np.copy(topo.lon[lon_min:lon_max])
 
-    # Use midpoint of domain as projection center (minimizes distortion, especially at poles)
-    lon_origin = (cell.lon.min() + cell.lon.max()) / 2.0
-    lat_origin = (cell.lat.min() + cell.lat.max()) / 2.0
+    # Choose projection origin based on use_center parameter
+    if use_center:
+        # NEW (default): Use midpoint of domain as projection center (minimizes distortion, especially at poles)
+        lon_origin = (cell.lon.min() + cell.lon.max()) / 2.0
+        lat_origin = (cell.lat.min() + cell.lat.max()) / 2.0
+    else:
+        # OLD: Use corner of domain as projection origin (for testing/comparison)
+        lon_origin = cell.lon[0]
+        lat_origin = cell.lat[0]
 
     lat_in_m = latlon2m(cell.lat, lon_origin, latlon="lat")
     lon_in_m = latlon2m(cell.lon, lat_origin, latlon="lon")

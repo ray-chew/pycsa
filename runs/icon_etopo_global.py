@@ -69,7 +69,7 @@ def plot_cell_diagnostics(c_idx, cell_sa, ampls_sa, dat_2D_sa, output_dir, param
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
     # Get elevation extent for consistent color scaling
-    vmin = -500.0  # Always fix ocean floor at -500m (blue portion)
+    vmin = -200.0  # Always fix ocean floor at -500m (blue portion)
     vmax = np.nanmax(cell_sa.topo)
 
     # Ensure vmax is positive (land)
@@ -182,7 +182,6 @@ def do_cell(c_idx,
 
     # Determine lat/lon extents with appropriate expansion for data loading
     lat_extent, lon_extent = utils.handle_latlon_expansion(lat_verts, lon_verts)
-    lat_verts, lon_verts = utils.handle_latlon_expansion(lat_verts, lon_verts, lat_expand = 0.0, lon_expand = 0.0)
 
     params.lat_extent = lat_extent
     params.lon_extent = lon_extent
@@ -190,8 +189,20 @@ def do_cell(c_idx,
     # Load topography data for this cell (ETOPO instead of MERIT)
     etopo_reader = reader.read_etopo_topo(None, params, is_parallel=True)
     etopo_reader.get_topo(topo)
+
+    # Clip deep bathymetry to -500m (same as test_etopo_pole_cells.py)
+    # This prevents issues with extreme ocean depths creating artifacts
     topo.topo[np.where(topo.topo < -500.0)] = -500.0
     topo.gen_mgrids()
+
+    # Handle dateline crossing BEFORE processing vertices for CSA
+    # This must be done before handle_latlon_expansion() to ensure consistent coordinates
+    if etopo_reader.split_EW:
+        lon_verts = lon_verts.copy()  # Don't modify the grid object
+        lon_verts[lon_verts < 0.0] += 360.0
+
+    # Process vertices for CSA (after dateline correction!)
+    lat_verts, lon_verts = utils.handle_latlon_expansion(lat_verts, lon_verts, lat_expand = 0.0, lon_expand = 0.0)
 
     # Set up cell center and vertices
     clon = np.array([grid.clon[c_idx]])
@@ -201,10 +212,6 @@ def do_cell(c_idx,
 
     ncells = 1
     nv = clon_vertices[0].size
-
-    # Handle dateline crossing
-    if etopo_reader.split_EW:
-        clon_vertices[clon_vertices < 0.0] += 360.0
 
     triangles = np.zeros((ncells, nv, 2))
 
@@ -237,17 +244,22 @@ def do_cell(c_idx,
         print(f"[LAND] Cell {c_idx} is land, processing...")
 
     # First approximation
-    cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(simplex_lat, simplex_lon)
+    cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(simplex_lat, simplex_lon, use_center=True)
 
     # Second approximation
     if USE_MODE_SELECTION:
         # COMPRESSED MODE: Use sa.do() to select top n_modes wavenumbers
         # This is the original workflow with spectral compression
         if params.recompute_rhs:
-            sols, _ = sa.do(tri_idx, ampls_fa)
+            sols, _ = sa.do(tri_idx, ampls_fa, use_center=True)
         else:
-            sols = sa.do(tri_idx, ampls_fa)
+            sols = sa.do(tri_idx, ampls_fa, use_center=True)
         cell_sa, ampls_sa, uw_sa, dat_2D_sa = sols
+
+        # Exclude ocean from spectral analysis (same as FULL SPECTRUM mode)
+        ocean_mask = cell_sa.topo < -200.0
+        cell_sa.mask = cell_sa.mask & ~ocean_mask
+        cell_sa.get_masked(mask=cell_sa.mask)
     else:
         # FULL SPECTRUM MODE: Use ALL wavenumbers (no mode selection)
         # This gives ~20% better RMSE but no compression
@@ -256,13 +268,13 @@ def do_cell(c_idx,
         # Step 1: Load topo with rectangular mask
         utils.get_lat_lon_segments(
             simplex_lat, simplex_lon, cell_sa, topo,
-            rect=True, filtered=True, padding=0
+            rect=True, filtered=True, padding=0, use_center=True
         )
 
         # Step 2: Apply triangular mask
         utils.get_lat_lon_segments(
             simplex_lat, simplex_lon, cell_sa, topo,
-            rect=False, filtered=False, padding=0
+            rect=False, filtered=False, padding=0, use_center=True
         )
 
         # Run SA with ALL wavenumbers
@@ -273,6 +285,15 @@ def do_cell(c_idx,
             iter_solve=params.sa_iter_solve,
             updt_analysis=True  # Populate cell_sa.analysis for NetCDF output
         )
+
+        # Exclude ocean from spectral analysis for orographic gravity waves
+        # The atmosphere flows over ocean SURFACE (0m), not the seafloor
+        # Threshold: -200m distinguishes deep ocean from below-sea-level land
+        #   - Most below-sea-level land features: -200m to 0m (Death Valley -86m, etc.)
+        #   - Coastal ocean bathymetry: typically < -200m
+        ocean_mask = cell_sa.topo < -200.0
+        cell_sa.mask = cell_sa.mask & ~ocean_mask
+        cell_sa.get_masked(mask=cell_sa.mask)
 
     # Store analysis results
     result = writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell_sa.analysis)

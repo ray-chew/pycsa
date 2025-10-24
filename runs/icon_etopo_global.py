@@ -187,7 +187,6 @@ def do_cell(c_idx,
     params.lat_extent = lat_extent
     params.lon_extent = lon_extent
 
-
     # Load topography data for this cell (ETOPO instead of MERIT)
     etopo_reader = reader.read_etopo_topo(None, params, is_parallel=True)
     etopo_reader.get_topo(topo)
@@ -237,20 +236,43 @@ def do_cell(c_idx,
         is_land = 1
         print(f"[LAND] Cell {c_idx} is land, processing...")
 
-    # Traditional first approximation (not DFFT first guess)
+    # First approximation
     cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(simplex_lat, simplex_lon)
 
-    kls_fa = None  # Traditional approach doesn't use DFFT wavenumbers
-
-    sols = (cell_fa, ampls_fa, uw_fa, dat_2D_fa)
-
     # Second approximation
-    if params.recompute_rhs:
-        sols, _ = sa.do(tri_idx, ampls_fa)
+    if USE_MODE_SELECTION:
+        # COMPRESSED MODE: Use sa.do() to select top n_modes wavenumbers
+        # This is the original workflow with spectral compression
+        if params.recompute_rhs:
+            sols, _ = sa.do(tri_idx, ampls_fa)
+        else:
+            sols = sa.do(tri_idx, ampls_fa)
+        cell_sa, ampls_sa, uw_sa, dat_2D_sa = sols
     else:
-        sols = sa.do(tri_idx, ampls_fa)
+        # FULL SPECTRUM MODE: Use ALL wavenumbers (no mode selection)
+        # This gives ~20% better RMSE but no compression
+        cell_sa = var.topo_cell()
 
-    cell_sa, ampls_sa, uw_sa, dat_2D_sa = sols
+        # Step 1: Load topo with rectangular mask
+        utils.get_lat_lon_segments(
+            simplex_lat, simplex_lon, cell_sa, topo,
+            rect=True, filtered=True, padding=0
+        )
+
+        # Step 2: Apply triangular mask
+        utils.get_lat_lon_segments(
+            simplex_lat, simplex_lon, cell_sa, topo,
+            rect=False, filtered=False, padding=0
+        )
+
+        # Run SA with ALL wavenumbers
+        sa_pmf = interface.get_pmf(params.nhi, params.nhj, params.U, params.V)
+        ampls_sa, uw_sa, dat_2D_sa = sa_pmf.sappx(
+            cell_sa,
+            lmbda=params.lmbda_sa,
+            iter_solve=params.sa_iter_solve,
+            updt_analysis=True  # Populate cell_sa.analysis for NetCDF output
+        )
 
     # Store analysis results
     result = writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell_sa.analysis)
@@ -289,6 +311,34 @@ if __name__ == '__main__':
     # Use traditional first approximation
     params.dfft_first_guess = False
     params.recompute_rhs = False
+
+    # Disable plotting by default (set to True if you want diagnostic plots for each cell)
+    params.plot_output = True
+
+    # ========================================================================
+    # SPECTRAL COMPRESSION TOGGLE
+    # ========================================================================
+    # Toggle between full spectrum vs compressed spectrum in second approximation:
+    #
+    # False (COMPRESSED - default): Use top n_modes=100 wavenumbers
+    #   - Pros: 20x smaller NetCDF files, fast I/O, spectral compression feature
+    #   - Cons: ~20% higher RMSE (e.g., 150.9m vs 121.0m for cell 3091)
+    #
+    # True (FULL SPECTRUM): Use ALL nhi*nhj=2048 wavenumbers
+    #   - Pros: Best reconstruction quality (~20% lower RMSE)
+    #   - Cons: 20x larger NetCDF files, no compression benefit
+    #
+    USE_FULL_SPECTRUM = False  # Set to True to disable spectral compression
+
+    if USE_FULL_SPECTRUM:
+        print("*** FULL SPECTRUM MODE: Using ALL wavenumbers (no compression) ***")
+        params.n_modes = params.nhi * params.nhj  # 2048 modes
+        USE_MODE_SELECTION = False  # Use all modes in SA
+    else:
+        print("*** COMPRESSED SPECTRUM MODE: Using top 100 wavenumbers ***")
+        # params.n_modes already set to 100 in icon_global_run
+        USE_MODE_SELECTION = True  # Select top n_modes in SA
+    # ========================================================================
 
     if params.self_test():
         params.print()

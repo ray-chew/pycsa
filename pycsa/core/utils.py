@@ -476,8 +476,9 @@ def get_lat_lon_segments(
     cell.lat = np.copy(topo.lat[lat_min:lat_max])
     cell.lon = np.copy(topo.lon[lon_min:lon_max])
 
-    lon_origin = cell.lon[0]
-    lat_origin = cell.lat[0]
+    # Use midpoint of domain as projection center (minimizes distortion, especially at poles)
+    lon_origin = (cell.lon.min() + cell.lon.max()) / 2.0
+    lat_origin = (cell.lat.min() + cell.lat.max()) / 2.0
 
     lat_in_m = latlon2m(cell.lat, lon_origin, latlon="lat")
     lon_in_m = latlon2m(cell.lon, lat_origin, latlon="lon")
@@ -561,43 +562,49 @@ def get_closest_idx(val, arr):
 
 
 def latlon2m(arr, fix_pt, latlon):
-    """Wrapper function to compute the distance of a list of values from a given fixed point (in meters).
+    """Compute along-axis distances (in meters) from the first element.
 
     Parameters
     ----------
-    arr : list
-        list of values in degrees
+    arr : array-like
+        1D list/array of coordinates in degrees (latitudes if ``latlon='lat'``,
+        longitudes if ``latlon='lon'``)
     fix_pt : float
-        given fixed point, e.g. the origin, in degrees
-    latlon : str
-        ``lat`` if the distance are to be computed in the latitudinal direction, ``lon`` otherwise.
+        Fixed coordinate in degrees:
+        - for ``latlon='lat'``: the fixed longitude at which meridional distances are evaluated
+        - for ``latlon='lon'``: the fixed latitude at which zonal (small-circle) distances are evaluated
+    latlon : {"lat", "lon"}
+        Which axis the distances are computed along.
 
     Returns
     -------
-    float
-        distance in meters
+    numpy.ndarray
+        Cumulative distances in meters starting at 0, monotonically non-decreasing.
     """
-    arr = np.array(arr)
+    arr = np.asarray(arr, dtype=float)
     assert arr.ndim == 1
-    origin = arr[0]
 
-    res = np.zeros_like(arr)
-    res[0] = 0.0
+    Rm = 6371000.0  # mean Earth radius in meters
 
-    for cnt, idx in enumerate(range(1, len(arr))):
-        cnt += 1
-        if latlon == "lat":
-            res[cnt] = __latlon2m_converter(fix_pt, fix_pt, origin, arr[idx])
-        elif latlon == "lon":
-            res[cnt] = __latlon2m_converter(origin, arr[idx], fix_pt, fix_pt)
-        else:
-            assert 0
+    if latlon == "lat":
+        # Meridional arc length: great circle along a meridian
+        phi = np.radians(arr)
+        dphi = np.diff(phi, prepend=phi[0])
+        steps = np.abs(dphi) * Rm
+    elif latlon == "lon":
+        # Zonal distance along a parallel (small-circle) at latitude fix_pt
+        # Handle dateline by unwrapping longitudes first
+        lam = np.unwrap(np.radians(arr))
+        dlam = np.diff(lam, prepend=lam[0])
+        steps = np.abs(dlam) * Rm * np.cos(np.radians(fix_pt))
+    else:
+        raise ValueError("latlon must be 'lat' or 'lon'")
 
-    return res * 1000
+    return np.cumsum(steps)
 
 
 def __latlon2m_converter(lon1, lon2, lat1, lat2):
-    """Helper function for lat-lon to meters conversion
+    """Helper function for great-circle distance between two lat-lon points.
 
     Parameters
     ----------
@@ -613,7 +620,7 @@ def __latlon2m_converter(lon1, lon2, lat1, lat2):
     Returns
     -------
     float
-        distance between ``(lat1,lon1)`` and ``(lat2,lon2)`` in meters.
+        Great-circle distance between ``(lat1,lon1)`` and ``(lat2,lon2)`` in kilometers.
 
     .. note:: Taken from https://stackoverflow.com/questions/19412462/getting-distance-between-two-points-based-on-latitude-longitude
 

@@ -676,8 +676,13 @@ class ncdata(object):
             lon_verts_360 = np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)
             span_360 = lon_verts_360.max() - lon_verts_360.min()
 
-            # If converting to [0, 360) reduces the span significantly, it's a true dateline crossing
+            # If converting to [0, 360) reduces the span, it's a true dateline crossing
             crosses_dateline = (span_360 < lon_span) and (lon_span > 180.0)
+
+            if self.verbose:
+                print(f"DEBUG get_topo: lon_verts = {self.lon_verts}")
+                print(f"DEBUG get_topo: lon_span = {lon_span}, span_360 = {span_360}")
+                print(f"DEBUG get_topo: crosses_dateline = {crosses_dateline}")
 
             # Determine loading strategy
             if lon_span >= 360.0:
@@ -694,29 +699,49 @@ class ncdata(object):
                 self.split_EW = True
 
                 # Use [0, 360) representation for proper wraparound
-                min_lon = lon_verts_360.min()
-                max_lon = lon_verts_360.max()
+                min_lon_360 = lon_verts_360.min()
+                max_lon_360 = lon_verts_360.max()
 
                 # Find tile indices in [0, 360) space, then convert back
                 # Western tiles: from max_lon (e.g., ~170°) to 180°
                 # Eastern tiles: from -180° to min_lon (e.g., ~-170° = 190° in [0,360))
 
-                # Compute indices using the [0, 360) values
+                # Convert back to [-180, 180) for tile index lookup
+                # since fn_lon is in [-180, 180) space
+                min_lon = min_lon_360 if min_lon_360 <= 180 else min_lon_360 - 360
+                max_lon = max_lon_360 if max_lon_360 <= 180 else max_lon_360 - 360
+
+                # Compute indices using the [-180, 180) values
                 lon_min_idx = self.__compute_idx(min_lon, "min", "lon")
                 lon_max_idx = self.__compute_idx(max_lon, "max", "lon")
 
-                # For dateline crossing, we need tiles from max_lon to 180° and from -180° to min_lon
-                # In tile index space: from lon_max_idx to end, plus from start to lon_min_idx
-                # Special case: if both indices are the same, we only need that tile and the one before/after dateline
+                if self.verbose:
+                    print(f"DEBUG dateline: min_lon={min_lon}, max_lon={max_lon}")
+                    print(f"DEBUG dateline: lon_min_idx={lon_min_idx}, lon_max_idx={lon_max_idx}")
+
+                # For dateline crossing, we need tiles covering the span from min_lon to max_lon
+                # Since we're crossing the dateline, the span wraps around ±180°
+                # In [-180, 180) representation:
+                #   - min_lon is the easternmost extent (e.g., 144°)
+                #   - max_lon is the westernmost extent (e.g., -144°)
+                # We need tiles from min_lon eastward to 180°, then from -180° eastward to max_lon
+                # In tile index space: from lon_min_idx to end (index 24), plus from start (index 0) to lon_max_idx
+
+                # Special case: if both indices are the same, we only need that tile and possibly neighbors
                 if lon_min_idx == lon_max_idx:
-                    # Both are in the same tile (likely tile 23 which is E165-W180)
-                    # Just load that tile, no wraparound needed
+                    # Both edges are in the same tile - check if we need neighbors
                     lon_idx_rng = [lon_min_idx]
-                    if lon_min_idx == len(self.fn_lon) - 2:  # If it's the last tile (E165)
-                        # Also include the W180 tile (index 0 maps to -180, but we need index at 180)
-                        lon_idx_rng = [lon_min_idx, len(self.fn_lon) - 1]  # E165 and W180 tiles
+                    if lon_min_idx >= len(self.fn_lon) - 2:  # Near the end of the array
+                        # Also include the dateline tile(s)
+                        lon_idx_rng.append(0)  # Add first tile for wraparound
                 else:
-                    lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon))) + list(range(0, lon_min_idx + 1))
+                    # Normal dateline crossing: go from min_idx to end (excluding the duplicate at 180°),
+                    # then from start to max_idx
+                    # Note: fn_lon[-1] = 180° maps to same tile as fn_lon[0] = -180°, so exclude index len-1
+                    lon_idx_rng = list(range(lon_min_idx, len(self.fn_lon) - 1)) + list(range(0, lon_max_idx + 1))
+
+                if self.verbose:
+                    print(f"DEBUG dateline: lon_idx_rng={lon_idx_rng}")
 
                 if self.verbose:
                     print(f"Dateline crossing detected: [{self.lon_verts.min():.2f}, {self.lon_verts.max():.2f}]")
@@ -744,6 +769,11 @@ class ncdata(object):
 
             # Get filenames and load data
             fns, lon_cnt, lat_cnt = self.__get_fns(lat_idx_rng, lon_idx_rng)
+
+            if self.verbose:
+                print(f"DEBUG: Generated {len(fns)} files, lon_cnt={lon_cnt}, lat_cnt={lat_cnt}")
+                print(f"DEBUG: First few files: {fns[:min(5, len(fns))]}")
+                print(f"DEBUG: Last few files: {fns[-min(5, len(fns)):]}")
 
             self.__load_topo(cell, fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng)
 

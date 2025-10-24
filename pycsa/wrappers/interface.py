@@ -370,7 +370,7 @@ class first_appx(object):
         self.params = params
         self.topo = topo
 
-    def do(self, simplex_lat, simplex_lon, res_topo=None):
+    def do(self, simplex_lat, simplex_lon, res_topo=None, use_center=True):
         """Do the First Approximation step
 
         Parameters
@@ -382,6 +382,8 @@ class first_appx(object):
             _description_
         res_topo : array-like, optional
             residual orography, only required in iterative refinement, by default None
+        use_center : bool, optional
+            use centered planar projection (True) or corner-based (False), by default True
 
         Returns
         -------
@@ -402,7 +404,7 @@ class first_appx(object):
                 taper_quad(self.params, simplex_lat, simplex_lon, cell_fa, self.topo)
             else:
                 utils.get_lat_lon_segments(
-                    simplex_lat, simplex_lon, cell_fa, self.topo, rect=self.params.rect
+                    simplex_lat, simplex_lon, cell_fa, self.topo, rect=self.params.rect, use_center=use_center
                 )
         else:
             cell_fa.topo = res_topo
@@ -414,6 +416,7 @@ class first_appx(object):
                 padding=self.params.padding,
                 rect=False,
                 mask=np.ones_like(res_topo).astype(bool),
+                use_center=use_center,
             )
 
         first_guess = get_pmf(self.nhi, self.nhj, self.params.U, self.params.V)
@@ -451,7 +454,7 @@ class second_appx(object):
         self.nhi, self.nhj = nhi, nhj
         self.n_modes = params.n_modes
 
-    def do(self, idx, ampls_fa, res_topo=None):
+    def do(self, idx, ampls_fa, res_topo=None, use_center=True):
         """Do the Second Approximation step
 
         Parameters
@@ -462,6 +465,8 @@ class second_appx(object):
             spectral modes identified in the first approximation step
         res_topo : array-like, optional
             residual orography, only required in iterative refinement, by default None
+        use_center : bool, optional
+            use centered planar projection (True) or corner-based (False), by default True
 
         Returns
         -------
@@ -489,7 +494,7 @@ class second_appx(object):
         simplex_lon = self.tri.tri_lon_verts[idx]
 
         # use the non-quadrilateral self.topography
-        utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, self.topo, rect=True)
+        utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, self.topo, rect=True, use_center=use_center)
 
         save_am = True if self.params.recompute_rhs else False
 
@@ -497,7 +502,7 @@ class second_appx(object):
             cell.topo = res_topo * cell.mask
 
         utils.get_lat_lon_segments(
-            simplex_lat, simplex_lon, cell, self.topo, rect=False, filtered=False
+            simplex_lat, simplex_lon, cell, self.topo, rect=False, filtered=False, use_center=use_center
         )
 
         if self.params.taper_sa:

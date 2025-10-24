@@ -542,15 +542,31 @@ def get_lat_lon_segments(
     if topo_mask is not None:
         cell.topo *= topo_mask
 
+    # Convert vertices from degrees to planar coordinates (meters) for triangle masking
+    # This is critical at polar latitudes where degree-space and meter-space have different geometries
+    # We need to convert each vertex individually using the same projection origin as the grid
+
+    Rm = 6371000.0  # Earth radius in meters
+
+    # Convert latitude vertices (meridional distance from first grid point)
+    # Keep sign to preserve direction (north/south)
+    lat_ref = cell.lat[0]  # Reference point (first grid latitude)
+    lat_verts_in_m = (np.radians(lat_verts) - np.radians(lat_ref)) * Rm
+
+    # Convert longitude vertices (zonal distance along parallel at lat_origin)
+    # Keep sign to preserve direction (east/west)
+    lon_ref = cell.lon[0]  # Reference point (first grid longitude)
+    lon_verts_in_m = (np.radians(lon_verts) - np.radians(lon_ref)) * Rm * np.cos(np.radians(lat_origin))
+
     if padding > 0:
         triangle = gen_triangle(
-            lon_verts,
-            lat_verts,
-            x_rng=[cell.lon.min(), cell.lon.max()],
-            y_rng=[cell.lat.min(), cell.lat.max()],
+            lon_verts_in_m,
+            lat_verts_in_m,
+            x_rng=[lon_in_m.min(), lon_in_m.max()],
+            y_rng=[lat_in_m.min(), lat_in_m.max()],
         )
     else:
-        triangle = gen_triangle(lon_verts, lat_verts)
+        triangle = gen_triangle(lon_verts_in_m, lat_verts_in_m)
 
     # crucial to update of the lat-lon data in the cell object AFTER the initialisation of the triangle object.
     cell.lat = lat_in_m

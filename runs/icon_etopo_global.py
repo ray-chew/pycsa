@@ -1,3 +1,23 @@
+#!/usr/bin/env python3
+"""
+ICON ETOPO Global Processing Script
+
+IMPORTANT: Thread control environment variables must be set BEFORE numpy/numba import
+to prevent thread over-subscription with Dask workers.
+"""
+import os
+
+# ============================================================================
+# CRITICAL: Set thread limits BEFORE importing numpy/numba/scipy
+# This prevents thread over-subscription when using Dask with threads_per_worker > 1
+# ============================================================================
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['NUMBA_NUM_THREADS'] = '1'  # Critical: prevents Numba parallel=True conflicts
+os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
+
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Use non-GUI backend for parallel processing
@@ -461,8 +481,10 @@ def group_cells_by_memory(clat_rad, max_memory_per_batch_gb=240.0):
             if avg_mem * len(current_batch_indices) > max_memory_per_batch_gb:
                 # Finalize current batch
                 avg_mem_current = np.mean(current_batch_memory)
-                n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem_current * 1.2)))  # 20% safety margin
-                mem_per_worker = avg_mem_current * 1.2
+                # Use 30% safety margin for diskless NetCDF loading
+                safety_factor = 1.0
+                n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem_current * safety_factor)))
+                mem_per_worker = avg_mem_current * safety_factor
 
                 batches.append({
                     'cell_indices': sorted(current_batch_indices),  # Sort by original index order
@@ -484,8 +506,10 @@ def group_cells_by_memory(clat_rad, max_memory_per_batch_gb=240.0):
     # Finalize last batch
     if current_batch_indices:
         avg_mem = np.mean(current_batch_memory)
-        n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem * 1.2)))
-        mem_per_worker = avg_mem * 1.2
+        # Use 30% safety margin for diskless NetCDF loading
+        safety_factor = 1.0
+        n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem * safety_factor)))
+        mem_per_worker = avg_mem * safety_factor
 
         batches.append({
             'cell_indices': sorted(current_batch_indices),
@@ -523,10 +547,10 @@ if __name__ == '__main__':
             'description': 'Generic laptop (16 threads, 16GB RAM)'
         },
         'dkrz_hpc': {
-            'total_cores': 128,
+            'total_cores': 250,
             'total_memory_gb': 240.0,
-            'netcdf_chunk_size': 1000,
-            'memory_per_cpu_mb': 1940,  # SLURM quota on interactive partition
+            'netcdf_chunk_size': 100,
+            'memory_per_cpu_mb': None,  # SLURM quota on interactive partition
             'description': 'DKRZ HPC interactive partition (standard memory node)'
         },
         'laptop_performance': {
@@ -720,23 +744,11 @@ if __name__ == '__main__':
                 n_workers = batch_config['n_workers']
                 memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
 
-                # Calculate threads per worker based on configuration
-                if config['memory_per_cpu_mb'] is not None:
-                    # HPC mode: Use SLURM's memory-per-CPU quota
-                    # Each worker gets CPUs proportional to its memory allocation
-                    threads_per_worker = max(1, int(
-                        batch_config['memory_per_worker_gb'] * 1000 / config['memory_per_cpu_mb']
-                    ))
-                else:
-                    # Laptop mode: Calculate based on total available resources
-                    # How many workers can we fit given memory constraints?
-                    max_workers_by_memory = max(1, int(
-                        config['total_memory_gb'] / batch_config['memory_per_worker_gb']
-                    ))
-                    # Limit workers to what we actually configured
-                    actual_workers = min(max_workers_by_memory, n_workers)
-                    # Distribute threads evenly across workers
-                    threads_per_worker = max(1, config['total_cores'] // actual_workers)
+                # CRITICAL: threads_per_worker MUST be 1 because HDF5 is not thread-safe
+                # HDF5 was not compiled with --enable-threadsafe on this system.
+                # Even opening different NetCDF files from different threads causes crashes.
+                # Use more workers instead of threads for parallelism.
+                threads_per_worker = 1
 
                 logger.info(f"\n  Starting Dask client for memory batch {mem_batch_idx}:")
                 logger.info(f"    Workers: {n_workers} × {memory_per_worker}")

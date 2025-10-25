@@ -23,3 +23,7 @@ manuscript/*
 first_revision/*
 outputs/*
 local_archive/*
+
+# Local configuration (never commit!)
+pycsa/local_paths.py
+setup_paths_local.sh

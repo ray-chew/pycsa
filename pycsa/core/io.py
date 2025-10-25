@@ -6,6 +6,7 @@ import netCDF4 as nc
 import numpy as np
 import h5py
 import os
+import threading
 
 from datetime import datetime
 from scipy import interpolate
@@ -148,7 +149,9 @@ class ncdata(object):
             self.dir = params.path_merit
             self.verbose = verbose
             self.opened_dfs = []
-            self.file_cache = {}  # Cache for opened NetCDF files: {filepath: Dataset}
+            # Thread-local storage: each thread gets its own file handles
+            # This prevents concurrent access to the same NetCDF Dataset object
+            self._thread_local = threading.local()
 
             self.fn_lon = np.array(
                 [
@@ -184,23 +187,33 @@ class ncdata(object):
 
         def _get_cached_file(self, filepath):
             """
-            Get a cached NetCDF file handle, or open and cache it if not already open.
-            This dramatically speeds up parallel processing by avoiding repeated file opens.
+            Get a thread-local cached NetCDF file handle.
+
+            Each thread gets its own file handle to prevent memory corruption from
+            concurrent reads. NetCDF4 Dataset objects are NOT thread-safe.
             """
-            if filepath not in self.file_cache:
+            # Get or create thread-local file cache
+            if not hasattr(self._thread_local, 'file_cache'):
+                self._thread_local.file_cache = {}
+
+            cache = self._thread_local.file_cache
+
+            if filepath not in cache:
                 if self.verbose:
-                    print(f"Opening and caching: {filepath}")
-                self.file_cache[filepath] = nc.Dataset(filepath, "r")
-            return self.file_cache[filepath]
+                    print(f"[Thread {threading.current_thread().name}] Opening: {filepath}")
+                cache[filepath] = nc.Dataset(filepath, "r")
+
+            return cache[filepath]
 
         def close_cached_files(self):
-            """Close all cached NetCDF files."""
-            for filepath, ds in self.file_cache.items():
-                try:
-                    ds.close()
-                except Exception as e:
-                    print(f"Warning: Error closing {filepath}: {e}")
-            self.file_cache.clear()
+            """Close all cached NetCDF files in current thread."""
+            if hasattr(self._thread_local, 'file_cache'):
+                for filepath, ds in self._thread_local.file_cache.items():
+                    try:
+                        ds.close()
+                    except Exception as e:
+                        print(f"Warning: Error closing {filepath}: {e}")
+                self._thread_local.file_cache.clear()
 
         def get_topo(self, cell):
 
@@ -623,7 +636,9 @@ class ncdata(object):
             self.dir = params.path_etopo
             self.verbose = verbose
             self.opened_dfs = []
-            self.file_cache = {}  # Cache for opened NetCDF files: {filepath: Dataset}
+            # Thread-local storage: each thread gets its own file handles
+            # This prevents concurrent access to the same NetCDF Dataset object
+            self._thread_local = threading.local()
 
             # ETOPO 2022 tiles are at 15 degree intervals
             self.fn_lon = np.array([
@@ -645,23 +660,53 @@ class ncdata(object):
 
         def _get_cached_file(self, filepath):
             """
-            Get a cached NetCDF file handle, or open and cache if not already open.
-            This dramatically speeds up parallel processing by avoiding repeated file opens.
+            Get a thread-local cached NetCDF file handle.
+
+            Each thread gets its own file handle to prevent memory corruption from
+            concurrent reads. NetCDF4 Dataset objects are NOT thread-safe.
+
+            Thread-local caching dramatically speeds up parallel processing by avoiding
+            repeated file opens within the same thread.
             """
-            if filepath not in self.file_cache:
+            # Get or create thread-local file cache
+            if not hasattr(self._thread_local, 'file_cache'):
+                self._thread_local.file_cache = {}
+
+            cache = self._thread_local.file_cache
+
+            if filepath not in cache:
                 if self.verbose:
-                    print(f"Opening and caching: {filepath}")
-                self.file_cache[filepath] = nc.Dataset(filepath, "r")
-            return self.file_cache[filepath]
+                    print(f"[Thread {threading.current_thread().name}] Opening: {filepath}")
+
+                import time
+                max_retries = 3
+                retry_delay = 0.5
+
+                for attempt in range(max_retries):
+                    try:
+                        # Each thread opens its own handle - prevents concurrent access issues
+                        cache[filepath] = nc.Dataset(filepath, "r")
+                        break
+                    except (OSError, RuntimeError, TypeError) as e:
+                        if attempt < max_retries - 1:
+                            # Retry with exponential backoff
+                            if self.verbose:
+                                print(f"Warning: Attempt {attempt+1} failed for {filepath}, retrying: {e}")
+                            time.sleep(retry_delay * (2 ** attempt))
+                        else:
+                            raise RuntimeError(f"Failed to open {filepath} after {max_retries} attempts: {e}")
+
+            return cache[filepath]
 
         def close_cached_files(self):
-            """Close all cached NetCDF files."""
-            for filepath, ds in self.file_cache.items():
-                try:
-                    ds.close()
-                except Exception as e:
-                    print(f"Warning: Error closing {filepath}: {e}")
-            self.file_cache.clear()
+            """Close all cached NetCDF files in current thread."""
+            if hasattr(self._thread_local, 'file_cache'):
+                for filepath, ds in self._thread_local.file_cache.items():
+                    try:
+                        ds.close()
+                    except Exception as e:
+                        print(f"Warning: Error closing {filepath}: {e}")
+                self._thread_local.file_cache.clear()
 
         def get_topo(self, cell):
             """Main method to load ETOPO topography data"""
@@ -1283,6 +1328,10 @@ class nc_writer(object):
         self.path = params.path_output
         self.rect_set = params.rect_set
         self.debug = params.debug_writer
+
+        # Ensure the datasets directory exists
+        datasets_dir = os.path.join(self.path, 'datasets')
+        os.makedirs(datasets_dir, exist_ok=True)
 
         rootgrp = nc.Dataset(self.path + self.fn, "w", format="NETCDF4")
         

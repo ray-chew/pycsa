@@ -312,7 +312,7 @@ class f_trans(object):
             cos_terms = a_m[: len(self.k_idx)]
             sin_terms = a_m[len(self.k_idx) :]
 
-            fourier_coeff = np.zeros((nhar_i, nhar_j), dtype=np.complex_)
+            fourier_coeff = np.zeros((nhar_i, nhar_j), dtype=np.complex128)
 
             for cnt, (row, col) in enumerate(zip(self.k_idx, self.l_idx)):
                 fourier_coeff[row, col] = cos_terms[cnt] + 1.0j * sin_terms[cnt]

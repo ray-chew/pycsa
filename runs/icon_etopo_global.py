@@ -315,6 +315,137 @@ def do_cell(c_idx,
     return result
 
 
+def estimate_cell_memory_gb(lat_deg):
+    """
+    Estimate memory requirements (in GB) for processing a cell based on its latitude.
+
+    At polar latitudes, cells cover a larger longitudinal range in degree-space,
+    requiring more topographic data points to be loaded with coarse-graining.
+
+    Parameters
+    ----------
+    lat_deg : float
+        Cell center latitude in degrees (-90 to 90)
+
+    Returns
+    -------
+    float
+        Estimated memory requirement in GB
+
+    Notes
+    -----
+    - Equatorial cells (~0°): ~10 GB sufficient
+    - Mid-latitude cells (~45°): ~10 GB
+    - High-latitude cells (~70°): ~25 GB
+    - Polar cells (~80-89°): ~60 GB required
+
+    Memory scales approximately with 1/cos(lat) due to meridian convergence,
+    but caps at ~60 GB for cells very close to the poles.
+    """
+    abs_lat = np.abs(lat_deg)
+
+    # Base memory requirement at equator
+    base_memory_gb = 10.0
+
+    # Scale factor based on latitude (empirical fit)
+    if abs_lat < 60.0:
+        # Below 60°, memory is fairly constant
+        scale_factor = 1.0
+    elif abs_lat < 85.0:
+        # Between 60° and 85°, use power law scaling
+        # At 70°: (1/0.342)^0.7 ≈ 2.5, giving 25 GB
+        # At 80°: (1/0.174)^0.7 ≈ 4.3, giving 43 GB
+        lat_rad = np.deg2rad(abs_lat)
+        cos_lat = np.cos(lat_rad)
+        scale_factor = (1.0 / cos_lat) ** 0.7
+    else:
+        # Above 85°, cap at 6x base (60 GB) to avoid unrealistic estimates
+        # Very close to poles, the ICON grid cells are smaller and don't
+        # actually require infinite memory despite cos(lat)→0
+        scale_factor = 6.0
+
+    return base_memory_gb * scale_factor
+
+
+def group_cells_by_memory(clat_rad, max_memory_per_batch_gb=240.0):
+    """
+    Group cells into batches with similar memory requirements.
+
+    Parameters
+    ----------
+    clat_rad : ndarray
+        Cell center latitudes in radians
+    max_memory_per_batch_gb : float
+        Maximum total memory available for a batch (default: 240 GB for 6 workers × 40 GB)
+
+    Returns
+    -------
+    list of dict
+        List of batch configurations, each containing:
+        - 'cell_indices': list of cell indices in this batch
+        - 'memory_per_cell_gb': average memory per cell in GB
+        - 'n_workers': recommended number of workers
+        - 'memory_per_worker_gb': recommended memory per worker
+    """
+    n_cells = len(clat_rad)
+    clat_deg = np.rad2deg(clat_rad)
+
+    # Estimate memory for each cell
+    cell_memory_gb = np.array([estimate_cell_memory_gb(lat) for lat in clat_deg])
+
+    # Sort cells by memory requirement (process high-memory cells first)
+    sorted_indices = np.argsort(cell_memory_gb)[::-1]
+
+    batches = []
+    current_batch_indices = []
+    current_batch_memory = []
+
+    for idx in sorted_indices:
+        mem = cell_memory_gb[idx]
+
+        # Check if adding this cell would exceed batch memory limit
+        if current_batch_indices:
+            avg_mem = np.mean(current_batch_memory + [mem])
+            # Ensure we can fit at least 1 worker with this memory
+            if avg_mem * len(current_batch_indices) > max_memory_per_batch_gb:
+                # Finalize current batch
+                avg_mem_current = np.mean(current_batch_memory)
+                n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem_current * 1.2)))  # 20% safety margin
+                mem_per_worker = avg_mem_current * 1.2
+
+                batches.append({
+                    'cell_indices': sorted(current_batch_indices),  # Sort by original index order
+                    'memory_per_cell_gb': avg_mem_current,
+                    'n_workers': n_workers,
+                    'memory_per_worker_gb': mem_per_worker
+                })
+
+                # Start new batch
+                current_batch_indices = [idx]
+                current_batch_memory = [mem]
+            else:
+                current_batch_indices.append(idx)
+                current_batch_memory.append(mem)
+        else:
+            current_batch_indices.append(idx)
+            current_batch_memory.append(mem)
+
+    # Finalize last batch
+    if current_batch_indices:
+        avg_mem = np.mean(current_batch_memory)
+        n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem * 1.2)))
+        mem_per_worker = avg_mem * 1.2
+
+        batches.append({
+            'cell_indices': sorted(current_batch_indices),
+            'memory_per_cell_gb': avg_mem,
+            'n_workers': n_workers,
+            'memory_per_worker_gb': mem_per_worker
+        })
+
+    return batches
+
+
 def parallel_wrapper(grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad):
     return lambda ii : do_cell(ii, grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad)
 
@@ -382,70 +513,71 @@ if __name__ == '__main__':
     base_output_dir.mkdir(parents=True, exist_ok=True)
     print(f"Base output directory: {base_output_dir}")
 
-    # Configure Dask for parallel processing
-    # Use processes (not threads) to avoid NetCDF file locking issues
-    # Each worker gets 1 thread to avoid GIL contention
+    # ========================================================================
+    # DYNAMIC MEMORY ALLOCATION SETUP
+    # ========================================================================
+    # Instead of fixed worker configuration, we'll dynamically adjust based on
+    # the memory requirements of cells being processed (latitude-dependent)
 
     import multiprocessing
     import os
 
-    # Determine optimal configuration based on available resources
-    # Check if we're on a high-performance node
+    # Determine total system resources
     total_cores = os.cpu_count() or 1
 
+    # Estimate total available memory for processing
+    # On laptop: typically 60 GB available (leave some for OS)
+    # On HPC: typically 240 GB available (256 GB total - 16 GB for OS)
     if total_cores >= 64:
-        # High-performance node (e.g., 128 cores, 256 GB RAM)
-        # Strategy: Conservative - use 10GB per worker for safety
-        # Even though typical cells need ~450 MB, some complex cells can spike higher
-        n_workers = min(24, total_cores // 4)  # Use 1/4 of cores with generous memory
-        memory_per_worker = '10GB'
-        processing_batch_size = 500  # Submit 500 cells at once to keep 24 workers busy
-        netcdf_chunk_size = 1000  # 1000 cells per NetCDF file (~21 files total)
-        print(f"HIGH-PERFORMANCE MODE: {total_cores} cores detected")
-        print(f"  Workers: {n_workers} × {memory_per_worker} = ~{n_workers * 10} GB total")
-        print(f"  Processing batch: {processing_batch_size} cells (keep workers busy)")
-        print(f"  NetCDF chunk: {netcdf_chunk_size} cells per file (~{n_cells // netcdf_chunk_size + 1} files)")
+        # High-performance node
+        total_memory_gb = 240.0
+        netcdf_chunk_size = 1000  # 1000 cells per NetCDF file
+        print(f"HIGH-PERFORMANCE MODE: {total_cores} cores, ~240 GB RAM available")
     else:
-        # Standard laptop/workstation
-        n_workers = min(6, max(1, total_cores // 4))
-        memory_per_worker = '10GB'
-        processing_batch_size = 50  # Submit 50 cells at once
-        netcdf_chunk_size = 100  # 100 cells per NetCDF file (~205 files total)
-        print(f"STANDARD MODE: {total_cores} cores detected")
-        print(f"  Workers: {n_workers} × {memory_per_worker}")
-        print(f"  Processing batch: {processing_batch_size} cells")
-        print(f"  NetCDF chunk: {netcdf_chunk_size} cells per file (~{n_cells // netcdf_chunk_size + 1} files)")
+        # Laptop/workstation
+        total_memory_gb = 60.0
+        netcdf_chunk_size = 100  # 100 cells per NetCDF file
+        print(f"STANDARD MODE: {total_cores} cores, ~60 GB RAM available")
 
-    client = Client(
-        threads_per_worker=1,
-        n_workers=n_workers,
-        processes=True,
-        memory_limit=memory_per_worker,
-        silence_logs='ERROR',  # Suppress memory warnings (only show errors)
-    )
-    print(f"Dask dashboard: {client.dashboard_link}")
+    # Group cells by memory requirements for dynamic worker allocation
+    print(f"\nAnalyzing cells by latitude for dynamic memory allocation...")
+    memory_batches = group_cells_by_memory(clat_rad, max_memory_per_batch_gb=total_memory_gb)
 
-    # Configure task retries - set to 0 to fail fast on OOM instead of infinite retries
-    import dask
-    dask.config.set({'distributed.scheduler.allowed-failures': 0})
+    print(f"Created {len(memory_batches)} memory-based batches:")
+    for i, batch in enumerate(memory_batches):
+        print(f"  Batch {i}: {len(batch['cell_indices'])} cells, "
+              f"{batch['memory_per_cell_gb']:.1f} GB/cell, "
+              f"{batch['n_workers']} workers × {batch['memory_per_worker_gb']:.1f} GB")
 
-    # Also suppress distributed worker memory warnings
-    import logging
-    logging.getLogger('distributed.worker.memory').setLevel(logging.ERROR)
+    # We'll create Dask client dynamically for each memory batch
+    # Start with None (will be created per batch)
+    client = None
+    current_batch_idx = None
 
     print(f"Total cells to process: {n_cells}")
 
-    cell_start = 0  # Start from beginning (can be modified for restart)
+    cell_start = 20000  # Start from beginning (can be modified for restart)
 
     # Progress tracking
     total_netcdf_chunks = (n_cells - cell_start + netcdf_chunk_size - 1) // netcdf_chunk_size
     print(f"\nProcessing {n_cells - cell_start} cells:")
-    print(f"  NetCDF chunks: {total_netcdf_chunks} files ({netcdf_chunk_size} cells each)")
-    print(f"  Processing batches: {processing_batch_size} cells per Dask batch\n")
+    print(f"  NetCDF chunks: {total_netcdf_chunks} files ({netcdf_chunk_size} cells each)\n")
 
     # Statistics
     total_land_cells = 0
     total_ocean_cells = 0
+
+    # Configure task retries and logging (do this once)
+    import dask
+    import logging
+    dask.config.set({'distributed.scheduler.allowed-failures': 0})
+    logging.getLogger('distributed.worker.memory').setLevel(logging.ERROR)
+
+    # Create a mapping from cell_idx to memory batch index for quick lookup
+    cell_to_batch = {}
+    for batch_idx, batch in enumerate(memory_batches):
+        for cell_idx in batch['cell_indices']:
+            cell_to_batch[cell_idx] = batch_idx
 
     # Outer loop: NetCDF file creation (one file per netcdf_chunk_size cells)
     for netcdf_chunk_idx, netcdf_chunk_start in enumerate(tqdm(
@@ -460,39 +592,78 @@ if __name__ == '__main__':
         chunk_output_dir.mkdir(parents=True, exist_ok=True)
 
         # Writer object for this NetCDF chunk
-        # Better naming: cells_0000-0999.nc instead of ambiguous _1000.nc
         sfx = f"_cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
         writer = io.nc_writer(params, sfx)
 
         pw_run = parallel_wrapper(grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad)
 
-        # Inner loop: Process cells in batches to keep workers busy
-        for batch_start in range(netcdf_chunk_start, netcdf_chunk_end, processing_batch_size):
-            batch_end = min(batch_start + processing_batch_size, netcdf_chunk_end)
+        # Group cells in this NetCDF chunk by memory batch
+        cells_by_memory_batch = {}
+        for c_idx in range(netcdf_chunk_start, netcdf_chunk_end):
+            if c_idx in cell_to_batch:
+                mem_batch_idx = cell_to_batch[c_idx]
+                if mem_batch_idx not in cells_by_memory_batch:
+                    cells_by_memory_batch[mem_batch_idx] = []
+                cells_by_memory_batch[mem_batch_idx].append(c_idx)
 
-            # Submit batch to Dask (workers process these in parallel)
-            lazy_results = []
-            for c_idx in range(batch_start, batch_end):
-                lazy_result = dask.delayed(pw_run)(c_idx)
-                lazy_results.append(lazy_result)
+        # Process each memory batch with appropriate Dask configuration
+        for mem_batch_idx in sorted(cells_by_memory_batch.keys()):
+            cell_indices = cells_by_memory_batch[mem_batch_idx]
+            batch_config = memory_batches[mem_batch_idx]
 
-            # Compute batch
-            results = dask.compute(*lazy_results)
+            # Check if we need to reconfigure Dask client
+            if current_batch_idx != mem_batch_idx:
+                # Shutdown previous client if it exists
+                if client is not None:
+                    client.close()
+                    print(f"\n  Closed previous Dask client")
 
-            # Write batch results to current NetCDF file
-            for item in results:
-                writer.duplicate(item.c_idx, item)
-                if item.is_land:
-                    total_land_cells += 1
-                else:
-                    total_ocean_cells += 1
+                # Create new client with appropriate memory configuration
+                n_workers = batch_config['n_workers']
+                memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
 
-        # Cleanup after each NetCDF chunk to prevent memory accumulation
+                print(f"\n  Starting Dask client for memory batch {mem_batch_idx}:")
+                print(f"    Workers: {n_workers} × {memory_per_worker}")
+                print(f"    Expected memory per cell: {batch_config['memory_per_cell_gb']:.1f} GB")
+
+                client = Client(
+                    threads_per_worker=1,
+                    n_workers=n_workers,
+                    processes=True,
+                    memory_limit=memory_per_worker,
+                    silence_logs='ERROR',
+                )
+                print(f"    Dashboard: {client.dashboard_link}")
+
+                current_batch_idx = mem_batch_idx
+
+            # Process cells in smaller batches to avoid overwhelming scheduler
+            processing_batch_size = min(batch_config['n_workers'] * 2, len(cell_indices))
+
+            for i in range(0, len(cell_indices), processing_batch_size):
+                batch_cells = cell_indices[i:i+processing_batch_size]
+
+                # Submit batch to Dask
+                lazy_results = []
+                for c_idx in batch_cells:
+                    lazy_result = dask.delayed(pw_run)(c_idx)
+                    lazy_results.append(lazy_result)
+
+                # Compute batch
+                results = dask.compute(*lazy_results)
+
+                # Write results to NetCDF file
+                for item in results:
+                    writer.duplicate(item.c_idx, item)
+                    if item.is_land:
+                        total_land_cells += 1
+                    else:
+                        total_ocean_cells += 1
+
+        # Cleanup after each NetCDF chunk
         if hasattr(reader, 'close_cached_files'):
             reader.close_cached_files()
 
-        # Force garbage collection between NetCDF chunks
-        import gc
         gc.collect()
 
         print(f"\n  NetCDF chunk {netcdf_chunk_idx}: Cells {netcdf_chunk_start}-{netcdf_chunk_end-1} complete")
@@ -516,5 +687,6 @@ if __name__ == '__main__':
         reader.close_cached_files()
         print("\n✓ Closed cached topography files")
 
-    client.close()
-    print("✓ Shut down Dask client")
+    if client is not None:
+        client.close()
+        print("✓ Shut down Dask client")

@@ -6,10 +6,61 @@ from matplotlib.colors import TwoSlopeNorm
 import matplotlib.colors as mcolors
 from pathlib import Path
 import gc
+import logging
+from datetime import datetime
 
 from pycsa.core import io, var, utils
 from pycsa.wrappers import interface, diagnostics
 from pycsa.plotting import plotter
+
+# Initialize logger (will be configured in main)
+logger = logging.getLogger(__name__)
+
+
+def setup_logger(log_dir="logs"):
+    """
+    Set up logging configuration for ETOPO global run.
+
+    Parameters
+    ----------
+    log_dir : str
+        Directory for log files (default: "logs")
+
+    Returns
+    -------
+    Path
+        Path to the log file
+    """
+    # Create log directory
+    log_path = Path(log_dir)
+    log_path.mkdir(parents=True, exist_ok=True)
+
+    # Create timestamped log filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = log_path / f"icon_etopo_global_{timestamp}.log"
+
+    # Configure logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+
+    # Remove any existing handlers
+    logger.handlers.clear()
+
+    # File handler - logs everything
+    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler.setLevel(logging.INFO)
+    file_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+
+    # Also silence matplotlib and other libraries from console
+    logging.getLogger('matplotlib').setLevel(logging.WARNING)
+    logging.getLogger('distributed').setLevel(logging.WARNING)
+
+    return log_file
 
 
 def get_topo_colormap():
@@ -133,7 +184,7 @@ def plot_cell_diagnostics(c_idx, cell_sa, ampls_sa, dat_2D_sa, output_dir, param
     # Explicit memory cleanup
     del fig, axs, fig_obj, im1, im2, topo_original, dat_2D_masked
 
-    print(f"  Plot saved: {output_path}")
+    logger.info(f"  Plot saved: {output_path}")
 
 
 def do_cell(c_idx,
@@ -173,7 +224,7 @@ def do_cell(c_idx,
         Result structure for NetCDF output
     """
 
-    print(f"[START] Processing cell {c_idx}")
+    logger.info(f"[START] Processing cell {c_idx}")
 
     topo = var.topo_cell()
 
@@ -237,11 +288,11 @@ def do_cell(c_idx,
     simplex_lon = tri.tri_lon_verts[tri_idx]
 
     if not utils.is_land(cell, simplex_lat, simplex_lon, topo):
-        print(f"[OCEAN] Cell {c_idx} is ocean, skipping")
+        logger.info(f"[OCEAN] Cell {c_idx} is ocean, skipping")
         return writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], 0)
     else:
         is_land = 1
-        print(f"[LAND] Cell {c_idx} is land, processing...")
+        logger.info(f"[LAND] Cell {c_idx} is land, processing...")
 
     # First approximation
     cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(simplex_lat, simplex_lon, use_center=True)
@@ -305,7 +356,7 @@ def do_cell(c_idx,
             chunk_output_dir, params
         )
 
-    print(f"[DONE] Cell {c_idx} analysis complete")
+    logger.info(f"[DONE] Cell {c_idx} analysis complete")
 
     # Explicit memory cleanup to help Dask workers
     del topo, cell_fa, cell_sa, ampls_fa, ampls_sa, uw_fa, uw_sa, dat_2D_fa, dat_2D_sa
@@ -456,6 +507,11 @@ import dask
 from tqdm import tqdm
 
 if __name__ == '__main__':
+    # Set up logging first
+    log_file = setup_logger(log_dir="logs")
+    print(f"Logging to: {log_file}")
+    print("=" * 80)
+
     # Override/add ETOPO-specific parameters
     params.fn_output = "icon_etopo_global"
     params.etopo_cg = 4  # Coarse-graining factor (1.8km at equator, ~0.9-1.8km at Drake Passage)
@@ -483,11 +539,11 @@ if __name__ == '__main__':
     USE_FULL_SPECTRUM = False  # Set to True to disable spectral compression
 
     if USE_FULL_SPECTRUM:
-        print("*** FULL SPECTRUM MODE: Using ALL wavenumbers (no compression) ***")
+        logger.info("*** FULL SPECTRUM MODE: Using ALL wavenumbers (no compression) ***")
         params.n_modes = params.nhi * params.nhj  # 2048 modes
         USE_MODE_SELECTION = False  # Use all modes in SA
     else:
-        print("*** COMPRESSED SPECTRUM MODE: Using top 100 wavenumbers ***")
+        logger.info("*** COMPRESSED SPECTRUM MODE: Using top 100 wavenumbers ***")
         # params.n_modes already set to 100 in icon_global_run
         USE_MODE_SELECTION = True  # Select top n_modes in SA
     # ========================================================================
@@ -511,7 +567,7 @@ if __name__ == '__main__':
     # Create base output directory
     base_output_dir = Path("outputs") / params.fn_output
     base_output_dir.mkdir(parents=True, exist_ok=True)
-    print(f"Base output directory: {base_output_dir}")
+    logger.info(f"Base output directory: {base_output_dir}")
 
     # ========================================================================
     # DYNAMIC MEMORY ALLOCATION SETUP
@@ -532,36 +588,36 @@ if __name__ == '__main__':
         # High-performance node
         total_memory_gb = 240.0
         netcdf_chunk_size = 1000  # 1000 cells per NetCDF file
-        print(f"HIGH-PERFORMANCE MODE: {total_cores} cores, ~240 GB RAM available")
+        logger.info(f"HIGH-PERFORMANCE MODE: {total_cores} cores, ~240 GB RAM available")
     else:
         # Laptop/workstation
         total_memory_gb = 60.0
         netcdf_chunk_size = 100  # 100 cells per NetCDF file
-        print(f"STANDARD MODE: {total_cores} cores, ~60 GB RAM available")
+        logger.info(f"STANDARD MODE: {total_cores} cores, ~60 GB RAM available")
 
     # Group cells by memory requirements for dynamic worker allocation
-    print(f"\nAnalyzing cells by latitude for dynamic memory allocation...")
+    logger.info(f"\nAnalyzing cells by latitude for dynamic memory allocation...")
     memory_batches = group_cells_by_memory(clat_rad, max_memory_per_batch_gb=total_memory_gb)
 
-    print(f"Created {len(memory_batches)} memory-based batches:")
+    logger.info(f"Created {len(memory_batches)} memory-based batches:")
     for i, batch in enumerate(memory_batches):
-        print(f"  Batch {i}: {len(batch['cell_indices'])} cells, "
-              f"{batch['memory_per_cell_gb']:.1f} GB/cell, "
-              f"{batch['n_workers']} workers × {batch['memory_per_worker_gb']:.1f} GB")
+        logger.info(f"  Batch {i}: {len(batch['cell_indices'])} cells, "
+                   f"{batch['memory_per_cell_gb']:.1f} GB/cell, "
+                   f"{batch['n_workers']} workers × {batch['memory_per_worker_gb']:.1f} GB")
 
     # We'll create Dask client dynamically for each memory batch
     # Start with None (will be created per batch)
     client = None
     current_batch_idx = None
 
-    print(f"Total cells to process: {n_cells}")
+    logger.info(f"Total cells to process: {n_cells}")
 
-    cell_start = 20000  # Start from beginning (can be modified for restart)
+    cell_start = 0  # Start from beginning (can be modified for restart)
 
     # Progress tracking
     total_netcdf_chunks = (n_cells - cell_start + netcdf_chunk_size - 1) // netcdf_chunk_size
-    print(f"\nProcessing {n_cells - cell_start} cells:")
-    print(f"  NetCDF chunks: {total_netcdf_chunks} files ({netcdf_chunk_size} cells each)\n")
+    logger.info(f"\nProcessing {n_cells - cell_start} cells:")
+    logger.info(f"  NetCDF chunks: {total_netcdf_chunks} files ({netcdf_chunk_size} cells each)\n")
 
     # Statistics
     total_land_cells = 0
@@ -616,15 +672,15 @@ if __name__ == '__main__':
                 # Shutdown previous client if it exists
                 if client is not None:
                     client.close()
-                    print(f"\n  Closed previous Dask client")
+                    logger.info(f"\n  Closed previous Dask client")
 
                 # Create new client with appropriate memory configuration
                 n_workers = batch_config['n_workers']
                 memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
 
-                print(f"\n  Starting Dask client for memory batch {mem_batch_idx}:")
-                print(f"    Workers: {n_workers} × {memory_per_worker}")
-                print(f"    Expected memory per cell: {batch_config['memory_per_cell_gb']:.1f} GB")
+                logger.info(f"\n  Starting Dask client for memory batch {mem_batch_idx}:")
+                logger.info(f"    Workers: {n_workers} × {memory_per_worker}")
+                logger.info(f"    Expected memory per cell: {batch_config['memory_per_cell_gb']:.1f} GB")
 
                 client = Client(
                     threads_per_worker=1,
@@ -633,7 +689,7 @@ if __name__ == '__main__':
                     memory_limit=memory_per_worker,
                     silence_logs='ERROR',
                 )
-                print(f"    Dashboard: {client.dashboard_link}")
+                logger.info(f"    Dashboard: {client.dashboard_link}")
 
                 current_batch_idx = mem_batch_idx
 
@@ -666,27 +722,32 @@ if __name__ == '__main__':
 
         gc.collect()
 
-        print(f"\n  NetCDF chunk {netcdf_chunk_idx}: Cells {netcdf_chunk_start}-{netcdf_chunk_end-1} complete")
-        print(f"    Land: {total_land_cells}, Ocean: {total_ocean_cells}, Total: {total_land_cells + total_ocean_cells}")
+        logger.info(f"\n  NetCDF chunk {netcdf_chunk_idx}: Cells {netcdf_chunk_start}-{netcdf_chunk_end-1} complete")
+        logger.info(f"    Land: {total_land_cells}, Ocean: {total_ocean_cells}, Total: {total_land_cells + total_ocean_cells}")
 
     # Cleanup: close all cached NetCDF files and shut down Dask client
-    print("\n" + "="*80)
-    print("PROCESSING COMPLETE")
-    print("="*80)
-    print(f"Total cells processed: {total_land_cells + total_ocean_cells}")
-    print(f"  Land cells: {total_land_cells}")
-    print(f"  Ocean cells: {total_ocean_cells}")
-    print(f"\nNetCDF files created: {total_netcdf_chunks}")
-    print(f"  Location: {params.path_output}datasets/")
-    print(f"  Pattern: icon_etopo_global_cells_XXXXX-XXXXX.nc")
-    print(f"\nTo merge into single file, run:")
-    print(f"  python3 -m runs.merge_netcdf_chunks")
-    print("="*80)
+    logger.info("\n" + "="*80)
+    logger.info("PROCESSING COMPLETE")
+    logger.info("="*80)
+    logger.info(f"Total cells processed: {total_land_cells + total_ocean_cells}")
+    logger.info(f"  Land cells: {total_land_cells}")
+    logger.info(f"  Ocean cells: {total_ocean_cells}")
+    logger.info(f"\nNetCDF files created: {total_netcdf_chunks}")
+    logger.info(f"  Location: {params.path_output}datasets/")
+    logger.info(f"  Pattern: icon_etopo_global_cells_XXXXX-XXXXX.nc")
+    logger.info(f"\nTo merge into single file, run:")
+    logger.info(f"  python3 -m runs.merge_netcdf_chunks")
+    logger.info("="*80)
 
     if hasattr(reader, 'close_cached_files'):
         reader.close_cached_files()
-        print("\n✓ Closed cached topography files")
+        logger.info("\n✓ Closed cached topography files")
 
     if client is not None:
         client.close()
-        print("✓ Shut down Dask client")
+        logger.info("✓ Shut down Dask client")
+
+    # Final console message
+    print("="*80)
+    print(f"PROCESSING COMPLETE - Check log file: {log_file}")
+    print("="*80)

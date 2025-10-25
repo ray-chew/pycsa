@@ -507,9 +507,50 @@ import dask
 from tqdm import tqdm
 
 if __name__ == '__main__':
+    # ========================================================================
+    # CONFIGURATION SELECTOR
+    # ========================================================================
+    # Choose one: 'generic_laptop', 'dkrz_hpc', 'laptop_performance'
+    SYSTEM_CONFIG = 'laptop_performance'  # ← Edit this line to switch configs
+    # ========================================================================
+
+    CONFIGS = {
+        'generic_laptop': {
+            'total_cores': 12,  # Conservative: use 12 of 16 threads
+            'total_memory_gb': 12.0,
+            'netcdf_chunk_size': 100,
+            'memory_per_cpu_mb': None,  # Will calculate dynamically
+            'description': 'Generic laptop (16 threads, 16GB RAM)'
+        },
+        'dkrz_hpc': {
+            'total_cores': 128,
+            'total_memory_gb': 240.0,
+            'netcdf_chunk_size': 1000,
+            'memory_per_cpu_mb': 1940,  # SLURM quota on interactive partition
+            'description': 'DKRZ HPC interactive partition (standard memory node)'
+        },
+        'laptop_performance': {
+            'total_cores': 20,  # Use 20 of 24 threads (leave 4 for background)
+            'total_memory_gb': 80.0,
+            'netcdf_chunk_size': 100,
+            'memory_per_cpu_mb': None,  # Will calculate dynamically
+            'description': 'AMD Ryzen AI 9 HX 370 (24 threads, 94GB RAM)'
+        }
+    }
+
+    # Validate configuration selection
+    if SYSTEM_CONFIG not in CONFIGS:
+        raise ValueError(f"Invalid SYSTEM_CONFIG '{SYSTEM_CONFIG}'. Choose from: {list(CONFIGS.keys())}")
+
+    config = CONFIGS[SYSTEM_CONFIG]
+
     # Set up logging first
     log_file = setup_logger(log_dir="logs")
     print(f"Logging to: {log_file}")
+    print("=" * 80)
+    print(f"SYSTEM CONFIG: {SYSTEM_CONFIG}")
+    print(f"  {config['description']}")
+    print(f"  Cores: {config['total_cores']}, Memory: {config['total_memory_gb']} GB")
     print("=" * 80)
 
     # Override/add ETOPO-specific parameters
@@ -578,22 +619,23 @@ if __name__ == '__main__':
     import multiprocessing
     import os
 
-    # Determine total system resources
-    total_cores = os.cpu_count() or 1
+    # Use configuration values
+    total_cores = config['total_cores']
+    total_memory_gb = config['total_memory_gb']
+    netcdf_chunk_size = config['netcdf_chunk_size']
 
-    # Estimate total available memory for processing
-    # On laptop: typically 60 GB available (leave some for OS)
-    # On HPC: typically 240 GB available (256 GB total - 16 GB for OS)
-    if total_cores >= 64:
-        # High-performance node
-        total_memory_gb = 240.0
-        netcdf_chunk_size = 1000  # 1000 cells per NetCDF file
-        logger.info(f"HIGH-PERFORMANCE MODE: {total_cores} cores, ~240 GB RAM available")
+    logger.info("=" * 80)
+    logger.info(f"RESOURCE CONFIGURATION: {SYSTEM_CONFIG}")
+    logger.info(f"  Description: {config['description']}")
+    logger.info(f"  Available cores: {total_cores}")
+    logger.info(f"  Available memory: {total_memory_gb} GB")
+    logger.info(f"  NetCDF chunk size: {netcdf_chunk_size} cells")
+    if config['memory_per_cpu_mb'] is not None:
+        logger.info(f"  SLURM quota: {config['memory_per_cpu_mb']} MB per CPU")
+        logger.info(f"  Mode: HPC (threads scale with worker memory)")
     else:
-        # Laptop/workstation
-        total_memory_gb = 60.0
-        netcdf_chunk_size = 100  # 100 cells per NetCDF file
-        logger.info(f"STANDARD MODE: {total_cores} cores, ~60 GB RAM available")
+        logger.info(f"  Mode: Laptop (threads distributed evenly)")
+    logger.info("=" * 80)
 
     # Group cells by memory requirements for dynamic worker allocation
     logger.info(f"\nAnalyzing cells by latitude for dynamic memory allocation...")
@@ -678,12 +720,31 @@ if __name__ == '__main__':
                 n_workers = batch_config['n_workers']
                 memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
 
+                # Calculate threads per worker based on configuration
+                if config['memory_per_cpu_mb'] is not None:
+                    # HPC mode: Use SLURM's memory-per-CPU quota
+                    # Each worker gets CPUs proportional to its memory allocation
+                    threads_per_worker = max(1, int(
+                        batch_config['memory_per_worker_gb'] * 1000 / config['memory_per_cpu_mb']
+                    ))
+                else:
+                    # Laptop mode: Calculate based on total available resources
+                    # How many workers can we fit given memory constraints?
+                    max_workers_by_memory = max(1, int(
+                        config['total_memory_gb'] / batch_config['memory_per_worker_gb']
+                    ))
+                    # Limit workers to what we actually configured
+                    actual_workers = min(max_workers_by_memory, n_workers)
+                    # Distribute threads evenly across workers
+                    threads_per_worker = max(1, config['total_cores'] // actual_workers)
+
                 logger.info(f"\n  Starting Dask client for memory batch {mem_batch_idx}:")
                 logger.info(f"    Workers: {n_workers} × {memory_per_worker}")
+                logger.info(f"    Threads per worker: {threads_per_worker}")
                 logger.info(f"    Expected memory per cell: {batch_config['memory_per_cell_gb']:.1f} GB")
 
                 client = Client(
-                    threads_per_worker=1,
+                    threads_per_worker=threads_per_worker,
                     n_workers=n_workers,
                     processes=True,
                     memory_limit=memory_per_worker,

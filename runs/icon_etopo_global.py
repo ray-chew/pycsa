@@ -537,7 +537,7 @@ if __name__ == '__main__':
     # CONFIGURATION SELECTOR
     # ========================================================================
     # Choose one: 'generic_laptop', 'dkrz_hpc', 'laptop_performance'
-    SYSTEM_CONFIG = 'laptop_performance'  # ← Edit this line to switch configs
+    SYSTEM_CONFIG = 'dkrz_hpc'  # ← Edit this line to switch configs
     # ========================================================================
 
     # ========================================================================

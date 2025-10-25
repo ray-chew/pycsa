@@ -3,16 +3,16 @@
 # Usage: source setup_paths.sh
 
 # Detect if we're on HPC or local machine
-if [[ -n "$SLURM_JOB_ID" ]] || [[ -n "$PBS_JOBID" ]] || [[ $(hostname) == *"hpc"* ]]; then
+if [[ -n "$SLURM_JOB_ID" ]] || [[ -n "$PBS_JOBID" ]] || [[ $(hostname) == *"dkrz"* ]]; then
     echo "Detected HPC environment"
     export SPEC_APPX_ENV="HPC"
 
     # HPC paths - UPDATE THESE FOR YOUR HPC
-    export SPEC_APPX_DATA_DIR="${HOME}/pyCSA/data"
-    export SPEC_APPX_OUTPUT_DIR="${HOME}/pyCSA/outputs"
+    export SPEC_APPX_DATA_DIR="/scratch/b/b382164/data"
+    export SPEC_APPX_OUTPUT_DIR="/scratch/b/b382164/outputs"
     export SPEC_APPX_MERIT_DIR="${HOME}/pyCSA/data/MERIT"
     export SPEC_APPX_REMA_DIR="${HOME}/pyCSA/data/REMA"
-    export SPEC_APPX_ETOPO_DIR="${HOME}/pyCSA/data/etopo_15s/"
+    export SPEC_APPX_ETOPO_DIR="${SPEC_APPX_DATA_DIR}/etopo_15s/"
 else
     echo "Detected local environment"
     export SPEC_APPX_ENV="LOCAL"
@@ -22,7 +22,7 @@ else
     export SPEC_APPX_OUTPUT_DIR="${HOME}/pyCSA/outputs"
     export SPEC_APPX_MERIT_DIR="${HOME}/pyCSA/data/MERIT"
     export SPEC_APPX_REMA_DIR="${HOME}/pyCSA/data/REMA"
-    export SPEC_APPX_ETOPO_DIR="${HOME}/pyCSA/data/etopo_15s/"
+    export SPEC_APPX_ETOPO_DIR="${HOME}/pyCSA/data/etopo_15s"
 fi
 
 echo "Environment: $SPEC_APPX_ENV"

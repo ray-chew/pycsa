@@ -169,8 +169,7 @@ class fig_obj(object):
 
         if self.set_label:
             axs.set_ylabel(r"$m$", fontsize=12)
-
-        axs.set_xlabel(r"$n$", fontsize=12)
+            axs.set_xlabel(r"$n$", fontsize=12)
         # axs.set_aspect('equal')
 
         # ref: https://stackoverflow.com/questions/20337664/cleanest-way-to-hide-every-nth-tick-label-in-matplotlib-colorbar

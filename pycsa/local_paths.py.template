@@ -1,0 +1,42 @@
+"""
+Template for local paths configuration.
+
+To use:
+1. Copy this file to local_paths.py: cp local_paths.py.template local_paths.py
+2. Edit local_paths.py with your actual paths
+3. Never commit local_paths.py (it's in .gitignore)
+
+Environment variables (optional):
+You can also set these as environment variables:
+- SPEC_APPX_DATA_DIR: Base directory for project data
+- SPEC_APPX_OUTPUT_DIR: Output directory
+- SPEC_APPX_MERIT_DIR: MERIT data directory
+- SPEC_APPX_REMA_DIR: REMA data directory
+- SPEC_APPX_ETOPO_DIR: ETOPO data directory
+"""
+
+import os
+from pathlib import Path
+from pycsa import var
+
+paths = var.obj()
+
+# Get base directories from environment or use defaults
+data_dir = os.getenv('SPEC_APPX_DATA_DIR', '/path/to/data')
+output_dir = os.getenv('SPEC_APPX_OUTPUT_DIR', '/path/to/outputs')
+merit_dir = os.getenv('SPEC_APPX_MERIT_DIR', '/path/to/MERIT')
+rema_dir = os.getenv('SPEC_APPX_REMA_DIR', '/path/to/REMA')
+etopo_dir = os.getenv('SPEC_APPX_ETOPO_DIR', '/path/to/etopo_15s')
+
+# Project data paths
+paths.compact_grid = os.path.join(data_dir, "icon_compact.nc")
+paths.compact_topo = os.path.join(data_dir, "topo_compact.nc")
+paths.icon_grid = os.path.join(data_dir, "icon_grid_0012_R02B04_G_linked.nc")
+
+# Output path
+paths.output = os.path.join(output_dir, "global_run/")
+
+# External data sources
+paths.merit = merit_dir
+paths.rema = rema_dir
+paths.etopo = etopo_dir

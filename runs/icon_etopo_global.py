@@ -538,11 +538,32 @@ if __name__ == '__main__':
     SYSTEM_CONFIG = 'laptop_performance'  # ← Edit this line to switch configs
     # ========================================================================
 
+    # ========================================================================
+    # QUICK START GUIDE - Processing Specific Cell Ranges
+    # ========================================================================
+    # To process specific cell ranges (e.g., to regenerate corrupted chunks):
+    #
+    # 1. Scroll down to "CELL RANGE CONFIGURATION" section (around line 690)
+    # 2. Set cell_start and cell_end:
+    #
+    #    Examples:
+    #      cell_start = 0,    cell_end = 100    → Process cells 0-99 only
+    #      cell_start = 2900, cell_end = 3000   → Process cells 2900-2999 only
+    #      cell_start = 0,    cell_end = None   → Process all cells from 0 to end
+    #      cell_start = 3000, cell_end = None   → Process from 3000 to end
+    #
+    # 3. Run the script - it will create appropriately named NetCDF files
+    #
+    # Note: Files are created in chunks of netcdf_chunk_size (default: 100)
+    #       Example: cells 0-99 → icon_etopo_global_cells_00000-00099.nc
+    # ========================================================================
+
     CONFIGS = {
         'generic_laptop': {
             'total_cores': 12,  # Conservative: use 12 of 16 threads
             'total_memory_gb': 12.0,
             'netcdf_chunk_size': 100,
+            'threads_per_worker': 1,  # Set to None for auto-compute
             'memory_per_cpu_mb': None,  # Will calculate dynamically
             'description': 'Generic laptop (16 threads, 16GB RAM)'
         },
@@ -550,6 +571,7 @@ if __name__ == '__main__':
             'total_cores': 250,
             'total_memory_gb': 240.0,
             'netcdf_chunk_size': 100,
+            'threads_per_worker': None,  # Auto-compute based on worker memory
             'memory_per_cpu_mb': None,  # SLURM quota on interactive partition
             'description': 'DKRZ HPC interactive partition (standard memory node)'
         },
@@ -557,6 +579,7 @@ if __name__ == '__main__':
             'total_cores': 20,  # Use 20 of 24 threads (leave 4 for background)
             'total_memory_gb': 80.0,
             'netcdf_chunk_size': 100,
+            'threads_per_worker': None,  # Auto-compute based on worker memory
             'memory_per_cpu_mb': None,  # Will calculate dynamically
             'description': 'AMD Ryzen AI 9 HX 370 (24 threads, 94GB RAM)'
         }
@@ -654,11 +677,15 @@ if __name__ == '__main__':
     logger.info(f"  Available cores: {total_cores}")
     logger.info(f"  Available memory: {total_memory_gb} GB")
     logger.info(f"  NetCDF chunk size: {netcdf_chunk_size} cells")
+
+    # Threading configuration display
+    if config['threads_per_worker'] is not None:
+        logger.info(f"  Threading mode: MANUAL (threads_per_worker = {config['threads_per_worker']})")
+    else:
+        logger.info(f"  Threading mode: AUTO (will compute based on worker count)")
+
     if config['memory_per_cpu_mb'] is not None:
         logger.info(f"  SLURM quota: {config['memory_per_cpu_mb']} MB per CPU")
-        logger.info(f"  Mode: HPC (threads scale with worker memory)")
-    else:
-        logger.info(f"  Mode: Laptop (threads distributed evenly)")
     logger.info("=" * 80)
 
     # Group cells by memory requirements for dynamic worker allocation
@@ -676,13 +703,33 @@ if __name__ == '__main__':
     client = None
     current_batch_idx = None
 
-    logger.info(f"Total cells to process: {n_cells}")
+    logger.info(f"Total cells in grid: {n_cells}")
 
-    cell_start = 0  # Start from beginning (can be modified for restart)
+    # ========================================================================
+    # CELL RANGE CONFIGURATION
+    # ========================================================================
+    # Set cell_start and cell_end to process specific ranges
+    # Examples:
+    #   cell_start = 0,    cell_end = None     → Process all cells (0 to n_cells-1)
+    #   cell_start = 2900, cell_end = 3000     → Process cells 2900-2999 only
+    #   cell_start = 0,    cell_end = 100      → Process cells 0-99 only
+    cell_start = 0      # First cell to process (inclusive)
+    cell_end = None     # Last cell to process (exclusive), None means process to end
+    # ========================================================================
+
+    # Validate and set cell_end
+    if cell_end is None:
+        cell_end = n_cells
+    else:
+        cell_end = min(cell_end, n_cells)  # Don't exceed total cells
+
+    if cell_start >= cell_end:
+        raise ValueError(f"Invalid cell range: cell_start ({cell_start}) >= cell_end ({cell_end})")
 
     # Progress tracking
-    total_netcdf_chunks = (n_cells - cell_start + netcdf_chunk_size - 1) // netcdf_chunk_size
-    logger.info(f"\nProcessing {n_cells - cell_start} cells:")
+    cells_to_process = cell_end - cell_start
+    total_netcdf_chunks = (cells_to_process + netcdf_chunk_size - 1) // netcdf_chunk_size
+    logger.info(f"\nProcessing cell range: {cell_start} to {cell_end-1} ({cells_to_process} cells)")
     logger.info(f"  NetCDF chunks: {total_netcdf_chunks} files ({netcdf_chunk_size} cells each)\n")
 
     # Statistics
@@ -703,11 +750,11 @@ if __name__ == '__main__':
 
     # Outer loop: NetCDF file creation (one file per netcdf_chunk_size cells)
     for netcdf_chunk_idx, netcdf_chunk_start in enumerate(tqdm(
-        range(cell_start, n_cells, netcdf_chunk_size),
+        range(cell_start, cell_end, netcdf_chunk_size),
         desc="NetCDF chunks",
         total=total_netcdf_chunks
     )):
-        netcdf_chunk_end = min(netcdf_chunk_start + netcdf_chunk_size, n_cells)
+        netcdf_chunk_end = min(netcdf_chunk_start + netcdf_chunk_size, cell_end)
 
         # Create subdirectory for this NetCDF chunk's plots
         chunk_output_dir = base_output_dir / f"cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
@@ -744,15 +791,29 @@ if __name__ == '__main__':
                 n_workers = batch_config['n_workers']
                 memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
 
-                # CRITICAL: threads_per_worker MUST be 1 because HDF5 is not thread-safe
-                # HDF5 was not compiled with --enable-threadsafe on this system.
-                # Even opening different NetCDF files from different threads causes crashes.
-                # Use more workers instead of threads for parallelism.
-                threads_per_worker = 1
+                # ============================================================
+                # THREADS PER WORKER CONFIGURATION
+                # ============================================================
+                # If threads_per_worker is explicitly set in config, use that value
+                # Otherwise, auto-compute based on available cores and workers
+                if config['threads_per_worker'] is not None:
+                    threads_per_worker = config['threads_per_worker']
+                    logger.info(f"\n  Using manual threads_per_worker: {threads_per_worker}")
+                else:
+                    # Auto-compute: distribute available cores among workers
+                    # Reserve at least 1 thread per worker, and cap at reasonable maximum
+                    threads_per_worker = max(1, min(4, total_cores // n_workers))
+                    logger.info(f"\n  Auto-computed threads_per_worker: {threads_per_worker}")
+                    logger.info(f"    (Based on {total_cores} cores / {n_workers} workers)")
+
+                # Note: Thread-safe HDF5 is required for threads_per_worker > 1
+                # Verify with: python3 -c "import netCDF4; print(netCDF4.__hdf5libversion__)"
+                # ============================================================
 
                 logger.info(f"\n  Starting Dask client for memory batch {mem_batch_idx}:")
                 logger.info(f"    Workers: {n_workers} × {memory_per_worker}")
                 logger.info(f"    Threads per worker: {threads_per_worker}")
+                logger.info(f"    Total parallel threads: {n_workers * threads_per_worker}")
                 logger.info(f"    Expected memory per cell: {batch_config['memory_per_cell_gb']:.1f} GB")
 
                 client = Client(

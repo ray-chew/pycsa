@@ -201,8 +201,10 @@ def plot_cell_diagnostics(c_idx, cell_sa, ampls_sa, dat_2D_sa, output_dir, param
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
 
-    # Explicit memory cleanup
+    # Explicit memory cleanup - delete ALL objects to prevent memory leaks
     del fig, axs, fig_obj, im1, im2, topo_original, dat_2D_masked
+    del cbar1, cbar2, norm, topo_cmap, diff
+    gc.collect()  # Force garbage collection after plotting
 
     logger.info(f"  Plot saved: {output_path}")
 
@@ -789,7 +791,18 @@ if __name__ == '__main__':
 
                 # Create new client with appropriate memory configuration
                 n_workers = batch_config['n_workers']
-                memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
+
+                # ============================================================
+                # MEMORY CONFIGURATION
+                # ============================================================
+                # If only 1 worker, allow it to use ALL available memory
+                # This is critical for high-memory polar cells (>60 GB)
+                if n_workers == 1:
+                    memory_per_worker = f"{int(total_memory_gb)}GB"
+                    logger.info(f"\n  Single-worker mode: allowing full memory access ({total_memory_gb} GB)")
+                else:
+                    memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
+                # ============================================================
 
                 # ============================================================
                 # THREADS PER WORKER CONFIGURATION

@@ -157,10 +157,10 @@ class fig_obj(object):
         if self.cbar:
             self.fig.colorbar(im, ax=axs, fraction=0.2, pad=0.04, shrink=0.7)
 
-        m_j = np.arange(-nhj / 2 + 1, nhj / 2 + 1)
+        m_j = np.arange(-nhj / 2 + 1, nhj / 2 + 1).astype(int)
         ylocs = np.arange(0.5, nhj + 0.5, 1.0)
 
-        m_i = np.arange(0, nhi)
+        m_i = np.arange(0, nhi).astype(int)
         xlocs = np.arange(0.5, nhi + 0.5, 1.0)
 
         axs.set_xticks(xlocs, m_i, rotation=-90)
@@ -168,8 +168,8 @@ class fig_obj(object):
         axs.set_title(title)
 
         if self.set_label:
-            axs.set_ylabel(r"$m$", fontsize=12)
-            axs.set_xlabel(r"$n$", fontsize=12)
+            axs.set_ylabel("m", fontsize=12, fontstyle='italic')
+            axs.set_xlabel("n", fontsize=12, fontstyle='italic')
         # axs.set_aspect('equal')
 
         # ref: https://stackoverflow.com/questions/20337664/cleanest-way-to-hide-every-nth-tick-label-in-matplotlib-colorbar
@@ -246,8 +246,8 @@ class fig_obj(object):
         axs.set_title(title)
 
         if self.set_label:
-            axs.set_xlabel(r"$k$ [m$^{-1}$]", fontsize=12)
-            axs.set_ylabel(r"$l$ [m$^{-1}$]", fontsize=12)
+            axs.set_xlabel("k [1/m]", fontsize=12, fontstyle='italic')
+            axs.set_ylabel("l [1/m]", fontsize=12, fontstyle='italic')
         if typ == "imag":
             axs.set_aspect("equal")
 

@@ -484,7 +484,7 @@ def group_cells_by_memory(clat_rad, max_memory_per_batch_gb=240.0):
                 # Finalize current batch
                 avg_mem_current = np.mean(current_batch_memory)
                 # Use 30% safety margin for diskless NetCDF loading
-                safety_factor = 1.0
+                safety_factor = 1.5
                 n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem_current * safety_factor)))
                 mem_per_worker = avg_mem_current * safety_factor
 
@@ -509,7 +509,7 @@ def group_cells_by_memory(clat_rad, max_memory_per_batch_gb=240.0):
     if current_batch_indices:
         avg_mem = np.mean(current_batch_memory)
         # Use 30% safety margin for diskless NetCDF loading
-        safety_factor = 1.0
+        safety_factor = 1.5
         n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem * safety_factor)))
         mem_per_worker = avg_mem * safety_factor
 
@@ -570,8 +570,8 @@ if __name__ == '__main__':
             'description': 'Generic laptop (16 threads, 16GB RAM)'
         },
         'dkrz_hpc': {
-            'total_cores': 250,
-            'total_memory_gb': 240.0,
+            'total_cores': 52,
+            'total_memory_gb': 510.0,
             'netcdf_chunk_size': 100,
             'threads_per_worker': None,  # Auto-compute based on worker memory
             'memory_per_cpu_mb': None,  # SLURM quota on interactive partition
@@ -715,8 +715,8 @@ if __name__ == '__main__':
     #   cell_start = 0,    cell_end = None     → Process all cells (0 to n_cells-1)
     #   cell_start = 2900, cell_end = 3000     → Process cells 2900-2999 only
     #   cell_start = 0,    cell_end = 100      → Process cells 0-99 only
-    cell_start = 0      # First cell to process (inclusive)
-    cell_end = None     # Last cell to process (exclusive), None means process to end
+    cell_start = 0         # First cell to process (inclusive)
+    cell_end = None        # Last cell to process (exclusive), None means process to end
     # ========================================================================
 
     # Validate and set cell_end

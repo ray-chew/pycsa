@@ -50,6 +50,7 @@ def get_topo_colormap():
 def count_land_ocean_cells(grid, params, reader):
     """
     Count how many cells in the ICON grid are land vs ocean based on ETOPO data.
+    Also computes land fraction for each cell for gradient visualization.
 
     Parameters
     ----------
@@ -63,12 +64,14 @@ def count_land_ocean_cells(grid, params, reader):
     Returns
     -------
     tuple
-        (land_count, ocean_count, land_cells, ocean_cells)
+        (land_count, ocean_count, land_cells, ocean_cells, land_fractions)
         land_cells and ocean_cells are lists of cell indices
+        land_fractions is array of land fraction [0-1] for each cell
     """
     n_cells = grid.clat.size
     land_cells = []
     ocean_cells = []
+    land_fractions = np.zeros(n_cells)  # Store land fraction for each cell
 
     print(f"Checking {n_cells} cells for land/ocean classification...")
 
@@ -126,16 +129,23 @@ def count_land_ocean_cells(grid, params, reader):
         simplex_lat = tri.tri_lat_verts[tri_idx]
         simplex_lon = tri.tri_lon_verts[tri_idx]
 
-        # Check if land
-        if utils.is_land(cell, simplex_lat, simplex_lon, topo):
+        # Check if land (binary classification)
+        is_land_cell = utils.is_land(cell, simplex_lat, simplex_lon, topo)
+
+        # Calculate land fraction (fraction of cell with elevation > 0m)
+        land_points = np.sum(cell.topo > 0.0)
+        total_points = cell.topo.size
+        land_fractions[c_idx] = land_points / total_points if total_points > 0 else 0.0
+
+        if is_land_cell:
             land_cells.append(c_idx)
         else:
             ocean_cells.append(c_idx)
 
-    return len(land_cells), len(ocean_cells), land_cells, ocean_cells
+    return len(land_cells), len(ocean_cells), land_cells, ocean_cells, land_fractions
 
 
-def plot_global_topography_and_grid(grid, params, reader, land_cells, ocean_cells, output_dir):
+def plot_global_topography_and_grid(grid, params, reader, land_cells, ocean_cells, land_fractions, output_dir):
     """
     Create plots of global topography and ICON grid.
 
@@ -151,6 +161,8 @@ def plot_global_topography_and_grid(grid, params, reader, land_cells, ocean_cell
         List of land cell indices
     ocean_cells : list
         List of ocean cell indices
+    land_fractions : array
+        Array of land fraction [0-1] for each cell
     output_dir : Path
         Output directory for plots
     """
@@ -163,7 +175,7 @@ def plot_global_topography_and_grid(grid, params, reader, land_cells, ocean_cell
     # Create figure with 3 subplots
     fig = plt.figure(figsize=(20, 6))
 
-    # Plot 1: Land/Ocean classification on grid
+    # Plot 1: Land/Ocean classification on grid with gradient
     ax1 = fig.add_subplot(131, projection='mollweide')
 
     # Convert to Mollweide projection coordinates (radians, but centered at 0)
@@ -171,21 +183,29 @@ def plot_global_topography_and_grid(grid, params, reader, land_cells, ocean_cell
     lon_plot[lon_plot > np.pi] -= 2*np.pi  # Wrap to [-π, π]
     lat_plot = np.deg2rad(clat_deg)
 
-    # Plot ocean cells in blue
-    if ocean_cells:
-        ax1.scatter(lon_plot[ocean_cells], lat_plot[ocean_cells],
-                   c='blue', s=1, alpha=0.5, label='Ocean')
+    # Create a custom colormap from blue (ocean) to green (land)
+    from matplotlib.colors import LinearSegmentedColormap
+    colors_gradient = ['#0066cc', '#3399ff', '#66ccff', '#99ff99', '#66cc66', '#339933', '#006600']
+    n_bins = 100
+    cmap_land_ocean = LinearSegmentedColormap.from_list('land_ocean', colors_gradient, N=n_bins)
 
-    # Plot land cells in green
-    if land_cells:
-        ax1.scatter(lon_plot[land_cells], lat_plot[land_cells],
-                   c='green', s=1, alpha=0.5, label='Land')
+    # Plot all cells with color based on land fraction
+    scatter = ax1.scatter(lon_plot, lat_plot,
+                         c=land_fractions,
+                         cmap=cmap_land_ocean,
+                         s=3,
+                         alpha=0.8,
+                         vmin=0.0,
+                         vmax=1.0)
+
+    # Add colorbar
+    cbar = plt.colorbar(scatter, ax=ax1, orientation='horizontal', pad=0.05, shrink=0.6)
+    cbar.set_label('Land Fraction (0=Ocean, 1=Land)', fontsize=9)
 
     ax1.set_title(f'ICON R2B4 Grid: Land/Ocean Classification\n'
                   f'Land: {len(land_cells)} cells, Ocean: {len(ocean_cells)} cells\n'
                   f'Land %: {100*len(land_cells)/(len(land_cells)+len(ocean_cells)):.2f}%',
                   fontsize=12, fontweight='bold')
-    ax1.legend(loc='lower left')
     ax1.grid(True)
 
     # Plot 2: All grid cells
@@ -250,7 +270,7 @@ if __name__ == '__main__':
 
     # Count land/ocean cells
     print("\nCounting land/ocean cells...")
-    land_count, ocean_count, land_cells, ocean_cells = count_land_ocean_cells(
+    land_count, ocean_count, land_cells, ocean_cells, land_fractions = count_land_ocean_cells(
         grid, params, reader
     )
 
@@ -268,7 +288,7 @@ if __name__ == '__main__':
     # Create plots
     print("\nCreating plots...")
     output_dir = Path("outputs") / "verification"
-    plot_global_topography_and_grid(grid, params, reader, land_cells, ocean_cells, output_dir)
+    plot_global_topography_and_grid(grid, params, reader, land_cells, ocean_cells, land_fractions, output_dir)
 
     # Save plotting data for debugging
     print("\nSaving plotting data for debugging...")
@@ -286,13 +306,14 @@ if __name__ == '__main__':
         clon_deg=clon_deg,
         land_cells=np.array(land_cells),
         ocean_cells=np.array(ocean_cells),
+        land_fractions=land_fractions,
         n_cells=n_cells,
         land_count=land_count,
         ocean_count=ocean_count,
         etopo_cg=params.etopo_cg
     )
     print(f"  Data saved: {data_file}")
-    print(f"  Contains: cell coordinates, land/ocean classifications, and counts")
+    print(f"  Contains: cell coordinates, land/ocean classifications, land fractions, and counts")
 
     print("\n✓ Verification complete!")
     print(f"  Land cells: {land_count}")

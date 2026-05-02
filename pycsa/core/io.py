@@ -14,6 +14,14 @@ from tqdm import tqdm
 
 from pycsa.core import utils
 
+# ============================================================================
+# CRITICAL: Global lock for NetCDF/HDF5 operations
+# HDF5 is NOT thread-safe by default. Even opening different files from
+# different threads can cause crashes if HDF5 wasn't compiled with --enable-threadsafe.
+# This lock serializes ALL NetCDF Dataset operations across all threads.
+# ============================================================================
+_NETCDF_GLOBAL_LOCK = threading.Lock()
+
 
 class ncdata(object):
     """Helper class to read NetCDF4 topographic data"""
@@ -187,10 +195,10 @@ class ncdata(object):
 
         def _get_cached_file(self, filepath):
             """
-            Get a thread-local cached NetCDF file handle.
+            Get a thread-local cached NetCDF file handle with global locking.
 
-            Each thread gets its own file handle to prevent memory corruption from
-            concurrent reads. NetCDF4 Dataset objects are NOT thread-safe.
+            Uses global lock because HDF5 is not thread-safe on this system.
+            Even opening different files from different threads causes crashes.
             """
             # Get or create thread-local file cache
             if not hasattr(self._thread_local, 'file_cache'):
@@ -201,7 +209,10 @@ class ncdata(object):
             if filepath not in cache:
                 if self.verbose:
                     print(f"[Thread {threading.current_thread().name}] Opening: {filepath}")
-                cache[filepath] = nc.Dataset(filepath, "r")
+
+                # CRITICAL: Use global lock to serialize HDF5 file opens
+                with _NETCDF_GLOBAL_LOCK:
+                    cache[filepath] = nc.Dataset(filepath, "r")
 
             return cache[filepath]
 
@@ -660,13 +671,10 @@ class ncdata(object):
 
         def _get_cached_file(self, filepath):
             """
-            Get a thread-local cached NetCDF file handle.
+            Get a thread-local cached NetCDF file handle with global locking.
 
-            Each thread gets its own file handle to prevent memory corruption from
-            concurrent reads. NetCDF4 Dataset objects are NOT thread-safe.
-
-            Thread-local caching dramatically speeds up parallel processing by avoiding
-            repeated file opens within the same thread.
+            Uses global lock because HDF5 is not thread-safe on this system.
+            Even opening different files from different threads causes crashes.
             """
             # Get or create thread-local file cache
             if not hasattr(self._thread_local, 'file_cache'):
@@ -684,8 +692,9 @@ class ncdata(object):
 
                 for attempt in range(max_retries):
                     try:
-                        # Each thread opens its own handle - prevents concurrent access issues
-                        cache[filepath] = nc.Dataset(filepath, "r")
+                        # CRITICAL: Use global lock to serialize HDF5 file opens
+                        with _NETCDF_GLOBAL_LOCK:
+                            cache[filepath] = nc.Dataset(filepath, "r")
                         break
                     except (OSError, RuntimeError, TypeError) as e:
                         if attempt < max_retries - 1:

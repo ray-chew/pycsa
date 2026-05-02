@@ -246,146 +246,163 @@ def do_cell(c_idx,
         Result structure for NetCDF output
     """
 
-    logger.info(f"[START] Processing cell {c_idx}")
+    import sys
+    import traceback
 
-    topo = var.topo_cell()
+    try:
+        logger.info(f"[START] Processing cell {c_idx}")
 
-    lat_verts = grid.clat_vertices[c_idx]
-    lon_verts = grid.clon_vertices[c_idx]
+        topo = var.topo_cell()
 
-    # Determine lat/lon extents with appropriate expansion for data loading
-    lat_extent, lon_extent = utils.handle_latlon_expansion(lat_verts, lon_verts)
+        lat_verts = grid.clat_vertices[c_idx]
+        lon_verts = grid.clon_vertices[c_idx]
 
-    params.lat_extent = lat_extent
-    params.lon_extent = lon_extent
+        # Determine lat/lon extents with appropriate expansion for data loading
+        lat_extent, lon_extent = utils.handle_latlon_expansion(lat_verts, lon_verts)
 
-    # Load topography data for this cell (ETOPO instead of MERIT)
-    etopo_reader = reader.read_etopo_topo(None, params, is_parallel=True)
-    etopo_reader.get_topo(topo)
+        params.lat_extent = lat_extent
+        params.lon_extent = lon_extent
 
-    # Clip deep bathymetry to -500m (same as test_etopo_pole_cells.py)
-    # This prevents issues with extreme ocean depths creating artifacts
-    topo.topo[np.where(topo.topo < -500.0)] = -500.0
-    topo.gen_mgrids()
+        # Load topography data for this cell (ETOPO instead of MERIT)
+        etopo_reader = reader.read_etopo_topo(None, params, is_parallel=True)
+        etopo_reader.get_topo(topo)
 
-    # Handle dateline crossing BEFORE processing vertices for CSA
-    # This must be done before handle_latlon_expansion() to ensure consistent coordinates
-    if etopo_reader.split_EW:
-        lon_verts = lon_verts.copy()  # Don't modify the grid object
-        lon_verts[lon_verts < 0.0] += 360.0
+        # Clip deep bathymetry to -500m (same as test_etopo_pole_cells.py)
+        # This prevents issues with extreme ocean depths creating artifacts
+        topo.topo[np.where(topo.topo < -500.0)] = -500.0
+        topo.gen_mgrids()
 
-    # Process vertices for CSA (after dateline correction!)
-    lat_verts, lon_verts = utils.handle_latlon_expansion(lat_verts, lon_verts, lat_expand = 0.0, lon_expand = 0.0)
+        # Handle dateline crossing BEFORE processing vertices for CSA
+        # This must be done before handle_latlon_expansion() to ensure consistent coordinates
+        if etopo_reader.split_EW:
+            lon_verts = lon_verts.copy()  # Don't modify the grid object
+            lon_verts[lon_verts < 0.0] += 360.0
 
-    # Set up cell center and vertices
-    clon = np.array([grid.clon[c_idx]])
-    clat = np.array([grid.clat[c_idx]])
-    clon_vertices = np.array([lon_verts])
-    clat_vertices = np.array([lat_verts])
+        # Process vertices for CSA (after dateline correction!)
+        lat_verts, lon_verts = utils.handle_latlon_expansion(lat_verts, lon_verts, lat_expand = 0.0, lon_expand = 0.0)
 
-    ncells = 1
-    nv = clon_vertices[0].size
+        # Set up cell center and vertices
+        clon = np.array([grid.clon[c_idx]])
+        clat = np.array([grid.clat[c_idx]])
+        clon_vertices = np.array([lon_verts])
+        clat_vertices = np.array([lat_verts])
 
-    triangles = np.zeros((ncells, nv, 2))
+        ncells = 1
+        nv = clon_vertices[0].size
 
-    for i in range(0, ncells, 1):
-        triangles[i, :, 0] = np.array(clon_vertices[i, :])
-        triangles[i, :, 1] = np.array(clat_vertices[i, :])
+        triangles = np.zeros((ncells, nv, 2))
 
-    # Initialize cell objects for CSA algorithm
-    tri_idx = 0
-    cell = var.topo_cell()
-    tri = var.obj()
+        for i in range(0, ncells, 1):
+            triangles[i, :, 0] = np.array(clon_vertices[i, :])
+            triangles[i, :, 1] = np.array(clat_vertices[i, :])
 
-    nhi = params.nhi
-    nhj = params.nhj
+        # Initialize cell objects for CSA algorithm
+        tri_idx = 0
+        cell = var.topo_cell()
+        tri = var.obj()
 
-    fa = interface.first_appx(nhi, nhj, params, topo)
-    sa = interface.second_appx(nhi, nhj, params, topo, tri)
+        nhi = params.nhi
+        nhj = params.nhj
 
-    tri.tri_lon_verts = triangles[:, :, 0]
-    tri.tri_lat_verts = triangles[:, :, 1]
+        fa = interface.first_appx(nhi, nhj, params, topo)
+        sa = interface.second_appx(nhi, nhj, params, topo, tri)
 
-    simplex_lat = tri.tri_lat_verts[tri_idx]
-    simplex_lon = tri.tri_lon_verts[tri_idx]
+        tri.tri_lon_verts = triangles[:, :, 0]
+        tri.tri_lat_verts = triangles[:, :, 1]
 
-    if not utils.is_land(cell, simplex_lat, simplex_lon, topo):
-        logger.info(f"[OCEAN] Cell {c_idx} is ocean, skipping")
-        return writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], 0, None, grid.cell_area[c_idx])
-    else:
-        is_land = 1
-        logger.info(f"[LAND] Cell {c_idx} is land, processing...")
+        simplex_lat = tri.tri_lat_verts[tri_idx]
+        simplex_lon = tri.tri_lon_verts[tri_idx]
 
-    # First approximation
-    cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(simplex_lat, simplex_lon, use_center=True)
-
-    # Second approximation
-    if USE_MODE_SELECTION:
-        # COMPRESSED MODE: Use sa.do() to select top n_modes wavenumbers
-        # This is the original workflow with spectral compression
-        if params.recompute_rhs:
-            sols, _ = sa.do(tri_idx, ampls_fa, use_center=True)
+        if not utils.is_land(cell, simplex_lat, simplex_lon, topo):
+            logger.info(f"[OCEAN] Cell {c_idx} is ocean, skipping")
+            return writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], 0, None, grid.cell_area[c_idx])
         else:
-            sols = sa.do(tri_idx, ampls_fa, use_center=True)
-        cell_sa, ampls_sa, uw_sa, dat_2D_sa = sols
+            is_land = 1
+            logger.info(f"[LAND] Cell {c_idx} is land, processing...")
 
-        # Exclude ocean from spectral analysis (same as FULL SPECTRUM mode)
-        ocean_mask = cell_sa.topo < -200.0
-        cell_sa.mask = cell_sa.mask & ~ocean_mask
-        cell_sa.get_masked(mask=cell_sa.mask)
-    else:
-        # FULL SPECTRUM MODE: Use ALL wavenumbers (no mode selection)
-        # This gives ~20% better RMSE but no compression
-        cell_sa = var.topo_cell()
+        # First approximation
+        cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(simplex_lat, simplex_lon, use_center=True)
 
-        # Step 1: Load topo with rectangular mask
-        utils.get_lat_lon_segments(
-            simplex_lat, simplex_lon, cell_sa, topo,
-            rect=True, filtered=True, padding=0, use_center=True
-        )
+        # Second approximation
+        if USE_MODE_SELECTION:
+            # COMPRESSED MODE: Use sa.do() to select top n_modes wavenumbers
+            # This is the original workflow with spectral compression
+            if params.recompute_rhs:
+                sols, _ = sa.do(tri_idx, ampls_fa, use_center=True)
+            else:
+                sols = sa.do(tri_idx, ampls_fa, use_center=True)
+            cell_sa, ampls_sa, uw_sa, dat_2D_sa = sols
 
-        # Step 2: Apply triangular mask
-        utils.get_lat_lon_segments(
-            simplex_lat, simplex_lon, cell_sa, topo,
-            rect=False, filtered=False, padding=0, use_center=True
-        )
+            # Exclude ocean from spectral analysis (same as FULL SPECTRUM mode)
+            ocean_mask = cell_sa.topo < -200.0
+            cell_sa.mask = cell_sa.mask & ~ocean_mask
+            cell_sa.get_masked(mask=cell_sa.mask)
+        else:
+            # FULL SPECTRUM MODE: Use ALL wavenumbers (no mode selection)
+            # This gives ~20% better RMSE but no compression
+            cell_sa = var.topo_cell()
 
-        # Run SA with ALL wavenumbers
-        sa_pmf = interface.get_pmf(params.nhi, params.nhj, params.U, params.V)
-        ampls_sa, uw_sa, dat_2D_sa = sa_pmf.sappx(
-            cell_sa,
-            lmbda=params.lmbda_sa,
-            iter_solve=params.sa_iter_solve,
-            updt_analysis=True  # Populate cell_sa.analysis for NetCDF output
-        )
+            # Step 1: Load topo with rectangular mask
+            utils.get_lat_lon_segments(
+                simplex_lat, simplex_lon, cell_sa, topo,
+                rect=True, filtered=True, padding=0, use_center=True
+            )
 
-        # Exclude ocean from spectral analysis for orographic gravity waves
-        # The atmosphere flows over ocean SURFACE (0m), not the seafloor
-        # Threshold: -200m distinguishes deep ocean from below-sea-level land
-        #   - Most below-sea-level land features: -200m to 0m (Death Valley -86m, etc.)
-        #   - Coastal ocean bathymetry: typically < -200m
-        ocean_mask = cell_sa.topo < -200.0
-        cell_sa.mask = cell_sa.mask & ~ocean_mask
-        cell_sa.get_masked(mask=cell_sa.mask)
+            # Step 2: Apply triangular mask
+            utils.get_lat_lon_segments(
+                simplex_lat, simplex_lon, cell_sa, topo,
+                rect=False, filtered=False, padding=0, use_center=True
+            )
 
-    # Store analysis results
-    result = writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell_sa.analysis, grid.cell_area[c_idx])
+            # Run SA with ALL wavenumbers
+            sa_pmf = interface.get_pmf(params.nhi, params.nhj, params.U, params.V)
+            ampls_sa, uw_sa, dat_2D_sa = sa_pmf.sappx(
+                cell_sa,
+                lmbda=params.lmbda_sa,
+                iter_solve=params.sa_iter_solve,
+                updt_analysis=True  # Populate cell_sa.analysis for NetCDF output
+            )
 
-    # Generate 3-panel plot
-    if params.plot_output:
-        plot_cell_diagnostics(
-            c_idx, cell_sa, ampls_sa, dat_2D_sa,
-            chunk_output_dir, params
-        )
+            # Exclude ocean from spectral analysis for orographic gravity waves
+            # The atmosphere flows over ocean SURFACE (0m), not the seafloor
+            # Threshold: -200m distinguishes deep ocean from below-sea-level land
+            #   - Most below-sea-level land features: -200m to 0m (Death Valley -86m, etc.)
+            #   - Coastal ocean bathymetry: typically < -200m
+            ocean_mask = cell_sa.topo < -200.0
+            cell_sa.mask = cell_sa.mask & ~ocean_mask
+            cell_sa.get_masked(mask=cell_sa.mask)
 
-    logger.info(f"[DONE] Cell {c_idx} analysis complete")
+        # Store analysis results
+        result = writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell_sa.analysis, grid.cell_area[c_idx])
 
-    # Explicit memory cleanup to help Dask workers
-    del topo, cell_fa, cell_sa, ampls_fa, ampls_sa, uw_fa, uw_sa, dat_2D_fa, dat_2D_sa
-    del fa, sa, tri, cell, etopo_reader
-    gc.collect()  # Force garbage collection
+        # Generate 3-panel plot
+        if params.plot_output:
+            plot_cell_diagnostics(
+                c_idx, cell_sa, ampls_sa, dat_2D_sa,
+                chunk_output_dir, params
+            )
 
-    return result
+        logger.info(f"[DONE] Cell {c_idx} analysis complete")
+
+        # Explicit memory cleanup to help Dask workers
+        del topo, cell_fa, cell_sa, ampls_fa, ampls_sa, uw_fa, uw_sa, dat_2D_fa, dat_2D_sa
+        del fa, sa, tri, cell, etopo_reader
+        gc.collect()  # Force garbage collection
+
+        return result
+
+    except Exception as e:
+        # Catch ALL exceptions and log them before worker dies
+        error_msg = f"[FATAL ERROR] Cell {c_idx} crashed with {type(e).__name__}: {str(e)}"
+        logger.error(error_msg)
+        logger.error(traceback.format_exc())
+
+        # Print to stderr so it appears in worker logs
+        print(error_msg, file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
+
+        # Re-raise to let Dask handle it
+        raise
 
 
 def estimate_cell_memory_gb(lat_deg):
@@ -750,101 +767,88 @@ if __name__ == '__main__':
         for cell_idx in batch['cell_indices']:
             cell_to_batch[cell_idx] = batch_idx
 
-    # Outer loop: NetCDF file creation (one file per netcdf_chunk_size cells)
-    for netcdf_chunk_idx, netcdf_chunk_start in enumerate(tqdm(
-        range(cell_start, cell_end, netcdf_chunk_size),
-        desc="NetCDF chunks",
-        total=total_netcdf_chunks
-    )):
-        netcdf_chunk_end = min(netcdf_chunk_start + netcdf_chunk_size, cell_end)
+    # ========================================================================
+    # SEQUENTIAL PROCESSING BY MEMORY BATCH
+    # ========================================================================
+    # Process memory batches sequentially (equatorial → mid-lat → polar)
+    # This allows easy restart: if script crashes, you know all previous
+    # memory batches are complete and can skip to the current batch.
+    # ========================================================================
 
-        # Create subdirectory for this NetCDF chunk's plots
-        chunk_output_dir = base_output_dir / f"cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
-        chunk_output_dir.mkdir(parents=True, exist_ok=True)
+    logger.info("\n" + "="*80)
+    logger.info("PROCESSING STRATEGY: Sequential by Memory Batch")
+    logger.info("="*80)
+    for batch_idx, batch_config in enumerate(memory_batches):
+        logger.info(f"\n{'='*80}")
+        logger.info(f"MEMORY BATCH {batch_idx}/{len(memory_batches)-1}: {len(batch_config['cell_indices'])} cells")
+        logger.info(f"  Memory per cell: {batch_config['memory_per_cell_gb']:.1f} GB")
+        logger.info(f"  Workers: {batch_config['n_workers']}")
+        logger.info(f"{'='*80}\n")
 
-        # Writer object for this NetCDF chunk
-        sfx = f"_cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
-        writer = io.nc_writer(params, sfx)
+        # Get all cells in this memory batch
+        batch_cell_indices = set(batch_config['cell_indices'])
 
-        pw_run = parallel_wrapper(grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad)
+        # Create Dask client for this memory batch
+        n_workers = batch_config['n_workers']
+        # Single-worker batches (high-memory polar cells) get the full machine
+        # memory; multi-worker batches share by config.
+        if n_workers == 1:
+            memory_per_worker = f"{int(total_memory_gb)}GB"
+            logger.info(f"  Single-worker mode: allowing full memory access ({total_memory_gb} GB)")
+        else:
+            memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
+        threads_per_worker = 1  # HDF5 not thread-safe
 
-        # Group cells in this NetCDF chunk by memory batch
-        cells_by_memory_batch = {}
-        for c_idx in range(netcdf_chunk_start, netcdf_chunk_end):
-            if c_idx in cell_to_batch:
-                mem_batch_idx = cell_to_batch[c_idx]
-                if mem_batch_idx not in cells_by_memory_batch:
-                    cells_by_memory_batch[mem_batch_idx] = []
-                cells_by_memory_batch[mem_batch_idx].append(c_idx)
+        logger.info(f"Starting Dask client for memory batch {batch_idx}:")
+        logger.info(f"  Workers: {n_workers} × {memory_per_worker}")
+        logger.info(f"  Threads per worker: {threads_per_worker}")
 
-        # Process each memory batch with appropriate Dask configuration
-        for mem_batch_idx in sorted(cells_by_memory_batch.keys()):
-            cell_indices = cells_by_memory_batch[mem_batch_idx]
-            batch_config = memory_batches[mem_batch_idx]
+        client = Client(
+            threads_per_worker=threads_per_worker,
+            n_workers=n_workers,
+            processes=True,
+            memory_limit=memory_per_worker,
+            silence_logs='ERROR',
+        )
+        logger.info(f"  Dashboard: {client.dashboard_link}\n")
 
-            # Check if we need to reconfigure Dask client
-            if current_batch_idx != mem_batch_idx:
-                # Shutdown previous client if it exists
-                if client is not None:
-                    client.close()
-                    logger.info(f"\n  Closed previous Dask client")
+        # Inner loop: NetCDF file creation (one file per netcdf_chunk_size cells)
+        # Only process NetCDF chunks that contain cells from this memory batch
+        for netcdf_chunk_idx, netcdf_chunk_start in enumerate(tqdm(
+                range(cell_start, n_cells, netcdf_chunk_size),
+                desc=f"NetCDF chunks (batch {batch_idx})",
+                total=total_netcdf_chunks
+            )):
+            netcdf_chunk_end = min(netcdf_chunk_start + netcdf_chunk_size, n_cells)
 
-                # Create new client with appropriate memory configuration
-                n_workers = batch_config['n_workers']
+            # Filter: only process cells in this NetCDF chunk that belong to current memory batch
+            cell_indices_in_chunk = []
+            for c_idx in range(netcdf_chunk_start, netcdf_chunk_end):
+                if c_idx in batch_cell_indices:
+                    cell_indices_in_chunk.append(c_idx)
 
-                # ============================================================
-                # MEMORY CONFIGURATION
-                # ============================================================
-                # If only 1 worker, allow it to use ALL available memory
-                # This is critical for high-memory polar cells (>60 GB)
-                if n_workers == 1:
-                    memory_per_worker = f"{int(total_memory_gb)}GB"
-                    logger.info(f"\n  Single-worker mode: allowing full memory access ({total_memory_gb} GB)")
-                else:
-                    memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
-                # ============================================================
+            # Skip this NetCDF chunk if no cells belong to current memory batch
+            if not cell_indices_in_chunk:
+                continue
 
-                # ============================================================
-                # THREADS PER WORKER CONFIGURATION
-                # ============================================================
-                # If threads_per_worker is explicitly set in config, use that value
-                # Otherwise, auto-compute based on available cores and workers
-                if config['threads_per_worker'] is not None:
-                    threads_per_worker = config['threads_per_worker']
-                    logger.info(f"\n  Using manual threads_per_worker: {threads_per_worker}")
-                else:
-                    # Auto-compute: distribute available cores among workers
-                    # Reserve at least 1 thread per worker, and cap at reasonable maximum
-                    threads_per_worker = max(1, min(4, total_cores // n_workers))
-                    logger.info(f"\n  Auto-computed threads_per_worker: {threads_per_worker}")
-                    logger.info(f"    (Based on {total_cores} cores / {n_workers} workers)")
+            logger.info(f"\n  Processing NetCDF chunk {netcdf_chunk_idx}: cells {netcdf_chunk_start}-{netcdf_chunk_end-1}")
+            logger.info(f"    Cells in this batch: {len(cell_indices_in_chunk)}")
 
-                # Note: Thread-safe HDF5 is required for threads_per_worker > 1
-                # Verify with: python3 -c "import netCDF4; print(netCDF4.__hdf5libversion__)"
-                # ============================================================
+            # Create subdirectory for this NetCDF chunk's plots
+            chunk_output_dir = base_output_dir / f"cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
+            chunk_output_dir.mkdir(parents=True, exist_ok=True)
 
-                logger.info(f"\n  Starting Dask client for memory batch {mem_batch_idx}:")
-                logger.info(f"    Workers: {n_workers} × {memory_per_worker}")
-                logger.info(f"    Threads per worker: {threads_per_worker}")
-                logger.info(f"    Total parallel threads: {n_workers * threads_per_worker}")
-                logger.info(f"    Expected memory per cell: {batch_config['memory_per_cell_gb']:.1f} GB")
+            # Writer object for this NetCDF chunk
+            sfx = f"_cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
+            writer = io.nc_writer(params, sfx)
 
-                client = Client(
-                    threads_per_worker=threads_per_worker,
-                    n_workers=n_workers,
-                    processes=True,
-                    memory_limit=memory_per_worker,
-                    silence_logs='ERROR',
-                )
-                logger.info(f"    Dashboard: {client.dashboard_link}")
-
-                current_batch_idx = mem_batch_idx
+            pw_run = parallel_wrapper(grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad)
 
             # Process cells in smaller batches to avoid overwhelming scheduler
-            processing_batch_size = min(batch_config['n_workers'] * 2, len(cell_indices))
+            processing_batch_size = min(n_workers * 2, len(cell_indices_in_chunk))
 
-            for i in range(0, len(cell_indices), processing_batch_size):
-                batch_cells = cell_indices[i:i+processing_batch_size]
+            for i in range(0, len(cell_indices_in_chunk), processing_batch_size):
+                batch_cells = cell_indices_in_chunk[i:i+processing_batch_size]
 
                 # Submit batch to Dask
                 lazy_results = []
@@ -863,16 +867,23 @@ if __name__ == '__main__':
                     else:
                         total_ocean_cells += 1
 
-        # Cleanup after each NetCDF chunk
-        if hasattr(reader, 'close_cached_files'):
-            reader.close_cached_files()
+            # Cleanup after each NetCDF chunk
+            if hasattr(reader, 'close_cached_files'):
+                reader.close_cached_files()
 
-        gc.collect()
+            gc.collect()
 
-        logger.info(f"\n  NetCDF chunk {netcdf_chunk_idx}: Cells {netcdf_chunk_start}-{netcdf_chunk_end-1} complete")
-        logger.info(f"    Land: {total_land_cells}, Ocean: {total_ocean_cells}, Total: {total_land_cells + total_ocean_cells}")
+            logger.info(f"    NetCDF chunk complete: {len(cell_indices_in_chunk)} cells processed")
+            logger.info(f"    Running totals - Land: {total_land_cells}, Ocean: {total_ocean_cells}")
 
-    # Cleanup: close all cached NetCDF files and shut down Dask client
+        # Close Dask client after finishing this memory batch
+        client.close()
+        logger.info(f"\n{'='*80}")
+        logger.info(f"MEMORY BATCH {batch_idx} COMPLETE")
+        logger.info(f"  Processed {len(batch_cell_indices)} cells")
+        logger.info(f"{'='*80}\n")
+
+    # Cleanup: close all cached NetCDF files
     logger.info("\n" + "="*80)
     logger.info("PROCESSING COMPLETE")
     logger.info("="*80)
@@ -889,10 +900,6 @@ if __name__ == '__main__':
     if hasattr(reader, 'close_cached_files'):
         reader.close_cached_files()
         logger.info("\n✓ Closed cached topography files")
-
-    if client is not None:
-        client.close()
-        logger.info("✓ Shut down Dask client")
 
     # Final console message
     print("="*80)

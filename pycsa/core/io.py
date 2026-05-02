@@ -1399,6 +1399,13 @@ class nc_writer(object):
         clon_var = grp.createVariable("clon","f8")
         clon_var[:] = struct.clon
 
+        # Add cell_area if available
+        if struct.cell_area is not None:
+            cell_area_var = grp.createVariable("cell_area","f8")
+            cell_area_var[:] = struct.cell_area
+            cell_area_var.units = "m^2"
+            cell_area_var.long_name = "Area of ICON grid cell"
+
         if struct.is_land:
             dk_var = grp.createVariable("dk","f8")
             dk_var[:] = struct.dk
@@ -1481,11 +1488,12 @@ class nc_writer(object):
         return True
 
     class grp_struct(object):
-        def __init__(self, c_idx, clat, clon, is_land, analysis = None):
+        def __init__(self, c_idx, clat, clon, is_land, analysis = None, cell_area = None):
             self.c_idx = c_idx
             self.clat = clat
             self.clon = clon
             self.is_land = is_land
+            self.cell_area = cell_area
 
             self.dk = None
             self.dl = None

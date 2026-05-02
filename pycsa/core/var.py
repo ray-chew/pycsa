@@ -22,6 +22,7 @@ class grid(object):
         self.clon = None
         self.clon_vertices = None
         self.links = None
+        self.cell_area = None
 
     def apply_f(self, f):
         """
@@ -32,7 +33,7 @@ class grid(object):
         f : ``function``
             arbitrary function to be applied to class attributes, e.g. a radians-degrees converter.
         """
-        self.non_convertibles = ["non_convertibles", "links"]
+        self.non_convertibles = ["non_convertibles", "links", "cell_area"]
         for key, value in vars(self).items():
             if key in self.non_convertibles:
                 pass

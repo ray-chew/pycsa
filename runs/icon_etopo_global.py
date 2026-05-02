@@ -311,7 +311,7 @@ def do_cell(c_idx,
 
     if not utils.is_land(cell, simplex_lat, simplex_lon, topo):
         logger.info(f"[OCEAN] Cell {c_idx} is ocean, skipping")
-        return writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], 0)
+        return writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], 0, None, grid.cell_area[c_idx])
     else:
         is_land = 1
         logger.info(f"[LAND] Cell {c_idx} is land, processing...")
@@ -369,7 +369,7 @@ def do_cell(c_idx,
         cell_sa.get_masked(mask=cell_sa.mask)
 
     # Store analysis results
-    result = writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell_sa.analysis)
+    result = writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell_sa.analysis, grid.cell_area[c_idx])
 
     # Generate 3-panel plot
     if params.plot_output:

@@ -482,7 +482,7 @@ Examples:
         print(f"  Total cells in grid: {n_cells}")
 
         # Set ETOPO parameters
-        params.etopo_cg = 4  # Coarse-graining factor (matches processing used in icon_etopo_global_hpc.py)
+        params.etopo_cg = 4  # Coarse-graining factor (matches processing used in icon_etopo_global.py)
 
         # Count land/ocean cells
         print("\nCounting land/ocean cells...")

@@ -58,6 +58,7 @@ def collect_all_cells(files):
         - is_land: int (0 or 1)
         - clat: float (radians)
         - clon: float (radians)
+        - cell_area: float or None (m^2)
         - analysis: dict of arrays (only for land cells)
     """
     cell_data = {}
@@ -77,17 +78,23 @@ def collect_all_cells(files):
                 clat = float(group.variables['clat'][:])
                 clon = float(group.variables['clon'][:])
 
+                # Extract cell_area if available
+                cell_area = None
+                if 'cell_area' in group.variables:
+                    cell_area = float(group.variables['cell_area'][:])
+
                 cell_info = {
                     'is_land': is_land,
                     'clat': clat,
                     'clon': clon,
+                    'cell_area': cell_area,
                 }
 
                 # For land cells, also extract analysis data
                 if is_land == 1:
                     cell_info['analysis'] = {}
                     for var_name in group.variables.keys():
-                        if var_name not in ['is_land', 'clat', 'clon']:
+                        if var_name not in ['is_land', 'clat', 'clon', 'cell_area']:
                             cell_info['analysis'][var_name] = group.variables[var_name][:]
 
                 cell_data[cell_id] = cell_info
@@ -144,6 +151,7 @@ def create_merged_netcdf(cell_data, output_path, expected_min, expected_max):
             is_land = cell['is_land']
             clat = cell['clat']
             clon = cell['clon']
+            cell_area = cell.get('cell_area', None)
 
             if is_land:
                 land_cells += 1
@@ -156,6 +164,7 @@ def create_merged_netcdf(cell_data, output_path, expected_min, expected_max):
             is_land = 0
             clat = 0.0  # Placeholder
             clon = 0.0  # Placeholder
+            cell_area = None
             missing_cells += 1
             ocean_cells += 1
 
@@ -172,6 +181,13 @@ def create_merged_netcdf(cell_data, output_path, expected_min, expected_max):
         var_clon[:] = clon
         var_clon.units = "radians"
         var_clon.long_name = "cell center longitude"
+
+        # Write cell_area if available
+        if cell_area is not None:
+            var_cell_area = grp.createVariable('cell_area', 'f8')
+            var_cell_area[:] = cell_area
+            var_cell_area.units = "m^2"
+            var_cell_area.long_name = "Area of ICON grid cell"
 
         # Write analysis data for land cells
         if is_land and cell_id in cell_data:

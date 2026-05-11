@@ -11,7 +11,53 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import logging
 
+from pycsa.core.io import _NETCDF_GLOBAL_LOCK
+from pycsa.core import utils
+
 logger = logging.getLogger(__name__)
+
+
+# ETOPO 2022 15 arc-second tile grid (15° spacing in both lat and lon)
+_ETOPO_FN_LON = np.array([
+    -180, -165, -150, -135, -120, -105, -90, -75, -60, -45, -30, -15,
+    0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180
+])
+_ETOPO_FN_LAT = np.array([90, 75, 60, 45, 30, 15, 0, -15, -30, -45, -60, -75, -90])
+
+
+def compute_split_EW(lon_verts: np.ndarray) -> bool:
+    """Determine whether a cell's longitude extent truly crosses the dateline.
+
+    Uses the robust span-comparison formula: a true crossing occurs only when
+    converting to the [0, 360) representation reduces the span AND the original
+    span exceeds 180°. This avoids the false positives that plagued cells in
+    the western hemisphere near the dateline (e.g. Aleutian cells).
+    """
+    lon_verts = np.asarray(lon_verts)
+    lon_span = lon_verts.max() - lon_verts.min()
+    lon_verts_360 = np.where(lon_verts < 0.0, lon_verts + 360.0, lon_verts)
+    span_360 = lon_verts_360.max() - lon_verts_360.min()
+    return bool((span_360 < lon_span) and (lon_span > 180.0))
+
+
+def _etopo_NSEW(vert: float, typ: str) -> str:
+    """N/S for latitude, E/W for longitude with the +180° → 'W' convention."""
+    if typ == "lat":
+        return "N" if vert >= 0.0 else "S"
+    # longitude — note ETOPO's quirk: 180° always uses 'W' (since 180°E ≡ 180°W)
+    if vert == 180.0:
+        return "W"
+    return "E" if vert >= 0.0 else "W"
+
+
+def _etopo_tile_filename(lat_bound: float, lon_bound: float) -> str:
+    """ETOPO 2022 15s tile filename for the (lat, lon) tile origin."""
+    return "ETOPO_2022_v1_15s_%s%.2d%s%.3d_surface.nc" % (
+        _etopo_NSEW(lat_bound, "lat"),
+        np.abs(int(lat_bound)),
+        _etopo_NSEW(lon_bound, "lon"),
+        np.abs(int(lon_bound)),
+    )
 
 
 class TopographyTileCache:
@@ -60,7 +106,11 @@ class TopographyTileCache:
         self.tile_lats: Dict[str, np.ndarray] = {}
         self.tile_lons: Dict[str, np.ndarray] = {}
 
-        # Pre-load all tiles
+        # ETOPO with empty tile list = lazy mode: tiles open on first access via
+        # get_etopo_data. MERIT keeps the existing eager pre-load behaviour.
+        if dataset_type == 'ETOPO' and len(tile_filenames) == 0:
+            return
+
         self._load_tiles(tile_filenames)
 
     def _load_tiles(self, filenames: List[str]):
@@ -75,8 +125,10 @@ class TopographyTileCache:
                 continue
 
             try:
-                # Open NetCDF file (keep it open for fast access)
-                ds = nc.Dataset(str(filepath), 'r')
+                # Open NetCDF file under the shared HDF5 lock (HDF5 is not
+                # thread-safe on this system — see pycsa/core/io.py).
+                with _NETCDF_GLOBAL_LOCK:
+                    ds = nc.Dataset(str(filepath), 'r')
                 self.tiles[fn] = ds
 
                 # Cache coordinate arrays
@@ -136,8 +188,10 @@ class TopographyTileCache:
         lon_min = float(np.min(lon_extent))
         lon_max = float(np.max(lon_extent))
 
-        # Handle dateline crossing
-        crosses_dateline = (lon_max - lon_min) > 180.0
+        # Handle dateline crossing — robust formula matching io.read_etopo_topo;
+        # the old `(lon_max - lon_min) > 180.0` test false-positived on western
+        # cells near the dateline (e.g. Aleutians).
+        crosses_dateline = compute_split_EW(lon_extent)
         if crosses_dateline:
             lon_min = max(np.where(lon_extent < 0.0, lon_extent + 360.0, lon_extent)) - 360.0
             lon_max = min(np.where(lon_extent < 0.0, lon_extent + 360.0, lon_extent))
@@ -253,7 +307,8 @@ class TopographyTileCache:
                     logger.error(f"Could not find elevation variable in tile {fn}")
                     continue
 
-            topo_subset = ds[elev_var][lat_idxs[0]:lat_idxs[-1]+1, lon_idxs[0]:lon_idxs[-1]+1]
+            with _NETCDF_GLOBAL_LOCK:
+                topo_subset = ds[elev_var][lat_idxs[0]:lat_idxs[-1]+1, lon_idxs[0]:lon_idxs[-1]+1]
 
             all_lats.append(lat_subset)
             all_lons.append(lon_subset)
@@ -286,6 +341,338 @@ class TopographyTileCache:
                         break
 
         return merged_lat, merged_lon, merged_topo
+
+    # ------------------------------------------------------------------
+    # ETOPO path — byte-equivalent port of pycsa.core.io.read_etopo_topo
+    # ------------------------------------------------------------------
+    # The MERIT methods above (get_data_for_region, _find_overlapping_tiles,
+    # _merge_tiles) stay MERIT-specific. ETOPO has a fixed 15° tile grid and
+    # dateline handling that doesn't fit cleanly into bounds-based discovery,
+    # so the ETOPO path uses its own discovery + assembly mirroring io.py.
+
+    def _open_etopo_tile(self, fn: str) -> nc.Dataset:
+        """Open an ETOPO tile on first access; cache the handle thereafter.
+
+        Goes through _NETCDF_GLOBAL_LOCK because HDF5 is not thread-safe on
+        the target system. Once opened, the handle (and its lat/lon coordinate
+        arrays) stay cached for the lifetime of this TopographyTileCache.
+        """
+        if fn in self.tiles:
+            return self.tiles[fn]
+        filepath = str(self.data_dir / fn)
+        with _NETCDF_GLOBAL_LOCK:
+            ds = nc.Dataset(filepath, "r")
+        self.tiles[fn] = ds
+        # Coordinate arrays are small; cache so we don't re-read per cell.
+        self.tile_lats[fn] = ds["lat"][:]
+        self.tile_lons[fn] = ds["lon"][:]
+        return ds
+
+    @staticmethod
+    def _etopo_compute_idx(vert: float, typ: str, direction: str, split_EW: bool) -> int:
+        """Look up which ETOPO tile-boundary index encloses ``vert``.
+
+        Mirrors pycsa.core.io.read_etopo_topo.__compute_idx (io.py:834-870).
+        """
+        fn_int = _ETOPO_FN_LON if direction == "lon" else _ETOPO_FN_LAT
+        where_idx = int(np.argmin(np.abs(fn_int - vert)))
+
+        if typ == "min":
+            if (vert - fn_int[where_idx]) < 0.0:
+                where_idx += -1 if direction == "lon" else 1
+        elif typ == "max":
+            if (vert - fn_int[where_idx]) > 0.0:
+                if direction == "lon":
+                    if not split_EW:
+                        where_idx += 1
+                else:
+                    where_idx -= 1
+            if (where_idx == len(fn_int) - 1) and split_EW:
+                where_idx -= 1
+        return int(where_idx)
+
+    @staticmethod
+    def _etopo_get_fns(lat_idx_rng: List[int], lon_idx_rng: List[int]) -> Tuple[List[str], int, int]:
+        """Build ETOPO filenames for a rectangular tile range.
+
+        Mirrors pycsa.core.io.read_etopo_topo.__get_fns (io.py:872-898).
+        Returns (filenames, lon_cnt, lat_cnt) where the counts are the
+        zero-based last enumerations (for __load_topo's row/col arithmetic).
+        """
+        fns: List[str] = []
+        lon_cnt = 0
+        lat_cnt = 0
+        for lat_cnt, lat_idx in enumerate(lat_idx_rng):
+            l_lat_bound = _ETOPO_FN_LAT[lat_idx]
+            for lon_cnt, lon_idx in enumerate(lon_idx_rng):
+                l_lon_bound = _ETOPO_FN_LON[lon_idx]
+                fns.append(_etopo_tile_filename(l_lat_bound, l_lon_bound))
+        return fns, lon_cnt, lat_cnt
+
+    @staticmethod
+    def _etopo_get_lon_idxs(
+        lon: np.ndarray,
+        lon_idx_rng: List[int],
+        n_col: int,
+        split_EW: bool,
+        lon_verts: np.ndarray,
+    ) -> Tuple[int, int]:
+        """Compute per-tile longitude slice indices.
+
+        Mirrors pycsa.core.io.read_etopo_topo.__get_lon_idxs (io.py:1052-1104).
+        """
+        l_lon_bound = _ETOPO_FN_LON[lon_idx_rng[n_col]]
+        r_idx = lon_idx_rng[n_col] + 1
+        if r_idx >= len(_ETOPO_FN_LON):
+            r_idx = 1  # 180° wraps to -165° (skip index 0 = -180° duplicate)
+        r_lon_bound = _ETOPO_FN_LON[r_idx]
+        lon_rng = r_lon_bound - l_lon_bound
+
+        lon_in_file = lon_verts[
+            ((lon_verts - l_lon_bound) >= 0)
+            & ((lon_verts - l_lon_bound) <= lon_rng)
+        ]
+
+        if len(lon_in_file) == 0:
+            lon_high = int(np.argmin(np.abs(lon - r_lon_bound)))
+            lon_low = int(np.argmin(np.abs(lon - l_lon_bound)))
+            return lon_low, lon_high
+
+        if not split_EW:
+            if lon_in_file.max() == lon_verts.max():
+                lon_high = int(np.argmin(np.abs(lon - lon_in_file.max())))
+            else:
+                lon_high = int(np.argmin(np.abs(lon - r_lon_bound)))
+            if lon_in_file.min() == lon_verts.min():
+                lon_low = int(np.argmin(np.abs(lon - lon_in_file.min())))
+            else:
+                lon_low = int(np.argmin(np.abs(lon - l_lon_bound)))
+            return lon_low, lon_high
+
+        # split_EW = True (dateline crossing)
+        negative_lons = lon_verts[lon_verts < 0.0]
+        lon_high = int(np.argmin(np.abs(lon - r_lon_bound)))
+        lon_low = int(np.argmin(np.abs(lon - l_lon_bound)))
+        if len(negative_lons) > 0:
+            wrapped = np.where(lon_verts < 0.0, lon_verts + 360.0, lon_verts)
+            if lon_in_file.max() == wrapped.min():
+                lon_high = int(np.argmin(np.abs(lon - r_lon_bound)))
+                lon_low = int(np.argmin(np.abs(lon - lon_in_file.min())))
+            if lon_in_file.min() == (negative_lons.max() + 360.0 - 360.0):
+                lon_high = int(np.argmin(np.abs(lon - lon_in_file.max())))
+                lon_low = int(np.argmin(np.abs(lon - l_lon_bound)))
+        return lon_low, lon_high
+
+    def _etopo_load_topo(
+        self,
+        fns: List[str],
+        lon_cnt: int,
+        lat_cnt: int,
+        lat_idx_rng: List[int],
+        lon_idx_rng: List[int],
+        lat_verts: np.ndarray,
+        lon_verts: np.ndarray,
+        split_EW: bool,
+    ) -> Tuple[List[float], List[float], np.ndarray]:
+        """Assemble the regional topography array from per-tile slices.
+
+        Mirrors pycsa.core.io.read_etopo_topo.__load_topo (io.py:900-1050)
+        as a two-pass over ``fns`` — first pass computes the output shape,
+        second pass populates the array. Returns (lat_list, lon_list, topo).
+        """
+        # First pass: compute output shape (nc_lat, nc_lon).
+        n_col = 0
+        n_row = 0
+        nc_lon = 0
+        nc_lat = 0
+        for fn in fns:
+            ds = self._open_etopo_tile(fn)
+            lat = self.tile_lats[fn]
+            lon = self.tile_lons[fn]
+
+            lat_min_idx = np.argmin(
+                np.abs((lat - np.sign(lat) * 1e-4) - lat_verts.min())
+            )
+            lat_max_idx = np.argmin(
+                np.abs((lat + np.sign(lat) * 1e-4) - lat_verts.max())
+            )
+            lat_high = int(max(lat_min_idx, lat_max_idx))
+            lat_low = int(min(lat_min_idx, lat_max_idx))
+
+            lon_low, lon_high = self._etopo_get_lon_idxs(
+                lon, lon_idx_rng, n_col, split_EW, lon_verts
+            )
+
+            if n_row == 0:
+                nc_lon += lon_high - lon_low
+            if n_col == 0:
+                nc_lat += lat_high - lat_low
+
+            n_col += 1
+            if n_col == (lon_cnt + 1):
+                n_col = 0
+                n_row += 1
+
+        # Second pass: populate the array.
+        topo_arr = np.zeros((nc_lat, nc_lon))
+        cell_lat: List[float] = []
+        cell_lon: List[float] = []
+        n_col = 0
+        n_row = 0
+        lon_sz_old = 0
+        lat_sz_old = 0
+        for fn in fns:
+            ds = self.tiles[fn]
+            lat = self.tile_lats[fn]
+            lon = self.tile_lons[fn]
+
+            lat_min_idx = np.argmin(
+                np.abs((lat - np.sign(lat) * 1e-4) - lat_verts.min())
+            )
+            lat_max_idx = np.argmin(
+                np.abs((lat + np.sign(lat) * 1e-4) - lat_verts.max())
+            )
+            lat_high = int(max(lat_min_idx, lat_max_idx))
+            lat_low = int(min(lat_min_idx, lat_max_idx))
+
+            lon_low, lon_high = self._etopo_get_lon_idxs(
+                lon, lon_idx_rng, n_col, split_EW, lon_verts
+            )
+
+            with _NETCDF_GLOBAL_LOCK:
+                slab = ds["z"][lat_low:lat_high, lon_low:lon_high].data
+
+            curr_lon = lon[lon_low:lon_high].data.tolist()
+            if n_col == 0:
+                cell_lat += lat[lat_low:lat_high].data.tolist()
+            if n_row == 0:
+                cell_lon += curr_lon
+
+            lon_sz = lon_high - lon_low
+            lat_sz = lat_high - lat_low
+            topo_arr[
+                lat_sz_old : lat_sz_old + lat_sz,
+                lon_sz_old : lon_sz_old + lon_sz,
+            ] = slab
+
+            n_col += 1
+            lon_sz_old += lon_sz
+            if n_col == (lon_cnt + 1):
+                n_col = 0
+                lon_sz_old = 0
+                n_row += 1
+                lat_sz_old += lat_sz
+
+        return cell_lat, cell_lon, topo_arr
+
+    def get_etopo_data(
+        self,
+        lat_extent: np.ndarray,
+        lon_extent: np.ndarray,
+        etopo_cg: int = 1,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Load ETOPO topography for a cell's lat/lon vertex extent.
+
+        Byte-equivalent to pycsa.core.io.read_etopo_topo.get_topo + __load_topo
+        (io.py:720-1050), but uses this cache's persistent file handles so the
+        same tile isn't re-opened across cells within a worker.
+
+        Parameters
+        ----------
+        lat_extent : array-like
+            Cell latitude vertices (1-D).
+        lon_extent : array-like
+            Cell longitude vertices (1-D), in [-180, 180).
+        etopo_cg : int, optional
+            Coarse-graining factor (stride). High southern latitudes
+            (lat_max < -85°) implicitly multiply this by 5 — see below.
+
+        Returns
+        -------
+        lat, lon, topo
+            1-D coordinate arrays and the 2-D topography slab, sorted in
+            ascending lat/lon. ``lon`` is in [0, 360) when the cell crosses
+            the dateline; otherwise it stays in [-180, 180).
+        """
+        lat_verts = np.asarray(lat_extent)
+        lon_verts = np.asarray(lon_extent)
+
+        # Dateline detection (robust formula; see compute_split_EW).
+        lon_span = lon_verts.max() - lon_verts.min()
+        lon_verts_360 = np.where(lon_verts < 0.0, lon_verts + 360.0, lon_verts)
+        span_360 = lon_verts_360.max() - lon_verts_360.min()
+        split_EW = (span_360 < lon_span) and (lon_span > 180.0)
+
+        # Determine longitude tile range — three branches: global / dateline / normal.
+        if lon_span >= 360.0:
+            split_EW = False
+            lon_idx_rng = list(range(0, len(_ETOPO_FN_LON) - 1))
+        elif split_EW:
+            min_lon_360 = lon_verts_360.min()
+            max_lon_360 = lon_verts_360.max()
+            min_lon = min_lon_360 if min_lon_360 <= 180 else min_lon_360 - 360
+            max_lon = max_lon_360 if max_lon_360 <= 180 else max_lon_360 - 360
+            lon_min_idx = self._etopo_compute_idx(min_lon, "min", "lon", split_EW)
+            lon_max_idx = self._etopo_compute_idx(max_lon, "max", "lon", split_EW)
+            if lon_min_idx == lon_max_idx:
+                lon_idx_rng = [lon_min_idx]
+                if lon_min_idx >= len(_ETOPO_FN_LON) - 2:
+                    lon_idx_rng.append(0)
+            else:
+                lon_idx_rng = (
+                    list(range(lon_min_idx, len(_ETOPO_FN_LON) - 1))
+                    + list(range(0, lon_max_idx + 1))
+                )
+        else:
+            min_lon = lon_verts.min()
+            max_lon = lon_verts.max()
+            lon_min_idx = self._etopo_compute_idx(min_lon, "min", "lon", split_EW)
+            lon_max_idx = self._etopo_compute_idx(max_lon, "max", "lon", split_EW)
+            if lon_min_idx == lon_max_idx:
+                lon_max_idx += 1
+            lon_idx_rng = list(range(lon_min_idx, lon_max_idx))
+
+        # Latitude tile range — same logic across all longitude branches.
+        lat_min_tile_idx = self._etopo_compute_idx(lat_verts.min(), "min", "lat", split_EW)
+        lat_max_tile_idx = self._etopo_compute_idx(lat_verts.max(), "max", "lat", split_EW)
+        lat_idx_rng = list(range(lat_max_tile_idx, lat_min_tile_idx))
+
+        # Build filenames; load + assemble.
+        fns, lon_cnt, lat_cnt = self._etopo_get_fns(lat_idx_rng, lon_idx_rng)
+        cell_lat, cell_lon, topo_arr = self._etopo_load_topo(
+            fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng,
+            lat_verts, lon_verts, split_EW,
+        )
+
+        # Wrap longitudes if dateline-crossing, then sort lat/lon and reorder topo.
+        lat_arr = np.array(cell_lat)
+        lon_arr = np.array(cell_lon)
+        if split_EW:
+            lon_arr = np.where(lon_arr < 0.0, lon_arr + 360.0, lon_arr)
+
+        lat_sort_idx = np.argsort(lat_arr)
+        lon_sort_idx = np.argsort(lon_arr)
+        lat_sorted = lat_arr[lat_sort_idx]
+        lon_sorted = lon_arr[lon_sort_idx]
+        topo_sorted = topo_arr[np.ix_(lat_sort_idx, lon_sort_idx)]
+
+        # Coarse-graining — io.py picks up a 5× multiplier for very-southern cells.
+        iint = etopo_cg
+        if iint > 1:
+            try:
+                out_lat = utils.sliding_window_view(
+                    lat_sorted, (iint,), (iint,)
+                ).mean(axis=-1)
+                out_lon = utils.sliding_window_view(
+                    lon_sorted, (iint,), (iint,)
+                ).mean(axis=-1)
+                out_topo = utils.sliding_window_view(
+                    topo_sorted, (iint, iint), (iint, iint)
+                ).mean(axis=(-1, -2))
+                return out_lat, out_lon, out_topo
+            except (ValueError, MemoryError) as e:
+                logger.warning(f"Coarse-graining failed ({e}); returning full resolution")
+        return lat_sorted, lon_sorted, topo_sorted
 
     def close_all(self):
         """Close all opened NetCDF files."""

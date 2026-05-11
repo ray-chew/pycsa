@@ -2,6 +2,40 @@
 Shared pytest fixtures and utilities for pyCSA tests.
 """
 
+# ---------------------------------------------------------------------------
+# Cartopy stub — let tests run in environments without cartopy installed.
+# pycsa.__init__ eagerly imports pycsa.plotting.cart_plot which imports
+# cartopy. The tests don't actually call any plotting functions, so a stub
+# is enough to satisfy the import chain. If real cartopy is installed, this
+# is a no-op.
+# ---------------------------------------------------------------------------
+try:
+    import cartopy  # noqa: F401
+except ImportError:
+    import sys
+    import types
+
+    def _stub_pkg(name):
+        m = types.ModuleType(name)
+        m.__path__ = []  # marks as package so submodule imports work
+        sys.modules[name] = m
+        return m
+
+    def _stub_attrs(mod, *names):
+        for n in names:
+            setattr(mod, n, type(n, (), {}))
+
+    _stub_pkg("cartopy")
+    _crs = _stub_pkg("cartopy.crs")
+    _stub_attrs(_crs, "PlateCarree", "Mollweide", "Robinson", "Geodetic")
+    _stub_pkg("cartopy.mpl")
+    _ticker = _stub_pkg("cartopy.mpl.ticker")
+    _stub_attrs(_ticker, "LongitudeFormatter", "LatitudeFormatter",
+                "LongitudeLocator", "LatitudeLocator")
+    _stub_pkg("cartopy.feature")
+    _stub_pkg("cartopy.io")
+    _stub_pkg("cartopy.io.shapereader")
+
 import numpy as np
 import pytest
 from pathlib import Path

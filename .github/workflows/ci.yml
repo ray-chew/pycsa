@@ -31,6 +31,24 @@ jobs:
       - name: Run Black
         run: black --check .
 
+  reproducibility:
+    name: Reproducibility Suite (Phase B gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ConorMacBride/install-package@v1
+        with:
+          apt: libgeos-dev
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install pyCSA + test extras
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[test]"
+      - name: Run reproducibility suite
+        run: pytest tests/reproducibility/ -v
+
   docs:
     name: Build Documentation
     runs-on: ubuntu-latest

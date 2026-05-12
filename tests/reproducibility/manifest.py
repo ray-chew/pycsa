@@ -131,8 +131,15 @@ class Manifest:
         rtol: float = DEFAULT_RTOL,
         atol: float = DEFAULT_ATOL,
         equal_nan: bool = True,
+        per_variable_rtol: dict[str, float] | None = None,
+        per_variable_atol: dict[str, float] | None = None,
         notes: str = "",
     ) -> "Manifest":
+        """Build a manifest. ``per_variable_*`` dicts override the default
+        tolerance for named variables (useful for numerically-unstable
+        outputs whose drift across platforms is mathematically expected)."""
+        per_variable_rtol = per_variable_rtol or {}
+        per_variable_atol = per_variable_atol or {}
         return cls(
             fixture=fixture,
             captured_at=_dt.datetime.now(_dt.timezone.utc)
@@ -141,7 +148,10 @@ class Manifest:
             captured_from=CapturedFrom.collect(),
             variables={
                 name: VariableManifest.from_array(
-                    arr, rtol=rtol, atol=atol, equal_nan=equal_nan
+                    arr,
+                    rtol=per_variable_rtol.get(name, rtol),
+                    atol=per_variable_atol.get(name, atol),
+                    equal_nan=equal_nan,
                 )
                 for name, arr in variables.items()
             },

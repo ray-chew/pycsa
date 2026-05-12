@@ -33,9 +33,9 @@ def get_coeffs(fobj, buffer_pool=None):
 
     if buffer_pool:
         # Use buffer pool - handles variable sizes dynamically
-        coeff = buffer_pool.get_or_create('coeff', (n_points, n_modes), Ncos.dtype)
-        coeff[:, :Ncos.shape[1]] = Ncos
-        coeff[:, Ncos.shape[1]:] = Nsin
+        coeff = buffer_pool.get_or_create("coeff", (n_points, n_modes), Ncos.dtype)
+        coeff[:, : Ncos.shape[1]] = Ncos
+        coeff[:, Ncos.shape[1] :] = Nsin
     else:
         # Fallback for backward compatibility
         coeff = np.hstack([Ncos, Nsin])
@@ -46,7 +46,9 @@ def get_coeffs(fobj, buffer_pool=None):
     if fobj.grad:
         if buffer_pool:
             # Allocate larger buffer for gradient stacking
-            coeff_grad = buffer_pool.get_or_create('coeff_grad', (2*n_points, n_modes), Ncos.dtype)
+            coeff_grad = buffer_pool.get_or_create(
+                "coeff_grad", (2 * n_points, n_modes), Ncos.dtype
+            )
             coeff_grad[:n_points] = coeff
             coeff_grad[n_points:] = coeff
             return coeff_grad
@@ -56,7 +58,15 @@ def get_coeffs(fobj, buffer_pool=None):
     return coeff
 
 
-def do(fobj, cell, lmbda=0.0, iter_solve=True, save_coeffs=False, buffer_pool=None, use_sparse=False):
+def do(
+    fobj,
+    cell,
+    lmbda=0.0,
+    iter_solve=True,
+    save_coeffs=False,
+    buffer_pool=None,
+    use_sparse=False,
+):
     """
     Does the linear regression with optional buffer pool and sparse solver
 
@@ -99,9 +109,9 @@ def do(fobj, cell, lmbda=0.0, iter_solve=True, save_coeffs=False, buffer_pool=No
     # Determine if sparse solver should be used
     # Criteria: pick_kls enabled AND <10% of total modes selected
     use_sparse_solver = use_sparse or (
-        getattr(fobj, 'pick_kls', False) and
-        hasattr(fobj, 'k_idx') and
-        len(fobj.k_idx) < 0.1 * (fobj.nhar_i * fobj.nhar_j)
+        getattr(fobj, "pick_kls", False)
+        and hasattr(fobj, "k_idx")
+        and len(fobj.k_idx) < 0.1 * (fobj.nhar_i * fobj.nhar_j)
     )
 
     if use_sparse_solver:
@@ -119,11 +129,13 @@ def do(fobj, cell, lmbda=0.0, iter_solve=True, save_coeffs=False, buffer_pool=No
         # Add regularization to sparse matrix
         if lmbda > 0:
             trace = E_tilda_lm_sparse.diagonal().mean() * lmbda
-            E_tilda_lm_sparse = E_tilda_lm_sparse + trace * eye(E_tilda_lm_sparse.shape[0])
+            E_tilda_lm_sparse = E_tilda_lm_sparse + trace * eye(
+                E_tilda_lm_sparse.shape[0]
+            )
 
         # Solve with sparse solver (direct solver for sparse SPD matrices)
         # Convert RHS to dense array if it's sparse, otherwise use as-is
-        if hasattr(h_tilda_l_sparse, 'toarray'):
+        if hasattr(h_tilda_l_sparse, "toarray"):
             rhs = h_tilda_l_sparse.toarray().flatten()
         else:
             rhs = np.asarray(h_tilda_l_sparse).flatten()
@@ -131,7 +143,7 @@ def do(fobj, cell, lmbda=0.0, iter_solve=True, save_coeffs=False, buffer_pool=No
 
         # Reconstruct (sparse @ dense is efficient)
         recons_result = coeff_sparse @ a_m
-        if hasattr(recons_result, 'toarray'):
+        if hasattr(recons_result, "toarray"):
             data_recons = recons_result.toarray().flatten()
         else:
             data_recons = np.asarray(recons_result).flatten()
@@ -146,7 +158,9 @@ def do(fobj, cell, lmbda=0.0, iter_solve=True, save_coeffs=False, buffer_pool=No
         # Compute LHS with optional buffer reuse
         if buffer_pool:
             n_modes = coeff.shape[1]
-            E_tilda_lm = buffer_pool.get_or_create('E_tilda_lm', (n_modes, n_modes), np.float64)
+            E_tilda_lm = buffer_pool.get_or_create(
+                "E_tilda_lm", (n_modes, n_modes), np.float64
+            )
             # Compute and store in buffer
             E_tilda_lm[:] = np.dot(coeff.T, coeff)
         else:
@@ -167,14 +181,20 @@ def do(fobj, cell, lmbda=0.0, iter_solve=True, save_coeffs=False, buffer_pool=No
             except la.LinAlgError:
                 # Fallback to GMRES if matrix is not positive definite
                 szc = E_tilda_lm.shape[0]
-                a_m, info = gmres(E_tilda_lm, h_tilda_l,
-                                 tol=1e-8,           # Convergence tolerance
-                                 atol=1e-10,         # Absolute tolerance
-                                 maxiter=min(szc, 100))  # Limit iterations
+                a_m, info = gmres(
+                    E_tilda_lm,
+                    h_tilda_l,
+                    tol=1e-8,  # Convergence tolerance
+                    atol=1e-10,  # Absolute tolerance
+                    maxiter=min(szc, 100),
+                )  # Limit iterations
                 if info != 0:
                     # GMRES didn't converge, warn user
                     import warnings
-                    warnings.warn(f"GMRES did not converge (info={info}), solution may be inaccurate")
+
+                    warnings.warn(
+                        f"GMRES did not converge (info={info}), solution may be inaccurate"
+                    )
         else:
             # Direct inversion (slower, but kept for compatibility)
             a_m = la.inv(E_tilda_lm).dot(h_tilda_l)

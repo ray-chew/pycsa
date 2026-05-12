@@ -144,9 +144,9 @@ def csa_run(cell, n_modes, lmbda_fg, lmbda_sg):
     freqs_fg, _, dat_2D_fg = first_guess.sappx(cell, lmbda=lmbda_fg, iter_solve=False)
 
     fq_cpy = np.copy(freqs_fg)
-    fq_cpy[
-        np.isnan(fq_cpy)
-    ] = 0.0  # necessary. Otherwise, popping with fq_cpy.max() gives the np.nan entries first.
+    fq_cpy[np.isnan(fq_cpy)] = (
+        0.0  # necessary. Otherwise, popping with fq_cpy.max() gives the np.nan entries first.
+    )
 
     indices = []
     max_ampls = []

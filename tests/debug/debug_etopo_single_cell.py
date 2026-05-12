@@ -11,7 +11,8 @@ This will create detailed plots and logs for debugging specific cell failures.
 import pytest
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from pathlib import Path
 import traceback
@@ -20,12 +21,11 @@ import sys
 from pycsa.core import io, var, utils
 from pycsa.wrappers import interface
 
-
 # =============================================================================
 # CONFIGURE WHICH CELLS TO DEBUG HERE
 # =============================================================================
 CELL_INDICES = [
-    1086,      # FileNotFoundError: E180 tile (N90E180)
+    1086,  # FileNotFoundError: E180 tile (N90E180)
     # 1027,   # FileNotFoundError: E180 tile (N90E180)
     # 1219,   # FileNotFoundError: E180 tile (N75E180)
 ]
@@ -59,12 +59,13 @@ def test_params():
     # Import local paths
     try:
         from pycsa import local_paths
+
         utils.transfer_attributes(params, local_paths.paths, prefix="path")
     except ImportError as e:
         pytest.skip(f"Could not import local_paths: {e}")
 
     # Verify ETOPO path exists
-    if not hasattr(params, 'path_etopo') or not Path(params.path_etopo).exists():
+    if not hasattr(params, "path_etopo") or not Path(params.path_etopo).exists():
         pytest.skip(f"ETOPO data path not found")
 
     # Test region: Alaska (will be overridden per cell)
@@ -201,13 +202,15 @@ def test_debug_cell(cell_idx, output_dir, test_params, test_grid):
         log_and_print(f"  etopo_cg: {test_params.etopo_cg}")
         log_and_print("")
 
-        etopo_reader = reader.read_etopo_topo(None, test_params, is_parallel=True, verbose=True)
+        etopo_reader = reader.read_etopo_topo(
+            None, test_params, is_parallel=True, verbose=True
+        )
 
         log_and_print(f"ETOPO reader created successfully")
         log_and_print(f"  split_EW: {etopo_reader.split_EW}")
-        if hasattr(etopo_reader, 'split_NS'):
+        if hasattr(etopo_reader, "split_NS"):
             log_and_print(f"  split_NS: {etopo_reader.split_NS}")
-        if hasattr(etopo_reader, 'file_cache'):
+        if hasattr(etopo_reader, "file_cache"):
             log_and_print(f"  file_cache size: {len(etopo_reader.file_cache)}")
         log_and_print("")
 
@@ -258,12 +261,12 @@ def test_debug_cell(cell_idx, output_dir, test_params, test_grid):
         log_and_print(traceback.format_exc())
 
         # Try to get more debug info from the reader
-        if hasattr(etopo_reader, '__get_fns'):
+        if hasattr(etopo_reader, "__get_fns"):
             try:
                 log_and_print("\nAttempting to get file info...")
                 # This might fail but could give us useful info
-                lat_idx_rng = getattr(etopo_reader, 'lat_idx_rng', None)
-                lon_idx_rng = getattr(etopo_reader, 'lon_idx_rng', None)
+                lat_idx_rng = getattr(etopo_reader, "lat_idx_rng", None)
+                lon_idx_rng = getattr(etopo_reader, "lon_idx_rng", None)
                 log_and_print(f"  lat_idx_rng: {lat_idx_rng}")
                 log_and_print(f"  lon_idx_rng: {lon_idx_rng}")
             except:
@@ -340,23 +343,29 @@ def test_debug_cell(cell_idx, output_dir, test_params, test_grid):
         is_land = utils.is_land(cell, simplex_lat, simplex_lon, topo)
 
         log_and_print(f"is_land result: {is_land}")
-        log_and_print(f"Cell lat shape: {cell.lat.shape if hasattr(cell, 'lat') and cell.lat is not None else 'None'}")
-        log_and_print(f"Cell lon shape: {cell.lon.shape if hasattr(cell, 'lon') and cell.lon is not None else 'None'}")
+        log_and_print(
+            f"Cell lat shape: {cell.lat.shape if hasattr(cell, 'lat') and cell.lat is not None else 'None'}"
+        )
+        log_and_print(
+            f"Cell lon shape: {cell.lon.shape if hasattr(cell, 'lon') and cell.lon is not None else 'None'}"
+        )
         log_and_print("")
 
         if not is_land:
             log_and_print("Cell is OCEAN - skipping CSA processing")
             # Still plot the topography
-            plot_topography(output_dir, topo, simplex_lat, simplex_lon, cell_idx, is_land=False)
+            plot_topography(
+                output_dir, topo, simplex_lat, simplex_lon, cell_idx, is_land=False
+            )
             return
 
         log_and_print("Cell is LAND - proceeding with CSA")
 
         # Save cell data for inspection
-        if hasattr(cell, 'lat') and cell.lat is not None:
+        if hasattr(cell, "lat") and cell.lat is not None:
             np.save(output_dir / "cell_lat.npy", cell.lat)
             np.save(output_dir / "cell_lon.npy", cell.lon)
-            if hasattr(cell, 'topo') and cell.topo is not None:
+            if hasattr(cell, "topo") and cell.topo is not None:
                 np.save(output_dir / "cell_topo.npy", cell.topo)
             log_and_print(f"Saved cell arrays to {output_dir}")
         log_and_print("")
@@ -367,7 +376,15 @@ def test_debug_cell(cell_idx, output_dir, test_params, test_grid):
 
         # Try to plot what we have so far
         try:
-            plot_topography(output_dir, topo, simplex_lat, simplex_lon, cell_idx, is_land=None, error=str(e))
+            plot_topography(
+                output_dir,
+                topo,
+                simplex_lat,
+                simplex_lon,
+                cell_idx,
+                is_land=None,
+                error=str(e),
+            )
         except:
             pass
 
@@ -385,7 +402,9 @@ def test_debug_cell(cell_idx, output_dir, test_params, test_grid):
         log_and_print(f"  rect: {test_params.rect}")
         log_and_print("")
 
-        utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, topo, rect=test_params.rect)
+        utils.get_lat_lon_segments(
+            simplex_lat, simplex_lon, cell, topo, rect=test_params.rect
+        )
 
         log_and_print(f"Segments extracted successfully!")
         log_and_print(f"  cell.lat shape: {cell.lat.shape}")
@@ -447,8 +466,16 @@ def test_debug_cell(cell_idx, output_dir, test_params, test_grid):
     log_and_print("=" * 70)
 
     try:
-        plot_topography(output_dir, topo, simplex_lat, simplex_lon, cell_idx, is_land=True,
-                       cell=cell, ampls=ampls)
+        plot_topography(
+            output_dir,
+            topo,
+            simplex_lat,
+            simplex_lon,
+            cell_idx,
+            is_land=True,
+            cell=cell,
+            ampls=ampls,
+        )
         log_and_print("✓ Generated diagnostic plots")
     except Exception as e:
         log_and_print(f"ERROR generating plots: {e}")
@@ -464,8 +491,17 @@ def test_debug_cell(cell_idx, output_dir, test_params, test_grid):
     print(f"\n✓ Debug complete! Check {output_dir} for detailed outputs")
 
 
-def plot_topography(output_dir, topo, simplex_lat, simplex_lon, cell_idx, is_land=None,
-                    cell=None, ampls=None, error=None):
+def plot_topography(
+    output_dir,
+    topo,
+    simplex_lat,
+    simplex_lon,
+    cell_idx,
+    is_land=None,
+    cell=None,
+    ampls=None,
+    error=None,
+):
     """Generate comprehensive topography plots."""
 
     fig = plt.figure(figsize=(16, 12))
@@ -473,70 +509,92 @@ def plot_topography(output_dir, topo, simplex_lat, simplex_lon, cell_idx, is_lan
     # Plot 1: Full topography with cell outline
     ax1 = plt.subplot(2, 3, 1)
     if topo.topo is not None and topo.topo.size > 0:
-        im1 = ax1.contourf(topo.lon, topo.lat, topo.topo, levels=50, cmap='terrain')
-        plt.colorbar(im1, ax=ax1, label='Elevation (m)')
+        im1 = ax1.contourf(topo.lon, topo.lat, topo.topo, levels=50, cmap="terrain")
+        plt.colorbar(im1, ax=ax1, label="Elevation (m)")
 
         # Overlay cell polygon
         if simplex_lat is not None and simplex_lon is not None and len(simplex_lat) > 0:
             # Close the polygon
             poly_lat = np.append(simplex_lat, simplex_lat[0])
             poly_lon = np.append(simplex_lon, simplex_lon[0])
-            ax1.plot(poly_lon, poly_lat, 'r-', linewidth=2, label='Cell boundary')
+            ax1.plot(poly_lon, poly_lat, "r-", linewidth=2, label="Cell boundary")
             ax1.legend()
     else:
-        ax1.text(0.5, 0.5, 'No topography data', ha='center', va='center')
+        ax1.text(0.5, 0.5, "No topography data", ha="center", va="center")
 
-    ax1.set_xlabel('Longitude (°)')
-    ax1.set_ylabel('Latitude (°)')
-    ax1.set_title(f'Cell {cell_idx}: Full Topography')
+    ax1.set_xlabel("Longitude (°)")
+    ax1.set_ylabel("Latitude (°)")
+    ax1.set_title(f"Cell {cell_idx}: Full Topography")
     ax1.grid(True, alpha=0.3)
 
     # Plot 2: Topography 3D view
-    ax2 = plt.subplot(2, 3, 2, projection='3d')
+    ax2 = plt.subplot(2, 3, 2, projection="3d")
     if topo.topo is not None and topo.topo.size > 0:
         # Downsample for 3D plotting if too large
         stride = max(1, topo.topo.shape[0] // 50)
         X, Y = np.meshgrid(topo.lon[::stride], topo.lat[::stride])
         Z = topo.topo[::stride, ::stride]
-        ax2.plot_surface(X, Y, Z, cmap='terrain', alpha=0.8)
-        ax2.set_xlabel('Longitude (°)')
-        ax2.set_ylabel('Latitude (°)')
-        ax2.set_zlabel('Elevation (m)')
+        ax2.plot_surface(X, Y, Z, cmap="terrain", alpha=0.8)
+        ax2.set_xlabel("Longitude (°)")
+        ax2.set_ylabel("Latitude (°)")
+        ax2.set_zlabel("Elevation (m)")
     else:
-        ax2.text2D(0.5, 0.5, 'No topography data', transform=ax2.transAxes,
-                   ha='center', va='center')
-    ax2.set_title('3D View')
+        ax2.text2D(
+            0.5,
+            0.5,
+            "No topography data",
+            transform=ax2.transAxes,
+            ha="center",
+            va="center",
+        )
+    ax2.set_title("3D View")
 
     # Plot 3: Elevation histogram
     ax3 = plt.subplot(2, 3, 3)
     if topo.topo is not None and topo.topo.size > 0:
-        ax3.hist(topo.topo.flatten(), bins=50, edgecolor='black', alpha=0.7)
-        ax3.axvline(0, color='blue', linestyle='--', linewidth=2, label='Sea level')
-        ax3.axvline(-500, color='red', linestyle='--', linewidth=2, label='Floor (-500m)')
-        ax3.set_xlabel('Elevation (m)')
-        ax3.set_ylabel('Count')
+        ax3.hist(topo.topo.flatten(), bins=50, edgecolor="black", alpha=0.7)
+        ax3.axvline(0, color="blue", linestyle="--", linewidth=2, label="Sea level")
+        ax3.axvline(
+            -500, color="red", linestyle="--", linewidth=2, label="Floor (-500m)"
+        )
+        ax3.set_xlabel("Elevation (m)")
+        ax3.set_ylabel("Count")
         ax3.legend()
     else:
-        ax3.text(0.5, 0.5, 'No topography data', ha='center', va='center')
-    ax3.set_title('Elevation Distribution')
+        ax3.text(0.5, 0.5, "No topography data", ha="center", va="center")
+    ax3.set_title("Elevation Distribution")
     ax3.grid(True, alpha=0.3)
 
     # Plot 4: Cell topography (if extracted)
     ax4 = plt.subplot(2, 3, 4)
-    if cell is not None and hasattr(cell, 'topo') and cell.topo is not None and cell.topo.size > 0:
-        im4 = ax4.contourf(cell.lon, cell.lat, cell.topo, levels=50, cmap='terrain')
-        plt.colorbar(im4, ax=ax4, label='Elevation (m)')
-        ax4.set_xlabel('Longitude (°)')
-        ax4.set_ylabel('Latitude (°)')
-        ax4.set_title('Extracted Cell Topography')
+    if (
+        cell is not None
+        and hasattr(cell, "topo")
+        and cell.topo is not None
+        and cell.topo.size > 0
+    ):
+        im4 = ax4.contourf(cell.lon, cell.lat, cell.topo, levels=50, cmap="terrain")
+        plt.colorbar(im4, ax=ax4, label="Elevation (m)")
+        ax4.set_xlabel("Longitude (°)")
+        ax4.set_ylabel("Latitude (°)")
+        ax4.set_title("Extracted Cell Topography")
         ax4.grid(True, alpha=0.3)
     else:
         status = "OCEAN" if is_land == False else "ERROR" if error else "No cell data"
-        ax4.text(0.5, 0.5, status, ha='center', va='center', fontsize=14, fontweight='bold')
+        ax4.text(
+            0.5, 0.5, status, ha="center", va="center", fontsize=14, fontweight="bold"
+        )
         if error:
-            ax4.text(0.5, 0.3, f"Error: {error[:50]}...", ha='center', va='center',
-                    fontsize=8, color='red')
-    ax4.set_title('Cell Data')
+            ax4.text(
+                0.5,
+                0.3,
+                f"Error: {error[:50]}...",
+                ha="center",
+                va="center",
+                fontsize=8,
+                color="red",
+            )
+    ax4.set_title("Cell Data")
 
     # Plot 5: Spectrum (if available)
     ax5 = plt.subplot(2, 3, 5)
@@ -546,72 +604,105 @@ def plot_topography(output_dir, topo, simplex_lat, simplex_lon, cell_idx, is_lan
         if len(ampls_valid) > 0:
             # Find indices of valid values for proper x-axis
             valid_indices = np.where(~np.isnan(ampls.flatten()))[0]
-            ax5.semilogy(valid_indices, ampls_valid, 'o-', markersize=4)
-            ax5.set_xlabel('Mode index')
-            ax5.set_ylabel('Amplitude')
-            ax5.set_title(f'Spectral Amplitudes ({len(ampls_valid)}/{ampls.size} valid)')
+            ax5.semilogy(valid_indices, ampls_valid, "o-", markersize=4)
+            ax5.set_xlabel("Mode index")
+            ax5.set_ylabel("Amplitude")
+            ax5.set_title(
+                f"Spectral Amplitudes ({len(ampls_valid)}/{ampls.size} valid)"
+            )
             ax5.grid(True, alpha=0.3)
         else:
-            ax5.text(0.5, 0.5, 'No valid spectrum values\n(all NaN)',
-                    ha='center', va='center', fontsize=10)
+            ax5.text(
+                0.5,
+                0.5,
+                "No valid spectrum values\n(all NaN)",
+                ha="center",
+                va="center",
+                fontsize=10,
+            )
     else:
-        ax5.text(0.5, 0.5, 'No spectrum computed', ha='center', va='center')
+        ax5.text(0.5, 0.5, "No spectrum computed", ha="center", va="center")
 
     # Plot 6: Summary info
     ax6 = plt.subplot(2, 3, 6)
-    ax6.axis('off')
+    ax6.axis("off")
 
     info_lines = [
         f"Cell Index: {cell_idx}",
         f"",
         f"Topography Grid:",
         f"  Shape: {topo.topo.shape if topo.topo is not None else 'None'}",
-        f"  Lat: [{np.min(topo.lat):.4f}, {np.max(topo.lat):.4f}]°" if topo.lat is not None else "  Lat: None",
-        f"  Lon: [{np.min(topo.lon):.4f}, {np.max(topo.lon):.4f}]°" if topo.lon is not None else "  Lon: None",
+        (
+            f"  Lat: [{np.min(topo.lat):.4f}, {np.max(topo.lat):.4f}]°"
+            if topo.lat is not None
+            else "  Lat: None"
+        ),
+        (
+            f"  Lon: [{np.min(topo.lon):.4f}, {np.max(topo.lon):.4f}]°"
+            if topo.lon is not None
+            else "  Lon: None"
+        ),
         f"",
         f"Elevation:",
         f"  Min: {np.min(topo.topo):.1f} m" if topo.topo is not None else "  Min: None",
         f"  Max: {np.max(topo.topo):.1f} m" if topo.topo is not None else "  Max: None",
-        f"  Mean: {np.mean(topo.topo):.1f} m" if topo.topo is not None else "  Mean: None",
+        (
+            f"  Mean: {np.mean(topo.topo):.1f} m"
+            if topo.topo is not None
+            else "  Mean: None"
+        ),
         f"",
         f"Land Classification: {is_land if is_land is not None else 'Unknown'}",
     ]
 
-    if cell is not None and hasattr(cell, 'topo') and cell.topo is not None:
-        info_lines.extend([
-            f"",
-            f"Cell Data:",
-            f"  Shape: {cell.topo.shape}",
-            f"  Points: {cell.topo.size}",
-        ])
+    if cell is not None and hasattr(cell, "topo") and cell.topo is not None:
+        info_lines.extend(
+            [
+                f"",
+                f"Cell Data:",
+                f"  Shape: {cell.topo.shape}",
+                f"  Points: {cell.topo.size}",
+            ]
+        )
 
     if ampls is not None:
         ampls_valid = ampls[~np.isnan(ampls)]
-        info_lines.extend([
-            f"",
-            f"Spectrum:",
-            f"  Total modes: {ampls.size}",
-            f"  Valid modes: {len(ampls_valid)}",
-        ])
+        info_lines.extend(
+            [
+                f"",
+                f"Spectrum:",
+                f"  Total modes: {ampls.size}",
+                f"  Valid modes: {len(ampls_valid)}",
+            ]
+        )
         if len(ampls_valid) > 0:
             info_lines.append(f"  Max: {np.max(ampls_valid):.6e}")
         else:
             info_lines.append(f"  Max: N/A (all NaN)")
 
     if error:
-        info_lines.extend([
-            f"",
-            f"ERROR:",
-            f"  {error[:60]}",
-        ])
+        info_lines.extend(
+            [
+                f"",
+                f"ERROR:",
+                f"  {error[:60]}",
+            ]
+        )
 
-    info_text = '\n'.join(info_lines)
-    ax6.text(0.1, 0.9, info_text, transform=ax6.transAxes,
-             fontsize=9, verticalalignment='top', family='monospace')
+    info_text = "\n".join(info_lines)
+    ax6.text(
+        0.1,
+        0.9,
+        info_text,
+        transform=ax6.transAxes,
+        fontsize=9,
+        verticalalignment="top",
+        family="monospace",
+    )
 
-    plt.suptitle(f'Cell {cell_idx} Debug Plots', fontsize=16, fontweight='bold')
+    plt.suptitle(f"Cell {cell_idx} Debug Plots", fontsize=16, fontweight="bold")
     plt.tight_layout()
-    plt.savefig(output_dir / f'cell_{cell_idx}_debug.png', dpi=150, bbox_inches='tight')
+    plt.savefig(output_dir / f"cell_{cell_idx}_debug.png", dpi=150, bbox_inches="tight")
     plt.close()
 
     print(f"  ✓ Saved plot: {output_dir / f'cell_{cell_idx}_debug.png'}")

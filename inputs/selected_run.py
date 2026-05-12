@@ -3,7 +3,7 @@ User input data for the run script :mod:`runs.delaunay_runs` for the studies:
     * Potential Biases (``POT_BIAS``)
     * Iterative refinement (``ITER_REF``)
     * FFT vs LSFF in the First Approximation step (``DFFT_FA`` and ``LSFF_FA``)
-    * Complementary study on the flux computation; does not appear in the manuscript (``FLUX_SDY``) 
+    * Complementary study on the flux computation; does not appear in the manuscript (``FLUX_SDY``)
 """
 
 import numpy as np

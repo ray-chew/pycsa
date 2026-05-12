@@ -175,7 +175,7 @@ class ncdata(object):
                     90.0,
                     120.0,
                     150.0,
-                    180.0
+                    180.0,
                 ]
             )
             self.fn_lat = np.array([90.0, 60.0, 30.0, 0.0, -30.0, -60.0, -90.0])
@@ -201,14 +201,16 @@ class ncdata(object):
             Even opening different files from different threads causes crashes.
             """
             # Get or create thread-local file cache
-            if not hasattr(self._thread_local, 'file_cache'):
+            if not hasattr(self._thread_local, "file_cache"):
                 self._thread_local.file_cache = {}
 
             cache = self._thread_local.file_cache
 
             if filepath not in cache:
                 if self.verbose:
-                    print(f"[Thread {threading.current_thread().name}] Opening: {filepath}")
+                    print(
+                        f"[Thread {threading.current_thread().name}] Opening: {filepath}"
+                    )
 
                 # CRITICAL: Use global lock to serialize HDF5 file opens
                 with _NETCDF_GLOBAL_LOCK:
@@ -218,7 +220,7 @@ class ncdata(object):
 
         def close_cached_files(self):
             """Close all cached NetCDF files in current thread."""
-            if hasattr(self._thread_local, 'file_cache'):
+            if hasattr(self._thread_local, "file_cache"):
                 for filepath, ds in self._thread_local.file_cache.items():
                     try:
                         ds.close()
@@ -228,14 +230,25 @@ class ncdata(object):
 
         def get_topo(self, cell):
 
-            # if lat_verts 
+            # if lat_verts
 
-            if ( (self.lon_verts.max() - self.lon_verts.min()) > 180.0 ):
+            if (self.lon_verts.max() - self.lon_verts.min()) > 180.0:
                 self.split_EW = True
 
             if self.split_EW:
-                min_lon = max(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)) - 360.0
-                max_lon = min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts))
+                min_lon = (
+                    max(
+                        np.where(
+                            self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts
+                        )
+                    )
+                    - 360.0
+                )
+                max_lon = min(
+                    np.where(
+                        self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts
+                    )
+                )
             else:
                 min_lon = self.lon_verts.min()
                 max_lon = self.lon_verts.max()
@@ -250,8 +263,10 @@ class ncdata(object):
                 lon_min_idx = self.__compute_idx(min_lon, "max", "lon")
                 lon_max_idx = self.__compute_idx(max_lon, "min", "lon")
 
-            if ( (self.lon_verts.max() - self.lon_verts.min()) > 180.0 ):
-                lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon) - 1 )) + list(range(0,lon_min_idx + 1))
+            if (self.lon_verts.max() - self.lon_verts.min()) > 180.0:
+                lon_idx_rng = list(range(lon_max_idx, len(self.fn_lon) - 1)) + list(
+                    range(0, lon_min_idx + 1)
+                )
 
             else:
                 if lon_min_idx == lon_max_idx:
@@ -260,11 +275,11 @@ class ncdata(object):
 
             lat_idx_rng = list(range(lat_max_idx, lat_min_idx))
 
-            fns, dirs, lon_cnt, lat_cnt = self.__get_fns(
-                lat_idx_rng, lon_idx_rng
-            )
+            fns, dirs, lon_cnt, lat_cnt = self.__get_fns(lat_idx_rng, lon_idx_rng)
 
-            self.__load_topo(cell, fns, dirs, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng)
+            self.__load_topo(
+                cell, fns, dirs, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng
+            )
 
         def __compute_idx(self, vert, typ, direction):
             """Given a point ``vert``, look up which MERIT NetCDF file contains this point."""
@@ -279,14 +294,14 @@ class ncdata(object):
                 print(fn_int, where_idx)
 
             if typ == "min":
-                if ((vert - fn_int[where_idx]) < 0.0):
+                if (vert - fn_int[where_idx]) < 0.0:
                     if direction == "lon":
                         # if not self.split_EW:
                         where_idx -= 1
                     else:
                         where_idx += 1
             elif typ == "max":
-                if ((vert - fn_int[where_idx]) > 0.0):
+                if (vert - fn_int[where_idx]) > 0.0:
                     if direction == "lon":
                         if not self.split_EW:
                             where_idx += 1
@@ -319,7 +334,9 @@ class ncdata(object):
                     l_lat_bound, "lat"
                 ), self.__get_NSEW(r_lat_bound, "lat")
 
-                if ((l_lat_tag == "S" and r_lat_tag == "S") and (l_lat_bound == -60 and r_lat_bound == -90)):
+                if (l_lat_tag == "S" and r_lat_tag == "S") and (
+                    l_lat_bound == -60 and r_lat_bound == -90
+                ):
                     merit_or_rema = "REMA_BKG"
                     self.rema = True
                     self.dir = self.dir.replace("MERIT", "REMA")
@@ -354,7 +371,18 @@ class ncdata(object):
 
             return fns, dirs, lon_cnt, lat_cnt
 
-        def __load_topo(self, cell, fns, dirs, lon_cnt, lat_cnt,  lat_idx_rng, lon_idx_rng, init=True, populate=True):
+        def __load_topo(
+            self,
+            cell,
+            fns,
+            dirs,
+            lon_cnt,
+            lat_cnt,
+            lat_idx_rng,
+            lon_idx_rng,
+            init=True,
+            populate=True,
+        ):
             """
             This method assembles a contiguous array in ``cell.topo`` containing the regional topography to be loaded.
 
@@ -365,7 +393,17 @@ class ncdata(object):
                 2. The second run populates the empty array with the information of the block arrays obtained in the first run.
             """
             if (cell.topo is None) and (init):
-                self.__load_topo(cell, fns, dirs, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng, init=False, populate=False)
+                self.__load_topo(
+                    cell,
+                    fns,
+                    dirs,
+                    lon_cnt,
+                    lat_cnt,
+                    lat_idx_rng,
+                    lon_idx_rng,
+                    init=False,
+                    populate=False,
+                )
 
             if not populate:
                 n_col = 0
@@ -402,8 +440,12 @@ class ncdata(object):
                 ############################################
 
                 lat = test["lat"]
-                lat_min_idx = np.argmin(np.abs((lat - np.sign(lat) * 1e-4) - self.lat_verts.min()))
-                lat_max_idx = np.argmin(np.abs((lat + np.sign(lat) * 1e-4) - self.lat_verts.max()))
+                lat_min_idx = np.argmin(
+                    np.abs((lat - np.sign(lat) * 1e-4) - self.lat_verts.min())
+                )
+                lat_max_idx = np.argmin(
+                    np.abs((lat + np.sign(lat) * 1e-4) - self.lat_verts.max())
+                )
 
                 lat_high = np.max((lat_min_idx, lat_max_idx))
                 lat_low = np.min((lat_min_idx, lat_max_idx))
@@ -417,10 +459,16 @@ class ncdata(object):
                 ############################################
 
                 # in the case where fns contains both MERIT and REMA dataset, then for the n_row = 0, we do...
-                if any("REMA" in fn for fn in fns) and any("MERIT" in fn for fn in fns) and (not populate):
-                    if (n_row == 0):
+                if (
+                    any("REMA" in fn for fn in fns)
+                    and any("MERIT" in fn for fn in fns)
+                    and (not populate)
+                ):
+                    if n_row == 0:
                         # run MERIT and REMA interpolation
-                        new_lon = self.__do_interp_lon_1D(dirs, fns, cnt_lon, lon_cnt, n_col, lon_idx_rng)
+                        new_lon = self.__do_interp_lon_1D(
+                            dirs, fns, cnt_lon, lon_cnt, n_col, lon_idx_rng
+                        )
                         self.interp_lons.append(new_lon)
 
                     # flag stating that we have MERIT+REMA mix
@@ -429,12 +477,11 @@ class ncdata(object):
                 lon = test["lon"]
 
                 lon_low, lon_high = self.__get_lon_idxs(lon, lon_idx_rng, n_col)
-                
 
                 if not populate:
                     if n_row == 0:
 
-                    # if (cnt_lon < (lon_cnt + 1)) and lon_nc_change:
+                        # if (cnt_lon < (lon_cnt + 1)) and lon_nc_change:
                         if not self.span:
                             nc_lon += lon_high - lon_low
                         else:
@@ -442,18 +489,18 @@ class ncdata(object):
                         cnt_lon += 1
 
                     if n_col == 0:
-                    # if (cnt_lat < (lat_cnt + 1)) and lat_nc_change:
+                        # if (cnt_lat < (lat_cnt + 1)) and lat_nc_change:
                         nc_lat += lat_high - lat_low
                         cnt_lat += 1
 
                     n_col += 1
-                    if n_col == (lon_cnt+1):
+                    if n_col == (lon_cnt + 1):
                         n_col = 0
                         n_row += 1
 
                 else:
                     topo = test["Elevation"][lat_low:lat_high, lon_low:lon_high]
-                    
+
                     curr_lon = lon[lon_low:lon_high].tolist()
 
                     if n_col == 0:
@@ -462,13 +509,12 @@ class ncdata(object):
                     if not self.span:
                         if n_row == 0:
                             cell.lon += curr_lon
-                    else: # interpolate topo data to new lon grid
+                    else:  # interpolate topo data to new lon grid
                         new_lon = self.interp_lons[n_col]
                         topo = self.__interp_topo_2D(topo, curr_lat, curr_lon, new_lon)
 
                         if n_row == 0:
                             cell.lon += new_lon.tolist()
-
 
                     #     # current dataset at n_row = 0 is a MERIT dataset
                     #     if "MERIT" in fn:
@@ -477,7 +523,7 @@ class ncdata(object):
                     # # topographic data is read over MERIT and REMA interface:
                     # if n_row > 0:
                     #     if ("REMA" in fn) and (self.prev_merit):
-                        
+
                     if not self.span:
                         lon_sz = lon_high - lon_low
                     else:
@@ -492,7 +538,7 @@ class ncdata(object):
                     n_col += 1
                     lon_sz_old += np.copy(lon_sz)
 
-                    if n_col == (lon_cnt+1):
+                    if n_col == (lon_cnt + 1):
                         n_col = 0
                         lon_sz_old = 0
 
@@ -528,31 +574,34 @@ class ncdata(object):
         def __do_interp_lon_1D(self, dirs, fns, cnt_lon, lon_cnt, n_col, lon_idx_rng):
             # Note: MERIT is always on n_row = 0 and REMA on n_row = 1
 
-                merit_path = dirs[cnt_lon] + fns[cnt_lon]
-                merit_dat  = self._get_cached_file(merit_path)
-                merit_lon  = merit_dat["lon"]
+            merit_path = dirs[cnt_lon] + fns[cnt_lon]
+            merit_dat = self._get_cached_file(merit_path)
+            merit_lon = merit_dat["lon"]
 
-                rema_path = dirs[cnt_lon + lon_cnt + 1] + fns[cnt_lon + lon_cnt + 1]
-                rema_dat  = self._get_cached_file(rema_path)
-                rema_lon  = rema_dat["lon"]
+            rema_path = dirs[cnt_lon + lon_cnt + 1] + fns[cnt_lon + lon_cnt + 1]
+            rema_dat = self._get_cached_file(rema_path)
+            rema_lon = rema_dat["lon"]
 
-                merit_lon_low, merit_lon_high = self.__get_lon_idxs(merit_lon, lon_idx_rng, n_col)
-                rema_lon_low, rema_lon_high   = self.__get_lon_idxs(rema_lon, lon_idx_rng, n_col)
+            merit_lon_low, merit_lon_high = self.__get_lon_idxs(
+                merit_lon, lon_idx_rng, n_col
+            )
+            rema_lon_low, rema_lon_high = self.__get_lon_idxs(
+                rema_lon, lon_idx_rng, n_col
+            )
 
-                merit_lon = merit_lon[merit_lon_low:merit_lon_high].tolist()
-                rema_lon  = rema_lon[rema_lon_low:rema_lon_high].tolist()
+            merit_lon = merit_lon[merit_lon_low:merit_lon_high].tolist()
+            rema_lon = rema_lon[rema_lon_low:rema_lon_high].tolist()
 
-                new_max = min(max(merit_lon), max(rema_lon))
-                new_min = max(min(merit_lon), min(rema_lon))
-                # we always use the number of data points in the merit lon grid:
-                new_sz = min(len(merit_lon),len(rema_lon))
+            new_max = min(max(merit_lon), max(rema_lon))
+            new_min = max(min(merit_lon), min(rema_lon))
+            # we always use the number of data points in the merit lon grid:
+            new_sz = min(len(merit_lon), len(rema_lon))
 
-                new_lon = np.linspace(new_min, new_max, new_sz)
+            new_lon = np.linspace(new_min, new_max, new_sz)
 
-                # Files kept open in cache (no close needed)
+            # Files kept open in cache (no close needed)
 
-                return new_lon
-
+            return new_lon
 
         @staticmethod
         def __interp_topo_2D(topo, curr_lat, curr_lon, new_lon):
@@ -560,7 +609,12 @@ class ncdata(object):
             XX, YY = np.meshgrid(new_lon, curr_lat)
             return interp((YY, XX))
 
-        def __get_lon_idxs(self, lon, lon_idx_rng, n_col, ):
+        def __get_lon_idxs(
+            self,
+            lon,
+            lon_idx_rng,
+            n_col,
+        ):
             l_lon_bound, r_lon_bound = (
                 self.fn_lon[lon_idx_rng[n_col]],
                 self.fn_lon[lon_idx_rng[n_col] + 1],
@@ -568,7 +622,10 @@ class ncdata(object):
 
             lon_rng = r_lon_bound - l_lon_bound
 
-            lon_in_file = self.lon_verts[( (self.lon_verts - l_lon_bound) > 0 ) & ( (self.lon_verts - l_lon_bound) <= lon_rng )]
+            lon_in_file = self.lon_verts[
+                ((self.lon_verts - l_lon_bound) > 0)
+                & ((self.lon_verts - l_lon_bound) <= lon_rng)
+            ]
 
             if len(lon_in_file) == 0:
                 lon_high = np.argmin(np.abs(lon - r_lon_bound))
@@ -578,7 +635,7 @@ class ncdata(object):
                 if not self.split_EW:
                     if lon_in_file.max() == self.lon_verts.max():
                         lon_high = np.argmin(np.abs(lon - lon_in_file.max()))
-                    else: 
+                    else:
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
 
                     if lon_in_file.min() == self.lon_verts.min():
@@ -591,14 +648,20 @@ class ncdata(object):
                     negative_lons = self.lon_verts[self.lon_verts < 0.0]
 
                     # Check if we have negative longitudes before using min/max
-                    if len(negative_lons) > 0 and lon_in_file.max() == min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)):
+                    if len(negative_lons) > 0 and lon_in_file.max() == min(
+                        np.where(
+                            self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts
+                        )
+                    ):
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
                         lon_low = np.argmin(np.abs(lon - lon_in_file.min()))
                     else:
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
 
                     # Check if we have negative longitudes before using max
-                    if len(negative_lons) > 0 and lon_in_file.min() == (max(negative_lons + 360.0) - 360.0):
+                    if len(negative_lons) > 0 and lon_in_file.min() == (
+                        max(negative_lons + 360.0) - 360.0
+                    ):
                         lon_high = np.argmin(np.abs(lon - lon_in_file.max()))
                         lon_low = np.argmin(np.abs(lon - l_lon_bound))
                     else:
@@ -609,7 +672,6 @@ class ncdata(object):
         def close_all(self):
             for df in self.opened_dfs:
                 df.close()
-
 
         @staticmethod
         def __get_NSEW(vert, typ):
@@ -652,16 +714,43 @@ class ncdata(object):
             self._thread_local = threading.local()
 
             # ETOPO 2022 tiles are at 15 degree intervals
-            self.fn_lon = np.array([
-                -180, -165, -150, -135, -120, -105, -90, -75, -60, -45, -30, -15,
-                0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180
-            ])
-            self.fn_lat = np.array([90, 75, 60, 45, 30, 15, 0, -15, -30, -45, -60, -75, -90])
+            self.fn_lon = np.array(
+                [
+                    -180,
+                    -165,
+                    -150,
+                    -135,
+                    -120,
+                    -105,
+                    -90,
+                    -75,
+                    -60,
+                    -45,
+                    -30,
+                    -15,
+                    0,
+                    15,
+                    30,
+                    45,
+                    60,
+                    75,
+                    90,
+                    105,
+                    120,
+                    135,
+                    150,
+                    165,
+                    180,
+                ]
+            )
+            self.fn_lat = np.array(
+                [90, 75, 60, 45, 30, 15, 0, -15, -30, -45, -60, -75, -90]
+            )
 
             self.lat_verts = np.array(params.lat_extent)
             self.lon_verts = np.array(params.lon_extent)
 
-            self.etopo_cg = params.etopo_cg if hasattr(params, 'etopo_cg') else 1
+            self.etopo_cg = params.etopo_cg if hasattr(params, "etopo_cg") else 1
             self.split_EW = False
 
             if not is_parallel:
@@ -677,16 +766,19 @@ class ncdata(object):
             Even opening different files from different threads causes crashes.
             """
             # Get or create thread-local file cache
-            if not hasattr(self._thread_local, 'file_cache'):
+            if not hasattr(self._thread_local, "file_cache"):
                 self._thread_local.file_cache = {}
 
             cache = self._thread_local.file_cache
 
             if filepath not in cache:
                 if self.verbose:
-                    print(f"[Thread {threading.current_thread().name}] Opening: {filepath}")
+                    print(
+                        f"[Thread {threading.current_thread().name}] Opening: {filepath}"
+                    )
 
                 import time
+
                 max_retries = 3
                 retry_delay = 0.5
 
@@ -700,16 +792,20 @@ class ncdata(object):
                         if attempt < max_retries - 1:
                             # Retry with exponential backoff
                             if self.verbose:
-                                print(f"Warning: Attempt {attempt+1} failed for {filepath}, retrying: {e}")
-                            time.sleep(retry_delay * (2 ** attempt))
+                                print(
+                                    f"Warning: Attempt {attempt+1} failed for {filepath}, retrying: {e}"
+                                )
+                            time.sleep(retry_delay * (2**attempt))
                         else:
-                            raise RuntimeError(f"Failed to open {filepath} after {max_retries} attempts: {e}")
+                            raise RuntimeError(
+                                f"Failed to open {filepath} after {max_retries} attempts: {e}"
+                            )
 
             return cache[filepath]
 
         def close_cached_files(self):
             """Close all cached NetCDF files in current thread."""
-            if hasattr(self._thread_local, 'file_cache'):
+            if hasattr(self._thread_local, "file_cache"):
                 for filepath, ds in self._thread_local.file_cache.items():
                     try:
                         ds.close()
@@ -727,7 +823,9 @@ class ncdata(object):
             # 1. We have longitudes on both sides of ±180° (some positive, some negative)
             # 2. AND the span wraps around (e.g., 170° to -170° = 340° wrap, not 20°)
             # The key is to check if converting all to [0, 360) would reduce the span
-            lon_verts_360 = np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)
+            lon_verts_360 = np.where(
+                self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts
+            )
             span_360 = lon_verts_360.max() - lon_verts_360.min()
 
             # If converting to [0, 360) reduces the span, it's a true dateline crossing
@@ -771,7 +869,9 @@ class ncdata(object):
 
                 if self.verbose:
                     print(f"DEBUG dateline: min_lon={min_lon}, max_lon={max_lon}")
-                    print(f"DEBUG dateline: lon_min_idx={lon_min_idx}, lon_max_idx={lon_max_idx}")
+                    print(
+                        f"DEBUG dateline: lon_min_idx={lon_min_idx}, lon_max_idx={lon_max_idx}"
+                    )
 
                 # For dateline crossing, we need tiles covering the span from min_lon to max_lon
                 # Since we're crossing the dateline, the span wraps around ±180°
@@ -792,13 +892,17 @@ class ncdata(object):
                     # Normal dateline crossing: go from min_idx to end (excluding the duplicate at 180°),
                     # then from start to max_idx
                     # Note: fn_lon[-1] = 180° maps to same tile as fn_lon[0] = -180°, so exclude index len-1
-                    lon_idx_rng = list(range(lon_min_idx, len(self.fn_lon) - 1)) + list(range(0, lon_max_idx + 1))
+                    lon_idx_rng = list(range(lon_min_idx, len(self.fn_lon) - 1)) + list(
+                        range(0, lon_max_idx + 1)
+                    )
 
                 if self.verbose:
                     print(f"DEBUG dateline: lon_idx_rng={lon_idx_rng}")
 
                 if self.verbose:
-                    print(f"Dateline crossing detected: [{self.lon_verts.min():.2f}, {self.lon_verts.max():.2f}]")
+                    print(
+                        f"Dateline crossing detected: [{self.lon_verts.min():.2f}, {self.lon_verts.max():.2f}]"
+                    )
                     print(f"  In [0,360): [{min_lon:.2f}, {max_lon:.2f}]")
                     print(f"  lon_min_idx={lon_min_idx}, lon_max_idx={lon_max_idx}")
                     print(f"  Loading tiles: {lon_idx_rng}")
@@ -825,7 +929,9 @@ class ncdata(object):
             fns, lon_cnt, lat_cnt = self.__get_fns(lat_idx_rng, lon_idx_rng)
 
             if self.verbose:
-                print(f"DEBUG: Generated {len(fns)} files, lon_cnt={lon_cnt}, lat_cnt={lat_cnt}")
+                print(
+                    f"DEBUG: Generated {len(fns)} files, lon_cnt={lon_cnt}, lat_cnt={lat_cnt}"
+                )
                 print(f"DEBUG: First few files: {fns[:min(5, len(fns))]}")
                 print(f"DEBUG: Last few files: {fns[-min(5, len(fns)):]}")
 
@@ -844,13 +950,13 @@ class ncdata(object):
                 print(fn_int, where_idx)
 
             if typ == "min":
-                if ((vert - fn_int[where_idx]) < 0.0):
+                if (vert - fn_int[where_idx]) < 0.0:
                     if direction == "lon":
                         where_idx -= 1
                     else:
                         where_idx += 1
             elif typ == "max":
-                if ((vert - fn_int[where_idx]) > 0.0):
+                if (vert - fn_int[where_idx]) > 0.0:
                     if direction == "lon":
                         if not self.split_EW:
                             where_idx += 1
@@ -897,7 +1003,17 @@ class ncdata(object):
 
             return fns, lon_cnt, lat_cnt
 
-        def __load_topo(self, cell, fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng, init=True, populate=True):
+        def __load_topo(
+            self,
+            cell,
+            fns,
+            lon_cnt,
+            lat_cnt,
+            lat_idx_rng,
+            lon_idx_rng,
+            init=True,
+            populate=True,
+        ):
             """
             Assembles a contiguous array in ``cell.topo`` containing the regional topography.
 
@@ -906,7 +1022,16 @@ class ncdata(object):
                 2. Second run populates the array with the actual topography data.
             """
             if (cell.topo is None) and (init):
-                self.__load_topo(cell, fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng, init=False, populate=False)
+                self.__load_topo(
+                    cell,
+                    fns,
+                    lon_cnt,
+                    lat_cnt,
+                    lat_idx_rng,
+                    lon_idx_rng,
+                    init=False,
+                    populate=False,
+                )
 
             if not populate:
                 n_col = 0
@@ -940,8 +1065,12 @@ class ncdata(object):
 
                 # Extract latitude data based on requested extent
                 # Always use the precise extraction based on lat_verts, don't try to be clever
-                lat_min_idx = np.argmin(np.abs((lat - np.sign(lat) * 1e-4) - self.lat_verts.min()))
-                lat_max_idx = np.argmin(np.abs((lat + np.sign(lat) * 1e-4) - self.lat_verts.max()))
+                lat_min_idx = np.argmin(
+                    np.abs((lat - np.sign(lat) * 1e-4) - self.lat_verts.min())
+                )
+                lat_max_idx = np.argmin(
+                    np.abs((lat + np.sign(lat) * 1e-4) - self.lat_verts.max())
+                )
 
                 lat_high = np.max((lat_min_idx, lat_max_idx))
                 lat_low = np.min((lat_min_idx, lat_max_idx))
@@ -996,7 +1125,9 @@ class ncdata(object):
                         lon_sz_old = 0
 
                         n_row += 1
-                        lat_sz_old += np.copy(lat_sz)  # FIX: Add to offset, don't replace!
+                        lat_sz_old += np.copy(
+                            lat_sz
+                        )  # FIX: Add to offset, don't replace!
 
                 # Note: Files are kept open in cache for reuse (closed via close_cached_files())
 
@@ -1040,7 +1171,9 @@ class ncdata(object):
                         ).mean(axis=(-1, -2))
                     except (ValueError, MemoryError) as e:
                         # If coarse-graining fails, fall back to no coarse-graining
-                        print(f"Warning: Coarse-graining failed ({e}), using full resolution")
+                        print(
+                            f"Warning: Coarse-graining failed ({e}), using full resolution"
+                        )
                         cell.lat = lat_sorted
                         cell.lon = lon_sorted
                         cell.topo = topo_sorted
@@ -1057,14 +1190,16 @@ class ncdata(object):
             # since both map to the same W180 tile
             r_idx = lon_idx_rng[n_col] + 1
             if r_idx >= len(self.fn_lon):
-                r_idx = 1  # Skip index 0 (-180°), go to index 1 (-165°) for proper bounds
+                r_idx = (
+                    1  # Skip index 0 (-180°), go to index 1 (-165°) for proper bounds
+                )
             r_lon_bound = self.fn_lon[r_idx]
 
             lon_rng = r_lon_bound - l_lon_bound
 
             lon_in_file = self.lon_verts[
-                ((self.lon_verts - l_lon_bound) >= 0) &
-                ((self.lon_verts - l_lon_bound) <= lon_rng)
+                ((self.lon_verts - l_lon_bound) >= 0)
+                & ((self.lon_verts - l_lon_bound) <= lon_rng)
             ]
 
             if len(lon_in_file) == 0:
@@ -1088,14 +1223,20 @@ class ncdata(object):
                     negative_lons = self.lon_verts[self.lon_verts < 0.0]
 
                     # Check if we have negative longitudes before using min/max
-                    if len(negative_lons) > 0 and lon_in_file.max() == min(np.where(self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts)):
+                    if len(negative_lons) > 0 and lon_in_file.max() == min(
+                        np.where(
+                            self.lon_verts < 0.0, self.lon_verts + 360.0, self.lon_verts
+                        )
+                    ):
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
                         lon_low = np.argmin(np.abs(lon - lon_in_file.min()))
                     else:
                         lon_high = np.argmin(np.abs(lon - r_lon_bound))
 
                     # Check if we have negative longitudes before using max
-                    if len(negative_lons) > 0 and lon_in_file.min() == (max(negative_lons + 360.0) - 360.0):
+                    if len(negative_lons) > 0 and lon_in_file.min() == (
+                        max(negative_lons + 360.0) - 360.0
+                    ):
                         lon_high = np.argmin(np.abs(lon - lon_in_file.max()))
                         lon_low = np.argmin(np.abs(lon - l_lon_bound))
                     else:
@@ -1331,19 +1472,19 @@ class nc_writer(object):
         self.fn = params.fn_output + str(sfx)
 
         if self.fn[-3:] != ".nc":
-            self.fn += '.nc'
+            self.fn += ".nc"
 
-        self.fn = 'datasets/' + self.fn
+        self.fn = "datasets/" + self.fn
         self.path = params.path_output
         self.rect_set = params.rect_set
         self.debug = params.debug_writer
 
         # Ensure the datasets directory exists
-        datasets_dir = os.path.join(self.path, 'datasets')
+        datasets_dir = os.path.join(self.path, "datasets")
         os.makedirs(datasets_dir, exist_ok=True)
 
         rootgrp = nc.Dataset(self.path + self.fn, "w", format="NETCDF4")
-        
+
         for key, value in vars(params).items():
 
             # if params attribute is None but check passed, then the attribute is not necessary for the run; skip it
@@ -1366,33 +1507,32 @@ class nc_writer(object):
 
         grp = rootgrp.createGroup(str(id))
 
-        is_land_var = grp.createVariable("is_land","i4")
+        is_land_var = grp.createVariable("is_land", "i4")
         is_land_var[:] = is_land
 
-        clat_var = grp.createVariable("clat","f8")
+        clat_var = grp.createVariable("clat", "f8")
         clat_var[:] = clat
-        clon_var = grp.createVariable("clon","f8")
+        clon_var = grp.createVariable("clon", "f8")
         clon_var[:] = clon
 
         if analysis is not None:
-            dk_var = grp.createVariable("dk","f8")
+            dk_var = grp.createVariable("dk", "f8")
             dk_var[:] = analysis.dk
-            dl_var = grp.createVariable("dl","f8")
+            dl_var = grp.createVariable("dl", "f8")
             dl_var[:] = analysis.dl
 
             pick_idx = np.where(analysis.ampls > 0)
 
-            H_spec_var = grp.createVariable("H_spec","f8", ("nspec",))
+            H_spec_var = grp.createVariable("H_spec", "f8", ("nspec",))
             H_spec_var[:] = self.__pad_zeros(analysis.ampls[pick_idx], self.n_modes)
 
-            kks_var = grp.createVariable("kks","f8", ("nspec",))
+            kks_var = grp.createVariable("kks", "f8", ("nspec",))
             kks_var[:] = self.__pad_zeros(analysis.kks[pick_idx], self.n_modes)
 
-            lls_var = grp.createVariable("lls","f8", ("nspec",))
+            lls_var = grp.createVariable("lls", "f8", ("nspec",))
             lls_var[:] = self.__pad_zeros(analysis.lls[pick_idx], self.n_modes)
 
         rootgrp.close()
-
 
     def duplicate(self, id, struct):
 
@@ -1400,40 +1540,39 @@ class nc_writer(object):
 
         grp = rootgrp.createGroup(str(id))
 
-        is_land_var = grp.createVariable("is_land","i4")
+        is_land_var = grp.createVariable("is_land", "i4")
         is_land_var[:] = struct.is_land
 
-        clat_var = grp.createVariable("clat","f8")
+        clat_var = grp.createVariable("clat", "f8")
         clat_var[:] = struct.clat
-        clon_var = grp.createVariable("clon","f8")
+        clon_var = grp.createVariable("clon", "f8")
         clon_var[:] = struct.clon
 
         # Add cell_area if available
         if struct.cell_area is not None:
-            cell_area_var = grp.createVariable("cell_area","f8")
+            cell_area_var = grp.createVariable("cell_area", "f8")
             cell_area_var[:] = struct.cell_area
             cell_area_var.units = "m^2"
             cell_area_var.long_name = "Area of ICON grid cell"
 
         if struct.is_land:
-            dk_var = grp.createVariable("dk","f8")
+            dk_var = grp.createVariable("dk", "f8")
             dk_var[:] = struct.dk
-            dl_var = grp.createVariable("dl","f8")
+            dl_var = grp.createVariable("dl", "f8")
             dl_var[:] = struct.dl
 
             pick_idx = np.where(struct.ampls > 0)
 
-            H_spec_var = grp.createVariable("H_spec","f8", ("nspec",))
+            H_spec_var = grp.createVariable("H_spec", "f8", ("nspec",))
             H_spec_var[:] = self.__pad_zeros(struct.ampls[pick_idx], self.n_modes)
 
-            kks_var = grp.createVariable("kks","f8", ("nspec",))
+            kks_var = grp.createVariable("kks", "f8", ("nspec",))
             kks_var[:] = self.__pad_zeros(struct.kks[pick_idx], self.n_modes)
 
-            lls_var = grp.createVariable("lls","f8", ("nspec",))
+            lls_var = grp.createVariable("lls", "f8", ("nspec",))
             lls_var[:] = self.__pad_zeros(struct.lls[pick_idx], self.n_modes)
 
         rootgrp.close()
-
 
     def duplicate_all(self, data):
 
@@ -1442,34 +1581,32 @@ class nc_writer(object):
         for id, struct in enumerate(tqdm(data)):
             grp = rootgrp.createGroup(str(id))
 
-            is_land_var = grp.createVariable("is_land","i4")
+            is_land_var = grp.createVariable("is_land", "i4")
             is_land_var[:] = struct.is_land
 
-            clat_var = grp.createVariable("clat","f8")
+            clat_var = grp.createVariable("clat", "f8")
             clat_var[:] = struct.clat
-            clon_var = grp.createVariable("clon","f8")
+            clon_var = grp.createVariable("clon", "f8")
             clon_var[:] = struct.clon
 
             if struct.is_land:
-                dk_var = grp.createVariable("dk","f8")
+                dk_var = grp.createVariable("dk", "f8")
                 dk_var[:] = struct.dk
-                dl_var = grp.createVariable("dl","f8")
+                dl_var = grp.createVariable("dl", "f8")
                 dl_var[:] = struct.dl
 
                 pick_idx = np.where(struct.ampls > 0)
 
-                H_spec_var = grp.createVariable("H_spec","f8", ("nspec",))
+                H_spec_var = grp.createVariable("H_spec", "f8", ("nspec",))
                 H_spec_var[:] = self.__pad_zeros(struct.ampls[pick_idx], self.n_modes)
 
-                kks_var = grp.createVariable("kks","f8", ("nspec",))
+                kks_var = grp.createVariable("kks", "f8", ("nspec",))
                 kks_var[:] = self.__pad_zeros(struct.kks[pick_idx], self.n_modes)
 
-                lls_var = grp.createVariable("lls","f8", ("nspec",))
+                lls_var = grp.createVariable("lls", "f8", ("nspec",))
                 lls_var[:] = self.__pad_zeros(struct.lls[pick_idx], self.n_modes)
 
         rootgrp.close()
-
-
 
     @staticmethod
     def read_dat(path, fn, id, struct):
@@ -1477,12 +1614,12 @@ class nc_writer(object):
             rootgrp = nc.Dataset(path + fn, "a", format="NETCDF4")
         except:
             return False
-        
+
         grp = rootgrp[str(id)]
 
         struct.is_land = grp["is_land"][:]
-        struct.clat    = grp["clat"][:]
-        struct.clon    = grp["clon"][:]
+        struct.clat = grp["clat"][:]
+        struct.clon = grp["clon"][:]
 
         if struct.is_land:
             struct.dk = grp["dk"][:]
@@ -1497,7 +1634,7 @@ class nc_writer(object):
         return True
 
     class grp_struct(object):
-        def __init__(self, c_idx, clat, clon, is_land, analysis = None, cell_area = None):
+        def __init__(self, c_idx, clat, clon, is_land, analysis=None, cell_area=None):
             self.c_idx = c_idx
             self.clat = clat
             self.clon = clon
@@ -1515,7 +1652,6 @@ class nc_writer(object):
                 for key, value in vars(analysis).items():
                     setattr(self, key, value)
 
-
     @staticmethod
     def __pad_zeros(lst, n_modes):
 
@@ -1525,7 +1661,6 @@ class nc_writer(object):
             pad_len = 0
 
         return np.concatenate((lst, np.zeros((pad_len))))
-
 
 
 class reader(object):

@@ -18,9 +18,11 @@ def autoreload():
     if ipython is not None:
         ipython.run_line_magic("autoreload", "2")
 
+
 # %%
 # from inputs.lam_run import params
 from inputs.selected_run import params
+
 autoreload()
 # from params.debug_run import params
 from copy import deepcopy

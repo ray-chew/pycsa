@@ -1,5 +1,4 @@
-"""User-defined parameters used in the debugger
-"""
+"""User-defined parameters used in the debugger"""
 
 import numpy as np
 from src import var

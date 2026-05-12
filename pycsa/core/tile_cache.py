@@ -18,10 +18,35 @@ logger = logging.getLogger(__name__)
 
 
 # ETOPO 2022 15 arc-second tile grid (15° spacing in both lat and lon)
-_ETOPO_FN_LON = np.array([
-    -180, -165, -150, -135, -120, -105, -90, -75, -60, -45, -30, -15,
-    0, 15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180
-])
+_ETOPO_FN_LON = np.array(
+    [
+        -180,
+        -165,
+        -150,
+        -135,
+        -120,
+        -105,
+        -90,
+        -75,
+        -60,
+        -45,
+        -30,
+        -15,
+        0,
+        15,
+        30,
+        45,
+        60,
+        75,
+        90,
+        105,
+        120,
+        135,
+        150,
+        165,
+        180,
+    ]
+)
 _ETOPO_FN_LAT = np.array([90, 75, 60, 45, 30, 15, 0, -15, -30, -45, -60, -75, -90])
 
 
@@ -93,8 +118,8 @@ class TopographyTileCache:
         self,
         data_dir: str,
         tile_filenames: List[str],
-        dataset_type: str = 'MERIT',
-        verbose: bool = False
+        dataset_type: str = "MERIT",
+        verbose: bool = False,
     ):
         self.data_dir = Path(data_dir)
         self.dataset_type = dataset_type
@@ -108,7 +133,7 @@ class TopographyTileCache:
 
         # ETOPO with empty tile list = lazy mode: tiles open on first access via
         # get_etopo_data. MERIT keeps the existing eager pre-load behaviour.
-        if dataset_type == 'ETOPO' and len(tile_filenames) == 0:
+        if dataset_type == "ETOPO" and len(tile_filenames) == 0:
             return
 
         self._load_tiles(tile_filenames)
@@ -128,12 +153,12 @@ class TopographyTileCache:
                 # Open NetCDF file under the shared HDF5 lock (HDF5 is not
                 # thread-safe on this system — see pycsa/core/io.py).
                 with _NETCDF_GLOBAL_LOCK:
-                    ds = nc.Dataset(str(filepath), 'r')
+                    ds = nc.Dataset(str(filepath), "r")
                 self.tiles[fn] = ds
 
                 # Cache coordinate arrays
-                lat = ds['lat'][:]
-                lon = ds['lon'][:]
+                lat = ds["lat"][:]
+                lon = ds["lon"][:]
                 self.tile_lats[fn] = lat
                 self.tile_lons[fn] = lon
 
@@ -142,22 +167,21 @@ class TopographyTileCache:
                     float(lat.min()),
                     float(lat.max()),
                     float(lon.min()),
-                    float(lon.max())
+                    float(lon.max()),
                 )
 
                 if self.verbose:
                     logger.debug(f"Loaded tile: {fn}")
-                    logger.debug(f"  Bounds: lat[{lat.min():.2f}, {lat.max():.2f}], "
-                               f"lon[{lon.min():.2f}, {lon.max():.2f}]")
+                    logger.debug(
+                        f"  Bounds: lat[{lat.min():.2f}, {lat.max():.2f}], "
+                        f"lon[{lon.min():.2f}, {lon.max():.2f}]"
+                    )
 
             except Exception as e:
                 logger.error(f"Failed to load tile {fn}: {e}")
 
     def get_data_for_region(
-        self,
-        lat_extent: np.ndarray,
-        lon_extent: np.ndarray,
-        merit_cg: int = 1
+        self, lat_extent: np.ndarray, lon_extent: np.ndarray, merit_cg: int = 1
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Extract topography data for a given lat/lon region.
@@ -193,14 +217,20 @@ class TopographyTileCache:
         # cells near the dateline (e.g. Aleutians).
         crosses_dateline = compute_split_EW(lon_extent)
         if crosses_dateline:
-            lon_min = max(np.where(lon_extent < 0.0, lon_extent + 360.0, lon_extent)) - 360.0
+            lon_min = (
+                max(np.where(lon_extent < 0.0, lon_extent + 360.0, lon_extent)) - 360.0
+            )
             lon_max = min(np.where(lon_extent < 0.0, lon_extent + 360.0, lon_extent))
 
         # Find tiles that overlap with this region
-        overlapping_tiles = self._find_overlapping_tiles(lat_min, lat_max, lon_min, lon_max)
+        overlapping_tiles = self._find_overlapping_tiles(
+            lat_min, lat_max, lon_min, lon_max
+        )
 
         if not overlapping_tiles:
-            logger.warning(f"No tiles found for region: lat[{lat_min}, {lat_max}], lon[{lon_min}, {lon_max}]")
+            logger.warning(
+                f"No tiles found for region: lat[{lat_min}, {lat_max}], lon[{lon_min}, {lon_max}]"
+            )
             # Return empty arrays
             return np.array([]), np.array([]), np.zeros((0, 0))
 
@@ -232,16 +262,17 @@ class TopographyTileCache:
         return lat_data, lon_data, topo_data
 
     def _find_overlapping_tiles(
-        self,
-        lat_min: float,
-        lat_max: float,
-        lon_min: float,
-        lon_max: float
+        self, lat_min: float, lat_max: float, lon_min: float, lon_max: float
     ) -> List[str]:
         """Find all tiles that overlap with the given region."""
         overlapping = []
 
-        for fn, (tile_lat_min, tile_lat_max, tile_lon_min, tile_lon_max) in self.tile_bounds.items():
+        for fn, (
+            tile_lat_min,
+            tile_lat_max,
+            tile_lon_min,
+            tile_lon_max,
+        ) in self.tile_bounds.items():
             # Check for overlap
             lat_overlap = not (tile_lat_max < lat_min or tile_lat_min > lat_max)
             lon_overlap = not (tile_lon_max < lon_min or tile_lon_min > lon_max)
@@ -258,7 +289,7 @@ class TopographyTileCache:
         lat_max: float,
         lon_min: float,
         lon_max: float,
-        crosses_dateline: bool
+        crosses_dateline: bool,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Merge data from multiple tiles into a single contiguous array.
@@ -289,15 +320,15 @@ class TopographyTileCache:
             lon_subset = lon[lon_idxs]
 
             # Handle elevation variable name (MERIT uses "Elevation", ETOPO may use different)
-            if 'Elevation' in ds.variables:
-                elev_var = 'Elevation'
-            elif 'elevation' in ds.variables:
-                elev_var = 'elevation'
-            elif 'z' in ds.variables:
-                elev_var = 'z'
+            if "Elevation" in ds.variables:
+                elev_var = "Elevation"
+            elif "elevation" in ds.variables:
+                elev_var = "elevation"
+            elif "z" in ds.variables:
+                elev_var = "z"
             else:
                 # Try to find any elevation-like variable
-                possible_names = ['topo', 'topography', 'height', 'dem']
+                possible_names = ["topo", "topography", "height", "dem"]
                 elev_var = None
                 for name in possible_names:
                     if name in ds.variables:
@@ -308,7 +339,9 @@ class TopographyTileCache:
                     continue
 
             with _NETCDF_GLOBAL_LOCK:
-                topo_subset = ds[elev_var][lat_idxs[0]:lat_idxs[-1]+1, lon_idxs[0]:lon_idxs[-1]+1]
+                topo_subset = ds[elev_var][
+                    lat_idxs[0] : lat_idxs[-1] + 1, lon_idxs[0] : lon_idxs[-1] + 1
+                ]
 
             all_lats.append(lat_subset)
             all_lons.append(lon_subset)
@@ -369,7 +402,9 @@ class TopographyTileCache:
         return ds
 
     @staticmethod
-    def _etopo_compute_idx(vert: float, typ: str, direction: str, split_EW: bool) -> int:
+    def _etopo_compute_idx(
+        vert: float, typ: str, direction: str, split_EW: bool
+    ) -> int:
         """Look up which ETOPO tile-boundary index encloses ``vert``.
 
         Mirrors pycsa.core.io.read_etopo_topo.__compute_idx (io.py:834-870).
@@ -392,7 +427,9 @@ class TopographyTileCache:
         return int(where_idx)
 
     @staticmethod
-    def _etopo_get_fns(lat_idx_rng: List[int], lon_idx_rng: List[int]) -> Tuple[List[str], int, int]:
+    def _etopo_get_fns(
+        lat_idx_rng: List[int], lon_idx_rng: List[int]
+    ) -> Tuple[List[str], int, int]:
         """Build ETOPO filenames for a rectangular tile range.
 
         Mirrors pycsa.core.io.read_etopo_topo.__get_fns (io.py:872-898).
@@ -429,8 +466,7 @@ class TopographyTileCache:
         lon_rng = r_lon_bound - l_lon_bound
 
         lon_in_file = lon_verts[
-            ((lon_verts - l_lon_bound) >= 0)
-            & ((lon_verts - l_lon_bound) <= lon_rng)
+            ((lon_verts - l_lon_bound) >= 0) & ((lon_verts - l_lon_bound) <= lon_rng)
         ]
 
         if len(lon_in_file) == 0:
@@ -619,9 +655,8 @@ class TopographyTileCache:
                 if lon_min_idx >= len(_ETOPO_FN_LON) - 2:
                     lon_idx_rng.append(0)
             else:
-                lon_idx_rng = (
-                    list(range(lon_min_idx, len(_ETOPO_FN_LON) - 1))
-                    + list(range(0, lon_max_idx + 1))
+                lon_idx_rng = list(range(lon_min_idx, len(_ETOPO_FN_LON) - 1)) + list(
+                    range(0, lon_max_idx + 1)
                 )
         else:
             min_lon = lon_verts.min()
@@ -633,15 +668,25 @@ class TopographyTileCache:
             lon_idx_rng = list(range(lon_min_idx, lon_max_idx))
 
         # Latitude tile range — same logic across all longitude branches.
-        lat_min_tile_idx = self._etopo_compute_idx(lat_verts.min(), "min", "lat", split_EW)
-        lat_max_tile_idx = self._etopo_compute_idx(lat_verts.max(), "max", "lat", split_EW)
+        lat_min_tile_idx = self._etopo_compute_idx(
+            lat_verts.min(), "min", "lat", split_EW
+        )
+        lat_max_tile_idx = self._etopo_compute_idx(
+            lat_verts.max(), "max", "lat", split_EW
+        )
         lat_idx_rng = list(range(lat_max_tile_idx, lat_min_tile_idx))
 
         # Build filenames; load + assemble.
         fns, lon_cnt, lat_cnt = self._etopo_get_fns(lat_idx_rng, lon_idx_rng)
         cell_lat, cell_lon, topo_arr = self._etopo_load_topo(
-            fns, lon_cnt, lat_cnt, lat_idx_rng, lon_idx_rng,
-            lat_verts, lon_verts, split_EW,
+            fns,
+            lon_cnt,
+            lat_cnt,
+            lat_idx_rng,
+            lon_idx_rng,
+            lat_verts,
+            lon_verts,
+            split_EW,
         )
 
         # Wrap longitudes if dateline-crossing, then sort lat/lon and reorder topo.
@@ -660,18 +705,20 @@ class TopographyTileCache:
         iint = etopo_cg
         if iint > 1:
             try:
-                out_lat = utils.sliding_window_view(
-                    lat_sorted, (iint,), (iint,)
-                ).mean(axis=-1)
-                out_lon = utils.sliding_window_view(
-                    lon_sorted, (iint,), (iint,)
-                ).mean(axis=-1)
+                out_lat = utils.sliding_window_view(lat_sorted, (iint,), (iint,)).mean(
+                    axis=-1
+                )
+                out_lon = utils.sliding_window_view(lon_sorted, (iint,), (iint,)).mean(
+                    axis=-1
+                )
                 out_topo = utils.sliding_window_view(
                     topo_sorted, (iint, iint), (iint, iint)
                 ).mean(axis=(-1, -2))
                 return out_lat, out_lon, out_topo
             except (ValueError, MemoryError) as e:
-                logger.warning(f"Coarse-graining failed ({e}); returning full resolution")
+                logger.warning(
+                    f"Coarse-graining failed ({e}); returning full resolution"
+                )
         return lat_sorted, lon_sorted, topo_sorted
 
     def close_all(self):
@@ -704,9 +751,7 @@ class TopographyTileCache:
 
 
 def create_tile_cache_from_grid(
-    grid,
-    params,
-    padding: float = 0.5
+    grid, params, padding: float = 0.5
 ) -> TopographyTileCache:
     """
     Create a tile cache containing all tiles needed for a given grid.
@@ -736,7 +781,9 @@ def create_tile_cache_from_grid(
     lon_min = np.min(grid.clon_vertices) - padding
     lon_max = np.max(grid.clon_vertices) + padding
 
-    logger.info(f"Grid spans: lat[{lat_min:.2f}, {lat_max:.2f}], lon[{lon_min:.2f}, {lon_max:.2f}]")
+    logger.info(
+        f"Grid spans: lat[{lat_min:.2f}, {lat_max:.2f}], lon[{lon_min:.2f}, {lon_max:.2f}]"
+    )
 
     # Determine which tiles to load (using MERIT tile naming convention)
     # TODO: Implement automatic tile discovery based on bounds
@@ -752,16 +799,13 @@ def create_tile_cache_from_grid(
     return TopographyTileCache(
         data_dir=params.path_merit,
         tile_filenames=tile_filenames,
-        dataset_type='MERIT',
-        verbose=params.verbose if hasattr(params, 'verbose') else False
+        dataset_type="MERIT",
+        verbose=params.verbose if hasattr(params, "verbose") else False,
     )
 
 
 def _get_merit_tiles_for_bounds(
-    lat_min: float,
-    lat_max: float,
-    lon_min: float,
-    lon_max: float
+    lat_min: float, lat_max: float, lon_min: float, lon_max: float
 ) -> List[str]:
     """
     Determine MERIT tile filenames needed to cover the given bounds.
@@ -771,38 +815,57 @@ def _get_merit_tiles_for_bounds(
     """
     # MERIT tile boundaries (standard grid)
     merit_lat_bounds = np.array([90.0, 60.0, 30.0, 0.0, -30.0, -60.0, -90.0])
-    merit_lon_bounds = np.array([-180.0, -150.0, -120.0, -90.0, -60.0, -30.0,
-                                 0.0, 30.0, 60.0, 90.0, 120.0, 150.0, 180.0])
+    merit_lon_bounds = np.array(
+        [
+            -180.0,
+            -150.0,
+            -120.0,
+            -90.0,
+            -60.0,
+            -30.0,
+            0.0,
+            30.0,
+            60.0,
+            90.0,
+            120.0,
+            150.0,
+            180.0,
+        ]
+    )
 
     tile_filenames = []
 
     # Find lat tile indices
-    lat_idx_min = np.searchsorted(merit_lat_bounds[::-1], lat_min, side='left')
-    lat_idx_max = np.searchsorted(merit_lat_bounds[::-1], lat_max, side='right')
+    lat_idx_min = np.searchsorted(merit_lat_bounds[::-1], lat_min, side="left")
+    lat_idx_max = np.searchsorted(merit_lat_bounds[::-1], lat_max, side="right")
 
     # Find lon tile indices
-    lon_idx_min = np.searchsorted(merit_lon_bounds, lon_min, side='left')
-    lon_idx_max = np.searchsorted(merit_lon_bounds, lon_max, side='right')
+    lon_idx_min = np.searchsorted(merit_lon_bounds, lon_min, side="left")
+    lon_idx_max = np.searchsorted(merit_lon_bounds, lon_max, side="right")
 
     def _get_nsew(val, coord_type):
         """Get N/S/E/W tag for coordinate value."""
-        if coord_type == 'lat':
-            return 'N' if val >= 0 else 'S'
+        if coord_type == "lat":
+            return "N" if val >= 0 else "S"
         else:  # lon
-            return 'E' if val >= 0 else 'W'
+            return "E" if val >= 0 else "W"
 
     # Generate filenames
-    for lat_idx in range(max(0, lat_idx_min-1), min(len(merit_lat_bounds)-1, lat_idx_max+1)):
+    for lat_idx in range(
+        max(0, lat_idx_min - 1), min(len(merit_lat_bounds) - 1, lat_idx_max + 1)
+    ):
         l_lat = merit_lat_bounds[lat_idx]
         r_lat = merit_lat_bounds[lat_idx + 1]
-        l_lat_tag = _get_nsew(l_lat, 'lat')
-        r_lat_tag = _get_nsew(r_lat, 'lat')
+        l_lat_tag = _get_nsew(l_lat, "lat")
+        r_lat_tag = _get_nsew(r_lat, "lat")
 
-        for lon_idx in range(max(0, lon_idx_min-1), min(len(merit_lon_bounds)-1, lon_idx_max+1)):
+        for lon_idx in range(
+            max(0, lon_idx_min - 1), min(len(merit_lon_bounds) - 1, lon_idx_max + 1)
+        ):
             l_lon = merit_lon_bounds[lon_idx]
             r_lon = merit_lon_bounds[lon_idx + 1]
-            l_lon_tag = _get_nsew(l_lon, 'lon')
-            r_lon_tag = _get_nsew(r_lon, 'lon')
+            l_lon_tag = _get_nsew(l_lon, "lon")
+            r_lon_tag = _get_nsew(r_lon, "lon")
 
             # Check if this is REMA region (Antarctica)
             if l_lat == -60.0 and r_lat == -90.0:

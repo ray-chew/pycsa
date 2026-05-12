@@ -250,9 +250,8 @@ class analysis(object):
 
         self.dk = np.diff(self.kks).mean()
         self.dl = np.diff(self.lls).mean()
-        
-        self.kks, self.lls = np.meshgrid(kks, lls)
 
+        self.kks, self.lls = np.meshgrid(kks, lls)
 
     def grid_kk_ll(self, fobj, dat):
         """

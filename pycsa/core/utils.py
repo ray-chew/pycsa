@@ -556,7 +556,11 @@ def get_lat_lon_segments(
     # Convert longitude vertices (zonal distance along parallel at lat_origin)
     # Keep sign to preserve direction (east/west)
     lon_ref = cell.lon[0]  # Reference point (first grid longitude)
-    lon_verts_in_m = (np.radians(lon_verts) - np.radians(lon_ref)) * Rm * np.cos(np.radians(lat_origin))
+    lon_verts_in_m = (
+        (np.radians(lon_verts) - np.radians(lon_ref))
+        * Rm
+        * np.cos(np.radians(lat_origin))
+    )
 
     if padding > 0:
         triangle = gen_triangle(
@@ -846,8 +850,8 @@ class taper(object):
 def transfer_attributes(params, cls, prefix=""):
     for key, value in vars(cls).items():
         if len(prefix) > 0:
-            key = prefix + '_' + key
-        
+            key = prefix + "_" + key
+
         if not hasattr(params, key):
             setattr(params, key, value)
         elif getattr(params, key) == None:
@@ -857,33 +861,43 @@ def transfer_attributes(params, cls, prefix=""):
 def is_land(cell, simplex_lat, simplex_lon, topo, height_tol=0.5, percent_tol=0.95):
 
     get_lat_lon_segments(
-    simplex_lat, simplex_lon, cell, topo, load_topo=True, filtered=False
-    ) 
+        simplex_lat, simplex_lon, cell, topo, load_topo=True, filtered=False
+    )
 
     if not (((cell.topo <= height_tol).sum() / cell.topo.size) > percent_tol):
         return True
     else:
         return False
-    
 
-def handle_latlon_expansion(clat_vertices, clon_vertices, lat_expand = 1.0, lon_expand = 1.0):
-    clon_vertices = np.around(clon_vertices,5)
-    clat_vertices = np.around(clat_vertices,5)
-    
+
+def handle_latlon_expansion(
+    clat_vertices, clon_vertices, lat_expand=1.0, lon_expand=1.0
+):
+    clon_vertices = np.around(clon_vertices, 5)
+    clat_vertices = np.around(clat_vertices, 5)
+
     # clon_vertices[np.where(np.abs(np.abs(clon_vertices) - 180.0) < 1e-5)] = 180.0
-    clon_vertices[np.where(clon_vertices == 180.0)]  = np.sign(clon_vertices.min()) * 180.0
-    clon_vertices[np.where(clon_vertices == -180.0)] = np.sign(clon_vertices.max()) * 180.0
+    clon_vertices[np.where(clon_vertices == 180.0)] = (
+        np.sign(clon_vertices.min()) * 180.0
+    )
+    clon_vertices[np.where(clon_vertices == -180.0)] = (
+        np.sign(clon_vertices.max()) * 180.0
+    )
 
     clat_vertices[np.argmax(clat_vertices)] += lat_expand
     clon_vertices[np.argmax(clon_vertices)] += lon_expand
-    
+
     clat_vertices[np.argmin(clat_vertices)] -= lat_expand
     clon_vertices[np.argmin(clon_vertices)] -= lon_expand
 
     clon_vertices[np.where(clon_vertices < -180.0)] += 360.0
-    clon_vertices[np.where(clon_vertices > 180.0)]  -= 360.0
+    clon_vertices[np.where(clon_vertices > 180.0)] -= 360.0
 
-    clat_vertices = np.where(clat_vertices < -90.0, clat_vertices + lat_expand, clat_vertices)
-    clat_vertices = np.where(clat_vertices > 90.0, clat_vertices - lat_expand, clat_vertices)
+    clat_vertices = np.where(
+        clat_vertices < -90.0, clat_vertices + lat_expand, clat_vertices
+    )
+    clat_vertices = np.where(
+        clat_vertices > 90.0, clat_vertices - lat_expand, clat_vertices
+    )
 
     return clat_vertices, clon_vertices

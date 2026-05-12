@@ -13,6 +13,7 @@ from pycsa.core import io, var
 
 class params:
     """Simple parameter class for ETOPO loading"""
+
     def __init__(self):
         # Path to ETOPO data directory (must end with /)
         self.path_etopo = "/home/ray/git-projects/spec_appx/data/etopo_15s/"
@@ -89,7 +90,7 @@ print()
 
 print("Done! All loaders completed successfully.")
 print("\nUsage tips:")
-print("- Set etopo_cg = 1 for full 15\" resolution (very high-res!)")
-print("- Set etopo_cg = 4 for ~60\" (~1.8 km at equator)")
-print("- Set etopo_cg = 8 for ~120\" (~3.6 km at equator)")
+print('- Set etopo_cg = 1 for full 15" resolution (very high-res!)')
+print('- Set etopo_cg = 4 for ~60" (~1.8 km at equator)')
+print('- Set etopo_cg = 8 for ~120" (~3.6 km at equator)')
 print("- Coarse-graining reduces memory and speeds up processing")

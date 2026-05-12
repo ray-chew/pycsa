@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 # %%
 pmf_diffs = [
     -0.0652774741607357,

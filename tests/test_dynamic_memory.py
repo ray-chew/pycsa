@@ -13,15 +13,16 @@ from pycsa.core import io, var, utils
 
 # Import the new functions
 import sys
-sys.path.insert(0, '/home/ray/git-projects/spec_appx/runs')
+
+sys.path.insert(0, "/home/ray/git-projects/spec_appx/runs")
 from icon_etopo_global import estimate_cell_memory_gb, group_cells_by_memory
 
 
 def test_memory_estimation():
     """Test that memory estimation scales appropriately with latitude."""
-    print("="*80)
+    print("=" * 80)
     print("TEST 1: Memory Estimation Function")
-    print("="*80)
+    print("=" * 80)
 
     test_latitudes = [0, 30, 45, 60, 70, 75, 80, 85, 89]
 
@@ -37,15 +38,17 @@ def test_memory_estimation():
 
     # Verify expectations
     assert estimate_cell_memory_gb(0) == 10.0, "Equatorial cells should need 10 GB"
-    assert estimate_cell_memory_gb(85) >= 50.0, "Polar cells (~85°) should need >= 50 GB"
+    assert (
+        estimate_cell_memory_gb(85) >= 50.0
+    ), "Polar cells (~85°) should need >= 50 GB"
     print("\n✓ Memory estimation function passes basic tests")
 
 
 def test_cell_grouping():
     """Test that cells are properly grouped by memory requirements."""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("TEST 2: Cell Grouping by Memory")
-    print("="*80)
+    print("=" * 80)
 
     # Load actual ICON grid to get realistic cell latitudes
     print("\nLoading ICON grid...")
@@ -59,7 +62,9 @@ def test_cell_grouping():
     n_cells = len(clat_rad)
 
     print(f"Loaded {n_cells} cells")
-    print(f"Latitude range: {np.rad2deg(clat_rad.min()):.1f}° to {np.rad2deg(clat_rad.max()):.1f}°")
+    print(
+        f"Latitude range: {np.rad2deg(clat_rad.min()):.1f}° to {np.rad2deg(clat_rad.max()):.1f}°"
+    )
 
     # Test for laptop configuration (60 GB total)
     print("\n--- LAPTOP CONFIGURATION (60 GB total) ---")
@@ -68,14 +73,18 @@ def test_cell_grouping():
     print(f"\nCreated {len(batches_laptop)} memory batches:")
     total_cells_batched = 0
     for i, batch in enumerate(batches_laptop):
-        n = len(batch['cell_indices'])
+        n = len(batch["cell_indices"])
         total_cells_batched += n
-        print(f"  Batch {i}: {n:>6} cells, "
-              f"{batch['memory_per_cell_gb']:>5.1f} GB/cell, "
-              f"{batch['n_workers']:>2} workers × {batch['memory_per_worker_gb']:>5.1f} GB = "
-              f"{batch['n_workers'] * batch['memory_per_worker_gb']:>6.1f} GB total")
+        print(
+            f"  Batch {i}: {n:>6} cells, "
+            f"{batch['memory_per_cell_gb']:>5.1f} GB/cell, "
+            f"{batch['n_workers']:>2} workers × {batch['memory_per_worker_gb']:>5.1f} GB = "
+            f"{batch['n_workers'] * batch['memory_per_worker_gb']:>6.1f} GB total"
+        )
 
-    assert total_cells_batched == n_cells, f"All cells should be batched (got {total_cells_batched}, expected {n_cells})"
+    assert (
+        total_cells_batched == n_cells
+    ), f"All cells should be batched (got {total_cells_batched}, expected {n_cells})"
     print(f"\n✓ All {n_cells} cells properly batched")
 
     # Test for HPC configuration (240 GB total)
@@ -85,33 +94,39 @@ def test_cell_grouping():
     print(f"\nCreated {len(batches_hpc)} memory batches:")
     total_cells_batched = 0
     for i, batch in enumerate(batches_hpc):
-        n = len(batch['cell_indices'])
+        n = len(batch["cell_indices"])
         total_cells_batched += n
-        print(f"  Batch {i}: {n:>6} cells, "
-              f"{batch['memory_per_cell_gb']:>5.1f} GB/cell, "
-              f"{batch['n_workers']:>2} workers × {batch['memory_per_worker_gb']:>5.1f} GB = "
-              f"{batch['n_workers'] * batch['memory_per_worker_gb']:>6.1f} GB total")
+        print(
+            f"  Batch {i}: {n:>6} cells, "
+            f"{batch['memory_per_cell_gb']:>5.1f} GB/cell, "
+            f"{batch['n_workers']:>2} workers × {batch['memory_per_worker_gb']:>5.1f} GB = "
+            f"{batch['n_workers'] * batch['memory_per_worker_gb']:>6.1f} GB total"
+        )
 
-    assert total_cells_batched == n_cells, f"All cells should be batched (got {total_cells_batched}, expected {n_cells})"
+    assert (
+        total_cells_batched == n_cells
+    ), f"All cells should be batched (got {total_cells_batched}, expected {n_cells})"
     print(f"\n✓ All {n_cells} cells properly batched")
 
     # Verify that HPC has better parallelism (more workers on average)
-    avg_workers_laptop = np.mean([b['n_workers'] for b in batches_laptop])
-    avg_workers_hpc = np.mean([b['n_workers'] for b in batches_hpc])
+    avg_workers_laptop = np.mean([b["n_workers"] for b in batches_laptop])
+    avg_workers_hpc = np.mean([b["n_workers"] for b in batches_hpc])
 
     print(f"\nAverage workers per batch:")
     print(f"  Laptop: {avg_workers_laptop:.1f}")
     print(f"  HPC:    {avg_workers_hpc:.1f}")
 
-    assert avg_workers_hpc > avg_workers_laptop, "HPC should have more workers on average"
+    assert (
+        avg_workers_hpc > avg_workers_laptop
+    ), "HPC should have more workers on average"
     print("✓ HPC configuration properly utilizes more workers")
 
 
 def test_specific_cells():
     """Test memory estimation for specific problematic cells."""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("TEST 3: Specific Cell Memory Requirements")
-    print("="*80)
+    print("=" * 80)
 
     from inputs.icon_global_run import params
 
@@ -136,7 +151,9 @@ def test_specific_cells():
         if estimated_mem >= 50.0:
             print("  ✓ Estimation is in the right ballpark")
         else:
-            print(f"  ⚠ Estimation may be too low (got {estimated_mem:.1f} GB, expected >= 50 GB)")
+            print(
+                f"  ⚠ Estimation may be too low (got {estimated_mem:.1f} GB, expected >= 50 GB)"
+            )
 
     # Show top 10 most memory-intensive cells
     cell_memory_gb = np.array([estimate_cell_memory_gb(lat) for lat in clat_deg])
@@ -149,18 +166,19 @@ def test_specific_cells():
         print(f"{idx:<12} {clat_deg[idx]:>7.2f}°     {cell_memory_gb[idx]:>6.1f} GB")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         test_memory_estimation()
         test_cell_grouping()
         test_specific_cells()
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("ALL TESTS PASSED ✓")
-        print("="*80)
+        print("=" * 80)
 
     except Exception as e:
         print(f"\n❌ TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

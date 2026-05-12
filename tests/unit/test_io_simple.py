@@ -68,12 +68,14 @@ class TestETOPOLoader:
     @pytest.fixture
     def test_params(self, etopo_dir):
         """Create test parameters for ETOPO loading."""
+
         class TestParams:
             def __init__(self):
                 self.path_etopo = str(etopo_dir) + "/"
                 self.lat_extent = [35.0, 40.0]
                 self.lon_extent = [-120.0, -115.0]
                 self.etopo_cg = 4  # Use coarse-graining for faster testing
+
         return TestParams()
 
     def test_etopo_loader_initialization(self, test_params, etopo_dir):
@@ -107,7 +109,9 @@ class TestETOPOLoader:
 
         # Check for reasonable elevation values (California coast to Sierra Nevada)
         # Should have values from below sea level to several thousand meters
-        assert cell.topo.min() >= -11000, "Topography minimum too low (deepest ocean ~11km)"
+        assert (
+            cell.topo.min() >= -11000
+        ), "Topography minimum too low (deepest ocean ~11km)"
         assert cell.topo.max() <= 9000, "Topography maximum too high (Mt Everest ~9km)"
 
         # Check for fill values (should not be present after loading)
@@ -118,6 +122,7 @@ class TestETOPOLoader:
 
     def test_etopo_coarse_graining(self, etopo_dir):
         """Test that coarse-graining reduces data size as expected."""
+
         class ParamsCG1:
             def __init__(self):
                 self.path_etopo = str(etopo_dir) + "/"
@@ -144,7 +149,9 @@ class TestETOPOLoader:
         size_ratio = cell1.topo.size / cell4.topo.size
 
         # Should be approximately 4x4 = 16 times reduction
-        assert size_ratio > 10, f"Coarse-graining didn't reduce size enough: {size_ratio}x"
+        assert (
+            size_ratio > 10
+        ), f"Coarse-graining didn't reduce size enough: {size_ratio}x"
         assert size_ratio < 20, f"Coarse-graining reduced size too much: {size_ratio}x"
 
     def test_etopo_grid_structure(self, test_params, etopo_dir):
@@ -161,8 +168,10 @@ class TestETOPOLoader:
         assert cell.topo.ndim == 2, "Topography should be 2D"
 
         # Check that dimensions match
-        assert cell.topo.shape == (len(cell.lat), len(cell.lon)), \
-            f"Topography shape {cell.topo.shape} doesn't match lat/lon ({len(cell.lat)}, {len(cell.lon)})"
+        assert cell.topo.shape == (
+            len(cell.lat),
+            len(cell.lon),
+        ), f"Topography shape {cell.topo.shape} doesn't match lat/lon ({len(cell.lat)}, {len(cell.lon)})"
 
         # Check that lat/lon are sorted
         assert np.all(np.diff(cell.lat) > 0), "Latitude should be sorted ascending"

@@ -2,7 +2,6 @@
 Interface wrapper module to ease setting up the CSA building blocks
 """
 
-
 from pycsa.core import fourier, lin_reg, physics, reconstruction
 from pycsa.core import utils, var
 from copy import deepcopy
@@ -33,6 +32,7 @@ class get_pmf(object):
         """
         # Initialize buffer pool for memory-efficient array reuse
         from pycsa.core.buffer_pool import BufferPool
+
         self.buffer_pool = BufferPool()
 
         # Initialize Fourier transformer with buffer pool
@@ -77,8 +77,11 @@ class get_pmf(object):
         if kwargs.get("refine", False):
             cell.topo_m -= data_recons
             am, data_recons = lin_reg.do(
-                self.fobj, cell, lmbda, kwargs.get("iter_solve", True),
-                buffer_pool=self.buffer_pool
+                self.fobj,
+                cell,
+                lmbda,
+                kwargs.get("iter_solve", True),
+                buffer_pool=self.buffer_pool,
             )
 
             self.fobj.get_freq_grid(am)
@@ -404,7 +407,12 @@ class first_appx(object):
                 taper_quad(self.params, simplex_lat, simplex_lon, cell_fa, self.topo)
             else:
                 utils.get_lat_lon_segments(
-                    simplex_lat, simplex_lon, cell_fa, self.topo, rect=self.params.rect, use_center=use_center
+                    simplex_lat,
+                    simplex_lon,
+                    cell_fa,
+                    self.topo,
+                    rect=self.params.rect,
+                    use_center=use_center,
                 )
         else:
             cell_fa.topo = res_topo
@@ -484,9 +492,9 @@ class second_appx(object):
         """
         # make a copy of the spectrum obtained from the FA.
         fq_cpy = np.copy(ampls_fa)
-        fq_cpy[
-            np.isnan(fq_cpy)
-        ] = 0.0  # necessary. Otherwise, popping with fq_cpy.max() gives the np.nan entries first.
+        fq_cpy[np.isnan(fq_cpy)] = (
+            0.0  # necessary. Otherwise, popping with fq_cpy.max() gives the np.nan entries first.
+        )
 
         cell = var.topo_cell()
 
@@ -494,7 +502,9 @@ class second_appx(object):
         simplex_lon = self.tri.tri_lon_verts[idx]
 
         # use the non-quadrilateral self.topography
-        utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, self.topo, rect=True, use_center=use_center)
+        utils.get_lat_lon_segments(
+            simplex_lat, simplex_lon, cell, self.topo, rect=True, use_center=use_center
+        )
 
         save_am = True if self.params.recompute_rhs else False
 
@@ -502,7 +512,13 @@ class second_appx(object):
             cell.topo = res_topo * cell.mask
 
         utils.get_lat_lon_segments(
-            simplex_lat, simplex_lon, cell, self.topo, rect=False, filtered=False, use_center=use_center
+            simplex_lat,
+            simplex_lon,
+            cell,
+            self.topo,
+            rect=False,
+            filtered=False,
+            use_center=use_center,
         )
 
         if self.params.taper_sa:

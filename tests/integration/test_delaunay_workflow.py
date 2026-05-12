@@ -23,6 +23,7 @@ class TestDelaunayWorkflow:
     @pytest.fixture
     def mock_params(self):
         """Create mock params object for interface classes."""
+
         class MockParams:
             U = 10.0
             V = 0.0
@@ -85,13 +86,11 @@ class TestDelaunayWorkflow:
         grid, topo, reader = test_data
 
         # Perform Delaunay decomposition with small grid for testing
-        tri = delaunay.get_decomposition(
-            topo, xnp=5, ynp=4, padding=reader.padding
-        )
+        tri = delaunay.get_decomposition(topo, xnp=5, ynp=4, padding=reader.padding)
 
         # Verify triangulation structure
-        assert hasattr(tri, 'simplices'), "Triangulation missing simplices"
-        assert hasattr(tri, 'points'), "Triangulation missing points"
+        assert hasattr(tri, "simplices"), "Triangulation missing simplices"
+        assert hasattr(tri, "points"), "Triangulation missing points"
         assert tri.simplices is not None, "Simplices not computed"
         assert tri.points is not None, "Points not computed"
 
@@ -106,10 +105,14 @@ class TestDelaunayWorkflow:
         assert tri.simplices.max() < len(tri.points), "Vertex index out of range"
 
         # Check triangle vertex coordinates
-        assert hasattr(tri, 'tri_lat_verts'), "Triangle lat vertices missing"
-        assert hasattr(tri, 'tri_lon_verts'), "Triangle lon vertices missing"
-        assert len(tri.tri_lat_verts) == len(tri.simplices), "Lat vertices count mismatch"
-        assert len(tri.tri_lon_verts) == len(tri.simplices), "Lon vertices count mismatch"
+        assert hasattr(tri, "tri_lat_verts"), "Triangle lat vertices missing"
+        assert hasattr(tri, "tri_lon_verts"), "Triangle lon vertices missing"
+        assert len(tri.tri_lat_verts) == len(
+            tri.simplices
+        ), "Lat vertices count mismatch"
+        assert len(tri.tri_lon_verts) == len(
+            tri.simplices
+        ), "Lon vertices count mismatch"
 
     # @pytest.mark.skip(reason="Requires complete params object - advanced test")
     def test_first_appx_interface(self, test_data, mock_params):
@@ -117,9 +120,7 @@ class TestDelaunayWorkflow:
         grid, topo, reader = test_data
 
         # Delaunay decomposition
-        tri = delaunay.get_decomposition(
-            topo, xnp=5, ynp=4, padding=reader.padding
-        )
+        tri = delaunay.get_decomposition(topo, xnp=5, ynp=4, padding=reader.padding)
 
         rect_idx = 0
         nhi = 12
@@ -140,7 +141,10 @@ class TestDelaunayWorkflow:
         assert ampls_fa is not None, "Amplitudes not computed"
         assert uw_fa is not None, "PMF not computed"
         assert dat_2D_fa is not None, "Reconstruction not computed"
-        assert ampls_fa.shape == (nhj, nhi), f"Unexpected amplitude shape: {ampls_fa.shape}"
+        assert ampls_fa.shape == (
+            nhj,
+            nhi,
+        ), f"Unexpected amplitude shape: {ampls_fa.shape}"
 
     # @pytest.mark.skip(reason="Requires complete params object - advanced test")
     def test_second_appx_interface(self, test_data, mock_params):
@@ -148,9 +152,7 @@ class TestDelaunayWorkflow:
         grid, topo, reader = test_data
 
         # Delaunay decomposition
-        tri = delaunay.get_decomposition(
-            topo, xnp=5, ynp=4, padding=reader.padding
-        )
+        tri = delaunay.get_decomposition(topo, xnp=5, ynp=4, padding=reader.padding)
 
         rect_idx = 0
         nhi = 12
@@ -184,9 +186,7 @@ class TestDelaunayWorkflow:
         grid, topo, reader = test_data
 
         # Delaunay decomposition
-        tri = delaunay.get_decomposition(
-            topo, xnp=5, ynp=4, padding=reader.padding
-        )
+        tri = delaunay.get_decomposition(topo, xnp=5, ynp=4, padding=reader.padding)
 
         rect_idx = 0
         nhi = 12
@@ -223,10 +223,12 @@ class TestDelaunayDiagnostics:
     @pytest.fixture
     def mock_params(self):
         """Create mock params."""
+
         class MockParams:
             run_case = "TEST"
             rect_set = [0, 2]
             padding = 10
+
         return MockParams()
 
     @pytest.fixture
@@ -261,6 +263,7 @@ class TestDelaunayDiagnostics:
     @pytest.mark.skip(reason="Diagnostics API needs verification")
     def test_diagnostics_basic(self, mock_params):
         """Test basic diagnostics initialization."""
+
         # Create mock triangulation
         class MockTri:
             simplices = np.array([[0, 1, 2], [1, 2, 3], [2, 3, 4]])
@@ -271,4 +274,4 @@ class TestDelaunayDiagnostics:
 
         # Just check it initializes without error
         assert diag is not None
-        assert hasattr(diag, 'rect_set')
+        assert hasattr(diag, "rect_set")

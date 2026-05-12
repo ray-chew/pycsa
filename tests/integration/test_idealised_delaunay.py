@@ -8,8 +8,10 @@ which provides more realistic multi-scale topography than pure sinusoids.
 import pytest
 import numpy as np
 from pycsa import var, utils, interface
+
 try:
     import noise
+
     NOISE_AVAILABLE = True
 except ImportError:
     NOISE_AVAILABLE = False
@@ -97,10 +99,11 @@ class TestIdealisedDelaunay:
 
         # Create isosceles triangle
         vid = utils.isosceles(
-            grid, cell,
+            grid,
+            cell,
             ymax=2.0 * np.pi * scale_fac,
             xmax=2.0 * np.pi * scale_fac,
-            res=res_x
+            res=res_x,
         )
 
         lat_v = grid.clat_vertices[vid, :]
@@ -149,10 +152,11 @@ class TestIdealisedDelaunay:
 
         # Create isosceles triangle
         vid = utils.isosceles(
-            grid, cell,
+            grid,
+            cell,
             ymax=2.0 * np.pi * scale_fac,
             xmax=2.0 * np.pi * scale_fac,
-            res=res_x
+            res=res_x,
         )
 
         lat_v = grid.clat_vertices[vid, :]
@@ -201,10 +205,11 @@ class TestIdealisedDelaunay:
 
         # Create isosceles triangle
         vid = utils.isosceles(
-            grid, cell,
+            grid,
+            cell,
             ymax=2.0 * np.pi * scale_fac,
             xmax=2.0 * np.pi * scale_fac,
-            res=res_x
+            res=res_x,
         )
 
         lat_v = grid.clat_vertices[vid, :]
@@ -263,6 +268,7 @@ class TestIdealisedDelaunay:
 
     def test_deterministic_perlin_generation(self):
         """Test that Perlin noise generation is deterministic with fixed seed."""
+
         # Generate twice with same parameters
         def generate_perlin():
             res = 50
@@ -271,13 +277,14 @@ class TestIdealisedDelaunay:
             for i in range(res):
                 for j in range(res):
                     world[i][j] = noise.pnoise2(
-                        i / 30.0, j / 30.0,
+                        i / 30.0,
+                        j / 30.0,
                         octaves=4,
                         persistence=0.5,
                         lacunarity=2.0,
                         repeatx=1024,
                         repeaty=1024,
-                        base=42  # Fixed seed
+                        base=42,  # Fixed seed
                     )
             return world
 
@@ -286,8 +293,7 @@ class TestIdealisedDelaunay:
 
         # Should be identical
         np.testing.assert_array_equal(
-            world1, world2,
-            err_msg="Perlin noise generation is not deterministic"
+            world1, world2, err_msg="Perlin noise generation is not deterministic"
         )
 
     def test_reconstruction_quality(self, cosine_terrain):
@@ -305,10 +311,11 @@ class TestIdealisedDelaunay:
 
         # Create isosceles triangle
         vid = utils.isosceles(
-            grid, cell,
+            grid,
+            cell,
             ymax=2.0 * np.pi * scale_fac,
             xmax=2.0 * np.pi * scale_fac,
-            res=res_x
+            res=res_x,
         )
 
         lat_v = grid.clat_vertices[vid, :]
@@ -332,7 +339,9 @@ class TestIdealisedDelaunay:
         recon_masked = recon * cell.mask
 
         # Relative L2 error
-        l2_error = np.linalg.norm(original_masked - recon_masked) / np.linalg.norm(original_masked)
+        l2_error = np.linalg.norm(original_masked - recon_masked) / np.linalg.norm(
+            original_masked
+        )
 
         # For a simple cosine, reconstruction should be good
         # (not perfect due to triangular domain and regularization)

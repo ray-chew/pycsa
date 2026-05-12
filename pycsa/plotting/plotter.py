@@ -36,7 +36,14 @@ class fig_obj(object):
         self.set_label = set_label
 
     def phys_panel(
-        self, axs, data, title="", extent=None, xlabel="", ylabel="", v_extent=None,
+        self,
+        axs,
+        data,
+        title="",
+        extent=None,
+        xlabel="",
+        ylabel="",
+        v_extent=None,
     ):
         """
         Plots a physical depiction of the input data.
@@ -168,8 +175,8 @@ class fig_obj(object):
         axs.set_title(title)
 
         if self.set_label:
-            axs.set_ylabel("m", fontsize=12, fontstyle='italic')
-            axs.set_xlabel("n", fontsize=12, fontstyle='italic')
+            axs.set_ylabel("m", fontsize=12, fontstyle="italic")
+            axs.set_xlabel("n", fontsize=12, fontstyle="italic")
         # axs.set_aspect('equal')
 
         # ref: https://stackoverflow.com/questions/20337664/cleanest-way-to-hide-every-nth-tick-label-in-matplotlib-colorbar
@@ -246,8 +253,8 @@ class fig_obj(object):
         axs.set_title(title)
 
         if self.set_label:
-            axs.set_xlabel("k [1/m]", fontsize=12, fontstyle='italic')
-            axs.set_ylabel("l [1/m]", fontsize=12, fontstyle='italic')
+            axs.set_xlabel("k [1/m]", fontsize=12, fontstyle="italic")
+            axs.set_ylabel("l [1/m]", fontsize=12, fontstyle="italic")
         if typ == "imag":
             axs.set_aspect("equal")
 
@@ -267,7 +274,7 @@ def error_bar_plot(
     fs=(10.0, 6.0),
     ylabel="",
     fontsize=8,
-    show_grid=True
+    show_grid=True,
 ):
     """
     Bar plot of errors.
@@ -400,11 +407,11 @@ def error_bar_split_plot(
     ax2.set_ylim(0, bs)
     ax1.set_ylim(ts[0], ts[1])
     ax1.set_yticks(ts_ticks)
-    ax1.ticklabel_format(style='plain')
+    ax1.ticklabel_format(style="plain")
 
     bars1 = ax1.bar(XX.index, XX.values, color=color)
     bars2 = ax2.bar(XX.index, XX.values, color=color)
-    ax1.bar_label(bars1, padding=3, fmt = '%d')
+    ax1.bar_label(bars1, padding=3, fmt="%d")
     ax2.bar_label(bars2, padding=3)
 
     for tick in ax2.get_xticklabels():
@@ -547,7 +554,5 @@ class plot_3d(object):
 
         plt.tight_layout()
         if output_fig:
-            plt.savefig(
-                "./outputs/%s.pdf" % output_fn, dpi=200, bbox_inches="tight"
-            )
+            plt.savefig("./outputs/%s.pdf" % output_fn, dpi=200, bbox_inches="tight")
         plt.show()

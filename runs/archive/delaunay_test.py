@@ -271,9 +271,9 @@ for rect_idx in params.rect_set:
             ##############################################
 
             fq_cpy = np.copy(freqs)
-            fq_cpy[
-                np.isnan(fq_cpy)
-            ] = 0.0  # necessary. Otherwise, popping with fq_cpy.max() gives the np.nan entries first.
+            fq_cpy[np.isnan(fq_cpy)] = (
+                0.0  # necessary. Otherwise, popping with fq_cpy.max() gives the np.nan entries first.
+            )
 
             if params.debug:
                 total_power = fq_cpy.sum()

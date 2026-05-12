@@ -7,7 +7,16 @@ A Python package for spectral approximation methods applied to topographic analy
 __version__ = "0.95.1"
 
 # Core modules - commonly used data structures and utilities
-from pycsa.core import var, utils, io, physics, fourier, delaunay, reconstruction, lin_reg
+from pycsa.core import (
+    var,
+    utils,
+    io,
+    physics,
+    fourier,
+    delaunay,
+    reconstruction,
+    lin_reg,
+)
 
 # Wrappers - high-level interfaces
 from pycsa.wrappers import interface, diagnostics

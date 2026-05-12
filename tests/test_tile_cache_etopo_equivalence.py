@@ -8,6 +8,7 @@ test loads representative ICON cells via both paths and asserts the returned
 
 Skips automatically if data/etopo_15s/ is missing.
 """
+
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +17,6 @@ import pytest
 from pycsa.core import io as pcio, utils, var
 from pycsa import local_paths
 from pycsa.core.tile_cache import TopographyTileCache, compute_split_EW
-
 
 ETOPO_DIR = Path(local_paths.paths.etopo)
 ICON_GRID = local_paths.paths.icon_grid
@@ -73,7 +73,9 @@ def _load_via_reader(grid, params, c_idx):
 
 def _load_via_cache(cache, params, lat_extent, lon_extent):
     """Candidate path: TopographyTileCache.get_etopo_data."""
-    lat, lon, topo = cache.get_etopo_data(lat_extent, lon_extent, etopo_cg=params.etopo_cg)
+    lat, lon, topo = cache.get_etopo_data(
+        lat_extent, lon_extent, etopo_cg=params.etopo_cg
+    )
     return lat, lon, topo
 
 
@@ -129,24 +131,31 @@ def test_worker_cache_lifecycle(grid, params):
 @pytest.mark.parametrize("c_idx,description", TEST_CELLS)
 def test_etopo_equivalence(grid, params, cache, c_idx, description):
     """Cache output must match the reference reader byte-for-byte for every cell."""
-    topo_ref, split_EW_ref, lat_extent, lon_extent = _load_via_reader(grid, params, c_idx)
-    lat_cache, lon_cache, topo_cache = _load_via_cache(cache, params, lat_extent, lon_extent)
+    topo_ref, split_EW_ref, lat_extent, lon_extent = _load_via_reader(
+        grid, params, c_idx
+    )
+    lat_cache, lon_cache, topo_cache = _load_via_cache(
+        cache, params, lat_extent, lon_extent
+    )
 
     # The free-function dateline detector must agree with the reader's own
     # internal flag for the same vertex set.
-    assert compute_split_EW(lon_extent) == split_EW_ref, (
-        f"cell {c_idx}: compute_split_EW disagrees with reader ({description})"
-    )
+    assert (
+        compute_split_EW(lon_extent) == split_EW_ref
+    ), f"cell {c_idx}: compute_split_EW disagrees with reader ({description})"
 
     np.testing.assert_array_equal(
-        lat_cache, topo_ref.lat,
+        lat_cache,
+        topo_ref.lat,
         err_msg=f"cell {c_idx}: lat arrays differ ({description})",
     )
     np.testing.assert_array_equal(
-        lon_cache, topo_ref.lon,
+        lon_cache,
+        topo_ref.lon,
         err_msg=f"cell {c_idx}: lon arrays differ ({description})",
     )
     np.testing.assert_array_equal(
-        topo_cache, topo_ref.topo,
+        topo_cache,
+        topo_ref.topo,
         err_msg=f"cell {c_idx}: topo arrays differ ({description})",
     )

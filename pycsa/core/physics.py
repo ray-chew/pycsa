@@ -45,7 +45,6 @@ class ideal_pmf(object):
         U = self.U
         V = self.V
 
-
         # if ((kks.ndim == 1) and (lls.ndim == 1)):
         #     print(True)
         #     ampls = analysis.ampls[np.nonzero(analysis.ampls)]
@@ -61,7 +60,7 @@ class ideal_pmf(object):
 
         # Compute mms safely: avoid divide-by-zero and sqrt of negatives.
         # We intentionally silence expected divide/invalid warnings and map singularities to 0.
-        base = (kks**2 + lls**2)
+        base = kks**2 + lls**2
         with np.errstate(divide="ignore", invalid="ignore"):
             frac = np.divide(N**2 * base, omsq, out=np.zeros_like(omsq), where=omsq > 0)
             mms = frac - base
@@ -70,13 +69,19 @@ class ideal_pmf(object):
 
         # wave-action density (Ag): safe division with zeros where om == 0
         with np.errstate(divide="ignore", invalid="ignore"):
-            Ag = -0.5 * np.divide((ampls**2) * N**2, om, out=np.zeros_like(om), where=om != 0)
+            Ag = -0.5 * np.divide(
+                (ampls**2) * N**2, om, out=np.zeros_like(om), where=om != 0
+            )
         Ag = np.nan_to_num(Ag, nan=0.0, posinf=0.0, neginf=0.0)
 
         # group velocity in z-direction, computed safely
         denom = (base + mms**2) ** 1.5
         with np.errstate(divide="ignore", invalid="ignore"):
-            cgz = self.N * np.sqrt(base) * np.divide(mms, denom, out=np.zeros_like(denom), where=denom > 0)
+            cgz = (
+                self.N
+                * np.sqrt(base)
+                * np.divide(mms, denom, out=np.zeros_like(denom), where=denom > 0)
+            )
         cgz = np.nan_to_num(cgz, nan=0.0, posinf=0.0, neginf=0.0)
 
         uw_pmf = Ag * kks * cgz

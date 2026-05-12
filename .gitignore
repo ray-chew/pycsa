@@ -27,3 +27,9 @@ local_archive/*
 # Local configuration (never commit!)
 pycsa/local_paths.py
 setup_paths_local.sh
+
+# Reproducibility fixtures (Phase B #2 / GH #31)
+# Globally we ignore *.nc / *.png / *.pdf; carve out the canonical fixtures.
+!tests/reproducibility/fixtures/**/*.nc
+!tests/reproducibility/fixtures/**/*.png
+!tests/reproducibility/fixtures/**/*.pdf

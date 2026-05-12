@@ -1,0 +1,64 @@
+fixture: idealised
+captured_at: '2026-05-12T10:23:38Z'
+captured_from: {git_sha: afdbc11f2ee522169236ad2e16a4de2074622083, python: 3.14.4,
+  numpy: 2.4.2, scipy: 1.17.1}
+variables:
+  freqs_arr:
+    dtype: float64
+    shape: [6, 12, 12]
+    sha256: ff3b6f5c128b99f66d2bef7df872e0d8f0f591cca5a68d213c6711c0fe03afe6
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 41570.62544768897, mean: 2579.296555886628, nan_count: 0,
+      size: 864}
+  errs:
+    dtype: float64
+    shape: [6]
+    sha256: 47002665f8f1668edad2d687ca7cfc71a60655f90def88f9def884effbd371f2
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 164397.86445750235, mean: 54851.41509895603, nan_count: 0,
+      size: 6}
+  sums:
+    dtype: float64
+    shape: [6]
+    sha256: 071c94713e6786f82ce91746122320c2fedcca85841447d309734472ffc5cb4d
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 1146.82593373569, max: 1111508.5527409802, mean: 371418.7040476746,
+      nan_count: 0, size: 6}
+  sum_errs:
+    dtype: float64
+    shape: [6]
+    sha256: ba9ff4faaf31f1eb904a2464a4228488127136d30833844da18973515bbec18b
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 893.0010666001867, mean: 297.7628525843572, nan_count: 0,
+      size: 6}
+  freqs_ref:
+    dtype: float64
+    shape: [12, 12]
+    sha256: 9895c8b90792eeba0777cc7a49aa6345c360557903e36551508622c586ce5f0a
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 96.55853709675661, mean: 8.634004681212057, nan_count: 0,
+      size: 144}
+  num_modes:
+    dtype: int64
+    shape: []
+    sha256: 9bb57922dc1a9aa3c4a6dcb92467700e2d5c80ff5906c5a3e3487c0321c50e6a
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {value: 22.0}
+notes: 'Idealised isosceles CSA experiment. Deterministic, no external
+
+  data. Variable order in freqs_arr/errs/sums/sum_errs follows
+
+  runs.idealised_isosceles.EXPERIMENT_LABELS = (''reference'', ''pLSFF'', ''regLSFF'',
+  ''optCSA'', ''subCSA'', ''pLSFF_quad'').'

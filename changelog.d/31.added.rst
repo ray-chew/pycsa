@@ -1,0 +1,10 @@
+Reproducibility test infrastructure: ``tests/reproducibility/`` with a
+``NetCDFComparator`` that gates Phase B refactor PRs against per-variable
+tolerance + SHA256 tripwire. Includes the idealised isosceles fixture
+captured from ``main``; MERIT and ETOPO single-cell fixtures land in
+follow-up commits on the same branch.
+
+``runs/idealised_isosceles.py`` is refactored from a jupytext-style script
+to a clean Python module with ``run()`` and ``main()`` entry points
+(``python -m runs.idealised_isosceles``). Numerics are bit-identical to the
+pre-refactor script.

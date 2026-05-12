@@ -217,13 +217,17 @@ def _run_pipeline(fixture_dir: Path) -> dict[str, np.ndarray]:
     ideal = physics.ideal_pmf(U=U, V=V)
     uw_comp = ideal.compute_uw_pmf(cell.analysis)
 
+    # k_idxs / l_idxs are deliberately NOT pinned: argmax tie-breaking
+    # among nearly-equal mode amplitudes is platform-dependent. The mode
+    # SELECTION is already pinned via `max_ampls` (sorted) and `freqs_sa`.
     return {
+        "topo_input": np.nan_to_num(topo_orig),
+        "dat_fa": np.nan_to_num(np.asarray(dat_fg)),
+        "dat_sa": np.nan_to_num(np.asarray(dat_sa)),
         "freqs_fa": np.nan_to_num(freqs_fg),
         "freqs_sa": np.nan_to_num(freqs_sa),
         "uw_sa": np.nan_to_num(uw_sa),
         "max_ampls": np.asarray(max_ampls, dtype=np.float64),
-        "k_idxs": np.asarray(k_idxs, dtype=np.int64),
-        "l_idxs": np.asarray(l_idxs, dtype=np.int64),
         "uw_comp": np.asarray(uw_comp, dtype=np.float64),
     }
 
@@ -234,25 +238,58 @@ def _run_pipeline(fixture_dir: Path) -> dict[str, np.ndarray]:
 
 
 def _render_figure(variables: dict[str, np.ndarray], path: Path) -> None:
+    """2-row figure: physical-domain reconstructions on top, spectra below."""
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, axs = plt.subplots(1, 3, figsize=(12, 4))
-    im0 = axs[0].imshow(
-        variables["freqs_fa"], origin="lower", aspect="auto", cmap="viridis"
-    )
-    axs[0].set_title("first-approx spectrum")
-    plt.colorbar(im0, ax=axs[0], fraction=0.046, pad=0.04)
-    im1 = axs[1].imshow(
-        variables["freqs_sa"], origin="lower", aspect="auto", cmap="viridis"
-    )
-    axs[1].set_title("second-approx spectrum (final)")
-    plt.colorbar(im1, ax=axs[1], fraction=0.046, pad=0.04)
-    axs[2].bar(range(len(variables["max_ampls"])), variables["max_ampls"])
-    axs[2].set_title(f"top {N_MODES} mode amplitudes")
-    axs[2].set_xlabel("mode rank")
+    topo = variables["topo_input"]
+    dat_fa = variables["dat_fa"]
+    dat_sa = variables["dat_sa"]
+    fa = variables["freqs_fa"]
+    sa = variables["freqs_sa"]
+    ampls = variables["max_ampls"]
+
+    fig, axs = plt.subplots(2, 3, figsize=(13, 7))
+
+    phys_vmin, phys_vmax = float(topo.min()), float(topo.max())
+    for col, (arr, title) in enumerate(
+        [
+            (topo, "original topography"),
+            (dat_fa, "first-approx reconstruction"),
+            (dat_sa, "final (SA) reconstruction"),
+        ]
+    ):
+        im = axs[0, col].imshow(
+            arr,
+            origin="lower",
+            aspect="auto",
+            cmap="terrain",
+            vmin=phys_vmin,
+            vmax=phys_vmax,
+        )
+        axs[0, col].set_title(title, fontsize=10)
+        axs[0, col].set_xlabel("lon index")
+        axs[0, col].set_ylabel("lat index")
+        plt.colorbar(im, ax=axs[0, col], fraction=0.046, pad=0.04)
+
+    im_fa = axs[1, 0].imshow(fa, origin="lower", aspect="auto", cmap="viridis")
+    axs[1, 0].set_title("first-approx spectrum", fontsize=10)
+    axs[1, 0].set_xlabel("k")
+    axs[1, 0].set_ylabel("l")
+    plt.colorbar(im_fa, ax=axs[1, 0], fraction=0.046, pad=0.04)
+
+    im_sa = axs[1, 1].imshow(sa, origin="lower", aspect="auto", cmap="viridis")
+    axs[1, 1].set_title("second-approx spectrum (final)", fontsize=10)
+    axs[1, 1].set_xlabel("k")
+    axs[1, 1].set_ylabel("l")
+    plt.colorbar(im_sa, ax=axs[1, 1], fraction=0.046, pad=0.04)
+
+    axs[1, 2].bar(range(len(ampls)), ampls)
+    axs[1, 2].set_title(f"top {N_MODES} mode amplitudes (sorted)", fontsize=10)
+    axs[1, 2].set_xlabel("mode rank")
+
     fig.suptitle(
         f"ETOPO single-cell — ICON cell {C_IDX_ORIGINAL} (south polar ~-89°S), "
         f"etopo_cg={ETOPO_CG} (×5 polar = {ETOPO_CG * 5}× effective)",
@@ -279,11 +316,18 @@ def capture(out_dir: Path, real_icon_grid: Path, real_etopo_dir: Path) -> None:
     print("running pipeline against the bundle ...")
     variables = _run_pipeline(out_dir)
 
-    save_netcdf(out_dir / "output.nc", variables)
+    # Physical-domain fields (topo_input, dat_fa, dat_sa) are used for the
+    # figure but not pinned in the fixture — they're (32, 1963)-class and
+    # bundling them would more than double the fixture footprint. Numerics
+    # are derivable from the pinned spectra.
+    FIGURE_ONLY = {"topo_input", "dat_fa", "dat_sa"}
+    pinned = {k: v for k, v in variables.items() if k not in FIGURE_ONLY}
+
+    save_netcdf(out_dir / "output.nc", pinned)
 
     manifest = Manifest.build(
         fixture=CASE,
-        variables=variables,
+        variables=pinned,
         notes=(
             f"ETOPO single-cell CSA on ICON cell {C_IDX_ORIGINAL} "
             f"(south polar ~-89°S — exercises the loader's polar 5× "

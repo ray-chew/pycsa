@@ -241,13 +241,19 @@ def _run_pipeline(fixture_dir: Path) -> dict[str, np.ndarray]:
     ideal = physics.ideal_pmf(U=U, V=V)
     uw_comp = ideal.compute_uw_pmf(cell.analysis)
 
+    # k_idxs / l_idxs are deliberately NOT pinned: the order in which argmax
+    # picks among nearly-equal mode amplitudes is platform-dependent
+    # (different LAPACK builds → different ULP-level floats → different
+    # argmax tie-breaks). The mode SELECTION is already pinned via
+    # `max_ampls` (sorted by amplitude) and `freqs_sa` (final spectrum).
     return {
+        "topo_input": np.nan_to_num(topo_orig),
+        "dat_fa": np.nan_to_num(np.asarray(dat_fg)),
+        "dat_sa": np.nan_to_num(np.asarray(dat_sa)),
         "freqs_fa": np.nan_to_num(freqs_fg),
         "freqs_sa": np.nan_to_num(freqs_sa),
         "uw_sa": np.nan_to_num(uw_sa),
         "max_ampls": np.asarray(max_ampls, dtype=np.float64),
-        "k_idxs": np.asarray(k_idxs, dtype=np.int64),
-        "l_idxs": np.asarray(l_idxs, dtype=np.int64),
         "uw_comp": np.asarray(uw_comp, dtype=np.float64),
     }
 
@@ -258,27 +264,63 @@ def _run_pipeline(fixture_dir: Path) -> dict[str, np.ndarray]:
 
 
 def _render_figure(variables: dict[str, np.ndarray], path: Path) -> None:
+    """2-row figure: physical-domain reconstructions on top, spectra below."""
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, axs = plt.subplots(1, 3, figsize=(12, 4))
-    im0 = axs[0].imshow(
-        variables["freqs_fa"], origin="lower", aspect="auto", cmap="viridis"
-    )
-    axs[0].set_title("first-approx spectrum")
-    plt.colorbar(im0, ax=axs[0], fraction=0.046, pad=0.04)
-    im1 = axs[1].imshow(
-        variables["freqs_sa"], origin="lower", aspect="auto", cmap="viridis"
-    )
-    axs[1].set_title("second-approx spectrum (final)")
-    plt.colorbar(im1, ax=axs[1], fraction=0.046, pad=0.04)
-    axs[2].bar(range(len(variables["max_ampls"])), variables["max_ampls"])
-    axs[2].set_title(f"top {N_MODES} mode amplitudes")
-    axs[2].set_xlabel("mode rank")
+    topo = variables["topo_input"]
+    dat_fa = variables["dat_fa"]
+    dat_sa = variables["dat_sa"]
+    fa = variables["freqs_fa"]
+    sa = variables["freqs_sa"]
+    ampls = variables["max_ampls"]
+
+    fig, axs = plt.subplots(2, 3, figsize=(13, 7))
+
+    # Row 1: physical domain — shared color range from the original topo.
+    phys_vmin, phys_vmax = float(topo.min()), float(topo.max())
+    for col, (arr, title) in enumerate(
+        [
+            (topo, "original topography"),
+            (dat_fa, "first-approx reconstruction"),
+            (dat_sa, "final (SA) reconstruction"),
+        ]
+    ):
+        im = axs[0, col].imshow(
+            arr,
+            origin="lower",
+            aspect="auto",
+            cmap="terrain",
+            vmin=phys_vmin,
+            vmax=phys_vmax,
+        )
+        axs[0, col].set_title(title, fontsize=10)
+        axs[0, col].set_xlabel("lon index")
+        axs[0, col].set_ylabel("lat index")
+        plt.colorbar(im, ax=axs[0, col], fraction=0.046, pad=0.04)
+
+    # Row 2: spectra + top-mode amplitudes.
+    im_fa = axs[1, 0].imshow(fa, origin="lower", aspect="auto", cmap="viridis")
+    axs[1, 0].set_title("first-approx spectrum", fontsize=10)
+    axs[1, 0].set_xlabel("k")
+    axs[1, 0].set_ylabel("l")
+    plt.colorbar(im_fa, ax=axs[1, 0], fraction=0.046, pad=0.04)
+
+    im_sa = axs[1, 1].imshow(sa, origin="lower", aspect="auto", cmap="viridis")
+    axs[1, 1].set_title("second-approx spectrum (final)", fontsize=10)
+    axs[1, 1].set_xlabel("k")
+    axs[1, 1].set_ylabel("l")
+    plt.colorbar(im_sa, ax=axs[1, 1], fraction=0.046, pad=0.04)
+
+    axs[1, 2].bar(range(len(ampls)), ampls)
+    axs[1, 2].set_title(f"top {N_MODES} mode amplitudes (sorted)", fontsize=10)
+    axs[1, 2].set_xlabel("mode rank")
+
     fig.suptitle(
-        f"regional MERIT — ICON cell {C_IDX_ORIGINAL} (Aleutians ~52°N), merit_cg={MERIT_CG}",
+        f"regional MERIT — ICON cell {C_IDX_ORIGINAL} (Aleutians ~52°N), "
+        f"merit_cg={MERIT_CG}",
         fontsize=11,
     )
     fig.tight_layout()
@@ -302,11 +344,18 @@ def capture(out_dir: Path, real_icon_grid: Path, real_merit_dir: Path) -> None:
     print("running pipeline against the bundle ...")
     variables = _run_pipeline(out_dir)
 
-    save_netcdf(out_dir / "output.nc", variables)
+    # Physical-domain fields (topo_input, dat_fa, dat_sa) are used for the
+    # figure but not pinned in the fixture: their numerics are derivable
+    # from the pinned spectra, and bundling the (32, 1963)-class arrays
+    # would more than double the fixture footprint.
+    FIGURE_ONLY = {"topo_input", "dat_fa", "dat_sa"}
+    pinned = {k: v for k, v in variables.items() if k not in FIGURE_ONLY}
+
+    save_netcdf(out_dir / "output.nc", pinned)
 
     manifest = Manifest.build(
         fixture=CASE,
-        variables=variables,
+        variables=pinned,
         notes=(
             f"Regional MERIT CSA on ICON cell {C_IDX_ORIGINAL} "
             f"(Aleutians, ~52°N — exercises the false-positive dateline path: "

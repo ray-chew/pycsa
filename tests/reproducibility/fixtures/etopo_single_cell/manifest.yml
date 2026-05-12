@@ -1,6 +1,6 @@
 fixture: etopo_single_cell
-captured_at: '2026-05-12T21:28:23Z'
-captured_from: {git_sha: 9d08db81470e5e9d373a541b46b68e38a05c203e, python: 3.12.3,
+captured_at: '2026-05-12T22:07:26Z'
+captured_from: {git_sha: 96b57bb811deea480e2d896b4039a56193b196a6, python: 3.12.3,
   numpy: 2.4.3, scipy: 1.17.1}
 variables:
   freqs_fa:
@@ -39,22 +39,6 @@ variables:
     equal_nan: true
     summary: {min: 2.6617402660903102, max: 52.286907884517696, mean: 8.325253129323244,
       nan_count: 0, size: 100}
-  k_idxs:
-    dtype: int64
-    shape: [100]
-    sha256: 1a24bc80005eabe08cb664552a4d7b336408eb066d63b2bc6aba2b73eb1fd3ce
-    rtol: 1.0e-05
-    atol: 1.0e-08
-    equal_nan: true
-    summary: {min: 0.0, max: 6.0, mean: 1.24, nan_count: 0, size: 100}
-  l_idxs:
-    dtype: int64
-    shape: [100]
-    sha256: f7c2c39b527e4109a918b8d573bfef59bb4603b3e0eafa76e2577610a9615ff6
-    rtol: 1.0e-05
-    atol: 1.0e-08
-    equal_nan: true
-    summary: {min: 0.0, max: 63.0, mean: 38.32, nan_count: 0, size: 100}
   uw_comp:
     dtype: float64
     shape: []

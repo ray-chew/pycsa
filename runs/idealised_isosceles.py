@@ -50,6 +50,7 @@ class IdealisedResult:
     """
 
     freqs_arr: np.ndarray  # (n_experiments, nhi, nhj)
+    dat_arr: np.ndarray  # (n_experiments, H, W) physical-domain reconstructions
     errs: np.ndarray  # L2 error vs reference, per experiment
     sums: np.ndarray  # total amplitude, per experiment
     sum_errs: np.ndarray  # relative amplitude error vs reference
@@ -137,7 +138,7 @@ def run(
     pure_lsff = interface.get_pmf(nhi, nhj, U, V)
     reg_lsff = interface.get_pmf(nhi, nhj, U, V)
 
-    def csa_run(n: int) -> np.ndarray:
+    def csa_run(n: int) -> tuple[np.ndarray, np.ndarray]:
         first_guess = interface.get_pmf(nhi, nhj, U, V)
         cell.get_masked(mask=np.ones_like(cell.topo).astype("bool"))
         cell.wlat = np.diff(cell.lat).mean()
@@ -161,27 +162,32 @@ def run(
         cell.get_masked(triangle=triangle)
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
-        freqs, _, _ = second_guess.sappx(
+        freqs, _, dat = second_guess.sappx(
             cell, lmbda=lmbda_sg, updt_analysis=True, scale=1.0, iter_solve=False
         )
-        return freqs
+        return freqs, dat
 
     num_experiments = 6
     freqs_arr = np.zeros((num_experiments, nhi, nhj))
+    dat_list: list[np.ndarray] = [None] * num_experiments  # type: ignore[list-item]
 
     # Order matches the original script + JAMES baseline indexing.
     freqs_arr[0] = freqs_ref
-    freqs_arr[1], _, _ = pure_lsff.sappx(
+    dat_list[0] = cell.topo * cell.mask  # original masked topography
+    freqs_arr[1], _, dat_list[1] = pure_lsff.sappx(
         cell, lmbda=0.0, iter_solve=False, save_am=True
     )
-    freqs_arr[5], _, _ = pure_lsff.recompute_rhs(
+    freqs_arr[5], _, dat_list[5] = pure_lsff.recompute_rhs(
         cell_quad, pure_lsff.fobj, save_coeffs=True
     )
-    freqs_arr[2], _, _ = reg_lsff.sappx(cell, lmbda=lmbda_reg, iter_solve=False)
-    freqs_arr[3] = csa_run(sz)
-    freqs_arr[4] = csa_run(n_modes)
+    freqs_arr[2], _, dat_list[2] = reg_lsff.sappx(
+        cell, lmbda=lmbda_reg, iter_solve=False
+    )
+    freqs_arr[3], dat_list[3] = csa_run(sz)
+    freqs_arr[4], dat_list[4] = csa_run(n_modes)
 
     freqs_arr = np.array([np.nan_to_num(f) for f in freqs_arr])
+    dat_arr = np.array([np.nan_to_num(np.asarray(d)) for d in dat_list])
 
     errs = np.array([np.linalg.norm(f - freqs_ref) for f in freqs_arr])
     sums = np.array([f.sum() for f in freqs_arr])
@@ -191,6 +197,7 @@ def run(
 
     return IdealisedResult(
         freqs_arr=freqs_arr,
+        dat_arr=dat_arr,
         errs=errs,
         sums=sums,
         sum_errs=sum_errs,

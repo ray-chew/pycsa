@@ -1,6 +1,6 @@
 fixture: regional_merit
-captured_at: '2026-05-12T19:52:48Z'
-captured_from: {git_sha: 9d08db81470e5e9d373a541b46b68e38a05c203e, python: 3.12.3,
+captured_at: '2026-05-12T22:07:18Z'
+captured_from: {git_sha: 96b57bb811deea480e2d896b4039a56193b196a6, python: 3.12.3,
   numpy: 2.4.3, scipy: 1.17.1}
 variables:
   freqs_fa:
@@ -39,22 +39,6 @@ variables:
     equal_nan: true
     summary: {min: 2.408708327157702, max: 2.83951607449461, mean: 2.57195038941592,
       nan_count: 0, size: 50}
-  k_idxs:
-    dtype: int64
-    shape: [50]
-    sha256: 23ba0bc73e2e54d33bfdcbc45979199917318291d31785661249590cc27f727d
-    rtol: 1.0e-05
-    atol: 1.0e-08
-    equal_nan: true
-    summary: {min: 0.0, max: 17.0, mean: 7.32, nan_count: 0, size: 50}
-  l_idxs:
-    dtype: int64
-    shape: [50]
-    sha256: 8e92908f80e175ad4dc25606936b9bd81477b943cfb847915987942268dc9f39
-    rtol: 1.0e-05
-    atol: 1.0e-08
-    equal_nan: true
-    summary: {min: 2.0, max: 45.0, mean: 25.42, nan_count: 0, size: 50}
   uw_comp:
     dtype: float64
     shape: []

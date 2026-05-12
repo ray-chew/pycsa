@@ -1,0 +1,59 @@
+name: CI Workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  format-check:
+    name: Run Black Formatter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Black
+        run: pip install black==26.3.0
+
+      - name: Run Black
+        run: black --check .
+
+  docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ConorMacBride/install-package@v1
+        with:
+          apt: libgeos-dev graphviz
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10.5"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install sphinx furo sphinx-changelog
+      - name: Sphinx build
+        run: |
+          sphinx-build docs/source _build
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _build/
+          force_orphan: true

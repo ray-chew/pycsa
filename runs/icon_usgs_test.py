@@ -96,9 +96,7 @@ for tri_idx in tri_set:
     simplex_lon = triangles[tri_idx, :, 0]
     simplex_lat = triangles[tri_idx, :, 1]
 
-    utils.get_lat_lon_segments(
-        simplex_lat, simplex_lon, cell, topo, rect=rect
-    )
+    utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, topo, rect=rect)
 
     topo_orig = np.copy(cell.topo)
 
@@ -136,9 +134,7 @@ for tri_idx in tri_set:
         max_val = fq_cpy[max_idx]
         fq_cpy[max_idx] = 0.0
 
-    utils.get_lat_lon_segments(
-        simplex_lat, simplex_lon, cell, topo, rect=False
-    )
+    utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, topo, rect=False)
 
     k_idxs = [pair[1] for pair in indices]
     l_idxs = [pair[0] for pair in indices]

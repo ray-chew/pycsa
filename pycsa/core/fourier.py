@@ -1,6 +1,8 @@
 import numpy as np
+
 try:
     import numba as nb
+
     NUMBA_AVAILABLE = True
 except ImportError:
     NUMBA_AVAILABLE = False
@@ -8,6 +10,7 @@ except ImportError:
 
 # Numba-optimized functions for hot computational loops
 if NUMBA_AVAILABLE:
+
     @nb.njit(parallel=True, fastmath=True, cache=True)
     def _compute_trig_terms(tt_sum_flat, bcos_out, bsin_out):
         """Numba-optimized computation of sin and cos terms.
@@ -24,6 +27,7 @@ if NUMBA_AVAILABLE:
                 arg = two_pi * tt_sum_flat[i, j]
                 bcos_out[i, j] = np.cos(arg)
                 bsin_out[i, j] = np.sin(arg)
+
 else:
     # Fallback if Numba not available
     _compute_trig_terms = None

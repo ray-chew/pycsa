@@ -173,9 +173,7 @@ class delaunay_metrics(object):
         else:
             max_idx = np.argmax(np.abs(self.pmf_refs))
             max_val = self.pmf_refs[max_idx]
-        self.max_errs = self.__get_max_diff(
-            self.pmf_sums, self.pmf_refs, max_val
-        )
+        self.max_errs = self.__get_max_diff(self.pmf_sums, self.pmf_refs, max_val)
         self.rel_errs = self.__get_rel_diff(self.pmf_sums, self.pmf_refs)
 
         self.max_errs = np.array(self.max_errs) * 100
@@ -357,4 +355,3 @@ class diag_plotter(object):
                 plt.savefig(self.output_dir + fn + ".pdf", dpi=200, bbox_inches="tight")
 
             plt.show()
-

@@ -11,7 +11,7 @@ import numpy as np
 
 # Force reload
 for mod in list(sys.modules.keys()):
-    if 'pycsa' in mod:
+    if "pycsa" in mod:
         del sys.modules[mod]
 
 from pycsa.core import io, var
@@ -50,27 +50,35 @@ def test_and_plot_region(lat_extent, lon_extent, description, plot=True):
             plt.figure(figsize=(12, 6))
             ax = plt.subplot(111)
 
-            im = ax.contourf(cell.lon_grid, cell.lat_grid, cell.topo,
-                           levels=20, cmap='terrain')
-            plt.colorbar(im, ax=ax, label='Elevation (m)')
+            im = ax.contourf(
+                cell.lon_grid, cell.lat_grid, cell.topo, levels=20, cmap="terrain"
+            )
+            plt.colorbar(im, ax=ax, label="Elevation (m)")
 
-            ax.set_xlabel('Longitude (°)')
-            ax.set_ylabel('Latitude (°)')
+            ax.set_xlabel("Longitude (°)")
+            ax.set_ylabel("Latitude (°)")
             ax.set_title(description)
             ax.grid(True, alpha=0.3)
 
             # Add dateline/meridian markers
-            if lon_extent[0] <= -180 <= lon_extent[1] or lon_extent[0] <= 180 <= lon_extent[1]:
-                ax.axvline(180, color='red', linestyle='--', alpha=0.5, label='Dateline')
-                ax.axvline(-180, color='red', linestyle='--', alpha=0.5)
+            if (
+                lon_extent[0] <= -180 <= lon_extent[1]
+                or lon_extent[0] <= 180 <= lon_extent[1]
+            ):
+                ax.axvline(
+                    180, color="red", linestyle="--", alpha=0.5, label="Dateline"
+                )
+                ax.axvline(-180, color="red", linestyle="--", alpha=0.5)
             if lon_extent[0] <= 0 <= lon_extent[1]:
-                ax.axvline(0, color='blue', linestyle='--', alpha=0.5, label='Prime Meridian')
+                ax.axvline(
+                    0, color="blue", linestyle="--", alpha=0.5, label="Prime Meridian"
+                )
 
             ax.legend()
 
             # Save plot
             filename = f"outputs/etopo_edge_case_{description.replace(' ', '_').replace('(', '').replace(')', '').replace('°', 'deg')}.png"
-            plt.savefig(filename, dpi=150, bbox_inches='tight')
+            plt.savefig(filename, dpi=150, bbox_inches="tight")
             print(f"    Plot saved: {filename}")
             plt.close()
 
@@ -79,6 +87,7 @@ def test_and_plot_region(lat_extent, lon_extent, description, plot=True):
     except Exception as e:
         print(f"  ✗ FAILED: {e}")
         import traceback
+
         traceback.print_exc()
         return False, None
 
@@ -100,7 +109,7 @@ def run_edge_case_tests():
         lat_extent=[-30.0, 60.0],
         lon_extent=[-30.0, 30.0],
         description="Prime Meridian (-30 to 30°E)",
-        plot=True
+        plot=True,
     )
     results.append(("Prime Meridian", success))
 
@@ -112,7 +121,7 @@ def run_edge_case_tests():
         lat_extent=[-30.0, 60.0],
         lon_extent=[150.0, -150.0],  # Crosses dateline
         description="Dateline Crossing (150°E to 150°W)",
-        plot=True
+        plot=True,
     )
     results.append(("Dateline", success))
 
@@ -124,7 +133,7 @@ def run_edge_case_tests():
         lat_extent=[-90.0, 90.0],
         lon_extent=[-180.0, 180.0],
         description="Full Global",
-        plot=True
+        plot=True,
     )
     results.append(("Full Global", success))
 
@@ -136,12 +145,14 @@ def run_edge_case_tests():
         lat_extent=[15.0, 45.0],
         lon_extent=[75.0, 105.0],
         description="Himalayas (15-45°N, 75-105°E)",
-        plot=True
+        plot=True,
     )
     if success and cell.topo.max() > 5000:
         print(f"    ✓ High peaks found: {cell.topo.max():.0f}m")
         max_idx = np.unravel_index(np.argmax(cell.topo), cell.topo.shape)
-        print(f"      Location: ({cell.lat[max_idx[0]]:.2f}°N, {cell.lon[max_idx[1]]:.2f}°E)")
+        print(
+            f"      Location: ({cell.lat[max_idx[0]]:.2f}°N, {cell.lon[max_idx[1]]:.2f}°E)"
+        )
     results.append(("Himalayas", success))
 
     # Test 5: Andes region
@@ -152,7 +163,7 @@ def run_edge_case_tests():
         lat_extent=[-45.0, -15.0],
         lon_extent=[-75.0, -60.0],
         description="Andes (45-15°S, 75-60°W)",
-        plot=True
+        plot=True,
     )
     if success and cell.topo.max() > 4000:
         print(f"    ✓ High peaks found: {cell.topo.max():.0f}m")
@@ -166,7 +177,7 @@ def run_edge_case_tests():
         lat_extent=[0.0, 45.0],
         lon_extent=[165.0, -165.0],
         description="Pacific Dateline (165°E to 165°W)",
-        plot=True
+        plot=True,
     )
     results.append(("Pacific Dateline", success))
 
@@ -197,6 +208,7 @@ def run_edge_case_tests():
 if __name__ == "__main__":
     # Create outputs directory if it doesn't exist
     import os
+
     os.makedirs("outputs", exist_ok=True)
 
     success = run_edge_case_tests()

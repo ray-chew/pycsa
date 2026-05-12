@@ -53,8 +53,12 @@ def test_region(name, lat_extent, lon_extent, merit_cg=50, description=""):
     print("=" * 80)
     print()
     print(f"Region Configuration:")
-    print(f"  Latitude:  {lat_extent[0]:7.2f}° to {lat_extent[1]:7.2f}° (span: {lat_extent[1]-lat_extent[0]:.2f}°)")
-    print(f"  Longitude: {lon_extent[0]:7.2f}° to {lon_extent[1]:7.2f}° (span: {abs(lon_extent[1]-lon_extent[0]):.2f}°)")
+    print(
+        f"  Latitude:  {lat_extent[0]:7.2f}° to {lat_extent[1]:7.2f}° (span: {lat_extent[1]-lat_extent[0]:.2f}°)"
+    )
+    print(
+        f"  Longitude: {lon_extent[0]:7.2f}° to {lon_extent[1]:7.2f}° (span: {abs(lon_extent[1]-lon_extent[0]):.2f}°)"
+    )
     print(f"  Coarse-graining: {merit_cg}x{merit_cg}")
     print()
     if description:
@@ -92,6 +96,7 @@ def test_region(name, lat_extent, lon_extent, merit_cg=50, description=""):
     except Exception as e:
         print(f"✗ ERROR during loading: {e}")
         import traceback
+
         traceback.print_exc()
         return {"success": False, "error": str(e)}
 
@@ -156,6 +161,7 @@ def test_region(name, lat_extent, lon_extent, merit_cg=50, description=""):
     except Exception as e:
         print(f"✗ ERROR during plotting: {e}")
         import traceback
+
         traceback.print_exc()
         return {"success": False, "error": f"Plotting failed: {e}"}
 
@@ -211,103 +217,124 @@ def run_all_edge_case_tests():
 
     # Test 1: MERIT-REMA Interface at EXACTLY -60° (South Orkney Islands!)
     # This is THE island you remember - sits right on the boundary!
-    results.append(test_region(
-        name="MERIT-REMA Boundary (South Orkney Islands)",
-        lat_extent=[-61.5, -59.5],  # Tight 2° centered on South Orkney at -60.5°
-        lon_extent=[-47.0, -44.0],  # Narrow 3° window over South Orkney Islands at -45.5°
-        merit_cg=10,  # Finer resolution to catch the small islands
-        description="Tests EXACTLY the -60° latitude boundary with South Orkney Islands!\n"
-                    "  These islands sit RIGHT ON the MERIT-REMA transition at 60.5°S.\n"
-                    "  Perfect test case for seamless dataset integration."
-    ))
+    results.append(
+        test_region(
+            name="MERIT-REMA Boundary (South Orkney Islands)",
+            lat_extent=[-61.5, -59.5],  # Tight 2° centered on South Orkney at -60.5°
+            lon_extent=[
+                -47.0,
+                -44.0,
+            ],  # Narrow 3° window over South Orkney Islands at -45.5°
+            merit_cg=10,  # Finer resolution to catch the small islands
+            description="Tests EXACTLY the -60° latitude boundary with South Orkney Islands!\n"
+            "  These islands sit RIGHT ON the MERIT-REMA transition at 60.5°S.\n"
+            "  Perfect test case for seamless dataset integration.",
+        )
+    )
 
     # Test 1b: MERIT-REMA Interface (Antarctic Peninsula - broader view)
-    results.append(test_region(
-        name="MERIT-REMA Interface (Antarctic Peninsula)",
-        lat_extent=[-70.0, -55.0],  # Crosses -60° boundary, broader range
-        lon_extent=[-65.0, -55.0],  # Narrow 10° window over Antarctic Peninsula
-        merit_cg=30,
-        description="Crosses the -60° latitude boundary over Antarctic Peninsula.\n"
-                    "  Broader view of the MERIT-REMA transition zone.\n"
-                    "  Tests seamless data integration between datasets."
-    ))
+    results.append(
+        test_region(
+            name="MERIT-REMA Interface (Antarctic Peninsula)",
+            lat_extent=[-70.0, -55.0],  # Crosses -60° boundary, broader range
+            lon_extent=[-65.0, -55.0],  # Narrow 10° window over Antarctic Peninsula
+            merit_cg=30,
+            description="Crosses the -60° latitude boundary over Antarctic Peninsula.\n"
+            "  Broader view of the MERIT-REMA transition zone.\n"
+            "  Tests seamless data integration between datasets.",
+        )
+    )
 
     # Test 2: Dateline Crossing - Kamchatka Peninsula (Russia, has land)
-    results.append(test_region(
-        name="Dateline Crossing (Kamchatka Peninsula)",
-        lat_extent=[50.0, 62.0],  # Kamchatka Peninsula latitude
-        lon_extent=[175.0, -175.0],  # Narrow 10° window crossing dateline
-        merit_cg=30,
-        description="Crosses the international dateline at ±180° longitude.\n"
-                    "  Focuses on Kamchatka Peninsula (volcanoes, mountains).\n"
-                    "  Tests handling of longitude wraparound over land."
-    ))
+    results.append(
+        test_region(
+            name="Dateline Crossing (Kamchatka Peninsula)",
+            lat_extent=[50.0, 62.0],  # Kamchatka Peninsula latitude
+            lon_extent=[175.0, -175.0],  # Narrow 10° window crossing dateline
+            merit_cg=30,
+            description="Crosses the international dateline at ±180° longitude.\n"
+            "  Focuses on Kamchatka Peninsula (volcanoes, mountains).\n"
+            "  Tests handling of longitude wraparound over land.",
+        )
+    )
 
     # Test 3: North Pole Region - Greenland focus (has major topography)
-    results.append(test_region(
-        name="North Pole Region (Greenland)",
-        lat_extent=[75.0, 85.0],  # High Arctic, northern Greenland
-        lon_extent=[-50.0, -20.0],  # Narrow window over Greenland ice sheet
-        merit_cg=40,
-        description="High latitude region near North Pole.\n"
-                    "  Focuses on northern Greenland (ice sheet with elevation).\n"
-                    "  Tests polar convergence and high-latitude handling."
-    ))
+    results.append(
+        test_region(
+            name="North Pole Region (Greenland)",
+            lat_extent=[75.0, 85.0],  # High Arctic, northern Greenland
+            lon_extent=[-50.0, -20.0],  # Narrow window over Greenland ice sheet
+            merit_cg=40,
+            description="High latitude region near North Pole.\n"
+            "  Focuses on northern Greenland (ice sheet with elevation).\n"
+            "  Tests polar convergence and high-latitude handling.",
+        )
+    )
 
     # Test 4: Prime Meridian Crossing - UK/France coast (small, fast, over land)
-    results.append(test_region(
-        name="Prime Meridian Crossing (UK-France)",
-        lat_extent=[49.0, 52.0],  # English Channel area, tight lat range
-        lon_extent=[-3.0, 3.0],  # Narrow 6° window crossing 0° longitude
-        merit_cg=20,
-        description="Crosses the Prime Meridian at 0° longitude.\n"
-                    "  Focuses on UK-France region (Dover, Calais area).\n"
-                    "  Tests transition from negative to positive longitude over land."
-    ))
+    results.append(
+        test_region(
+            name="Prime Meridian Crossing (UK-France)",
+            lat_extent=[49.0, 52.0],  # English Channel area, tight lat range
+            lon_extent=[-3.0, 3.0],  # Narrow 6° window crossing 0° longitude
+            merit_cg=20,
+            description="Crosses the Prime Meridian at 0° longitude.\n"
+            "  Focuses on UK-France region (Dover, Calais area).\n"
+            "  Tests transition from negative to positive longitude over land.",
+        )
+    )
 
     # Test 5: Equator Crossing - Mount Kenya area (has elevation features)
-    results.append(test_region(
-        name="Equator Crossing (Mount Kenya)",
-        lat_extent=[-2.0, 2.0],  # Narrow 4° crossing equator
-        lon_extent=[36.0, 38.0],  # Tight 2° window on Mt. Kenya
-        merit_cg=20,
-        description="Crosses the Equator at 0° latitude.\n"
-                    "  Focuses on Mount Kenya (5199m, sits on equator!).\n"
-                    "  Tests hemisphere transition over dramatic topography."
-    ))
+    results.append(
+        test_region(
+            name="Equator Crossing (Mount Kenya)",
+            lat_extent=[-2.0, 2.0],  # Narrow 4° crossing equator
+            lon_extent=[36.0, 38.0],  # Tight 2° window on Mt. Kenya
+            merit_cg=20,
+            description="Crosses the Equator at 0° latitude.\n"
+            "  Focuses on Mount Kenya (5199m, sits on equator!).\n"
+            "  Tests hemisphere transition over dramatic topography.",
+        )
+    )
 
     # Test 6: Tierra del Fuego - near MERIT-REMA boundary
-    results.append(test_region(
-        name="Tierra del Fuego (Near Antarctic Boundary)",
-        lat_extent=[-56.0, -53.0],  # Southernmost South America
-        lon_extent=[-70.0, -65.0],  # Cape Horn area
-        merit_cg=25,
-        description="Southernmost tip of South America, near -60° boundary.\n"
-                    "  Tests high southern latitude (stays in MERIT, doesn't cross to REMA).\n"
-                    "  Drake Passage area with complex coastline."
-    ))
+    results.append(
+        test_region(
+            name="Tierra del Fuego (Near Antarctic Boundary)",
+            lat_extent=[-56.0, -53.0],  # Southernmost South America
+            lon_extent=[-70.0, -65.0],  # Cape Horn area
+            merit_cg=25,
+            description="Southernmost tip of South America, near -60° boundary.\n"
+            "  Tests high southern latitude (stays in MERIT, doesn't cross to REMA).\n"
+            "  Drake Passage area with complex coastline.",
+        )
+    )
 
     # Test 7: Bering Strait - dateline + high latitude (Alaska-Russia)
-    results.append(test_region(
-        name="Bering Strait (Dateline + High Latitude)",
-        lat_extent=[64.0, 68.0],  # Bering Strait, tight range
-        lon_extent=[177.0, -177.0],  # Narrow 6° crossing dateline
-        merit_cg=25,
-        description="Bering Strait region between Alaska and Russia.\n"
-                    "  Tests BOTH dateline crossing AND high latitude.\n"
-                    "  Includes Bering Strait islands and coastlines."
-    ))
+    results.append(
+        test_region(
+            name="Bering Strait (Dateline + High Latitude)",
+            lat_extent=[64.0, 68.0],  # Bering Strait, tight range
+            lon_extent=[177.0, -177.0],  # Narrow 6° crossing dateline
+            merit_cg=25,
+            description="Bering Strait region between Alaska and Russia.\n"
+            "  Tests BOTH dateline crossing AND high latitude.\n"
+            "  Includes Bering Strait islands and coastlines.",
+        )
+    )
 
     # Test 8: South Pole Region (Pure REMA) - smaller window
-    results.append(test_region(
-        name="South Pole Region (Marie Byrd Land)",
-        lat_extent=[-85.0, -75.0],  # Deep Antarctica
-        lon_extent=[-150.0, -100.0],  # Narrower 50° window over Marie Byrd Land
-        merit_cg=60,  # Higher CG for speed
-        description="Interior Antarctica (pure REMA data).\n"
-                    "  Focuses on Marie Byrd Land (West Antarctica, mountains).\n"
-                    "  Tests REMA dataset at extreme southern latitude."
-    ))
+    results.append(
+        test_region(
+            name="South Pole Region (Marie Byrd Land)",
+            lat_extent=[-85.0, -75.0],  # Deep Antarctica
+            lon_extent=[-150.0, -100.0],  # Narrower 50° window over Marie Byrd Land
+            merit_cg=60,  # Higher CG for speed
+            description="Interior Antarctica (pure REMA data).\n"
+            "  Focuses on Marie Byrd Land (West Antarctica, mountains).\n"
+            "  Tests REMA dataset at extreme southern latitude.",
+        )
+    )
 
     return results
 
@@ -373,14 +400,23 @@ if __name__ == "__main__":
     parser.add_argument(
         "--quick",
         action="store_true",
-        help="Run quick test (only 3 most critical regions)"
+        help="Run quick test (only 3 most critical regions)",
     )
     parser.add_argument(
         "--test",
         type=str,
-        choices=["merit-rema", "south-orkney", "dateline", "north-pole", "prime-meridian",
-                 "equator", "tierra-del-fuego", "bering", "south-pole"],
-        help="Run only a specific test"
+        choices=[
+            "merit-rema",
+            "south-orkney",
+            "dateline",
+            "north-pole",
+            "prime-meridian",
+            "equator",
+            "tierra-del-fuego",
+            "bering",
+            "south-pole",
+        ],
+        help="Run only a specific test",
     )
 
     args = parser.parse_args()
@@ -393,64 +429,64 @@ if __name__ == "__main__":
                 "lat_extent": [-61.5, -59.5],
                 "lon_extent": [-47.0, -44.0],
                 "merit_cg": 10,
-                "description": "Tests EXACTLY -60° boundary with South Orkney Islands"
+                "description": "Tests EXACTLY -60° boundary with South Orkney Islands",
             },
             "south-orkney": {
                 "name": "MERIT-REMA Boundary (South Orkney Islands)",
                 "lat_extent": [-61.5, -59.5],
                 "lon_extent": [-47.0, -44.0],
                 "merit_cg": 10,
-                "description": "Tests EXACTLY -60° boundary with South Orkney Islands"
+                "description": "Tests EXACTLY -60° boundary with South Orkney Islands",
             },
             "dateline": {
                 "name": "Dateline Crossing (Kamchatka)",
                 "lat_extent": [50.0, 62.0],
                 "lon_extent": [175.0, -175.0],
                 "merit_cg": 30,
-                "description": "Tests ±180° longitude over Kamchatka Peninsula"
+                "description": "Tests ±180° longitude over Kamchatka Peninsula",
             },
             "north-pole": {
                 "name": "North Pole (Greenland)",
                 "lat_extent": [75.0, 85.0],
                 "lon_extent": [-50.0, -20.0],
                 "merit_cg": 40,
-                "description": "Tests high Arctic over northern Greenland"
+                "description": "Tests high Arctic over northern Greenland",
             },
             "prime-meridian": {
                 "name": "Prime Meridian (UK-France)",
                 "lat_extent": [49.0, 52.0],
                 "lon_extent": [-3.0, 3.0],
                 "merit_cg": 20,
-                "description": "Tests 0° longitude crossing over UK-France"
+                "description": "Tests 0° longitude crossing over UK-France",
             },
             "equator": {
                 "name": "Equator (Mount Kenya)",
                 "lat_extent": [-2.0, 2.0],
                 "lon_extent": [36.0, 38.0],
                 "merit_cg": 20,
-                "description": "Tests 0° latitude over Mount Kenya"
+                "description": "Tests 0° latitude over Mount Kenya",
             },
             "tierra-del-fuego": {
                 "name": "Tierra del Fuego",
                 "lat_extent": [-56.0, -53.0],
                 "lon_extent": [-70.0, -65.0],
                 "merit_cg": 25,
-                "description": "Tests southern tip of South America"
+                "description": "Tests southern tip of South America",
             },
             "bering": {
                 "name": "Bering Strait",
                 "lat_extent": [64.0, 68.0],
                 "lon_extent": [177.0, -177.0],
                 "merit_cg": 25,
-                "description": "Tests dateline + high latitude over strait"
+                "description": "Tests dateline + high latitude over strait",
             },
             "south-pole": {
                 "name": "South Pole (Marie Byrd Land)",
                 "lat_extent": [-85.0, -75.0],
                 "lon_extent": [-150.0, -100.0],
                 "merit_cg": 60,
-                "description": "Tests pure REMA over West Antarctica"
-            }
+                "description": "Tests pure REMA over West Antarctica",
+            },
         }
 
         config = test_configs[args.test]
@@ -465,31 +501,37 @@ if __name__ == "__main__":
         results = []
 
         # 1. MERIT-REMA interface at EXACT boundary (most critical!)
-        results.append(test_region(
-            name="MERIT-REMA Boundary (South Orkney Islands)",
-            lat_extent=[-61.5, -59.5],
-            lon_extent=[-47.0, -44.0],
-            merit_cg=10,
-            description="EXACTLY -60° boundary with South Orkney Islands at 60.5°S"
-        ))
+        results.append(
+            test_region(
+                name="MERIT-REMA Boundary (South Orkney Islands)",
+                lat_extent=[-61.5, -59.5],
+                lon_extent=[-47.0, -44.0],
+                merit_cg=10,
+                description="EXACTLY -60° boundary with South Orkney Islands at 60.5°S",
+            )
+        )
 
         # 2. Dateline crossing
-        results.append(test_region(
-            name="Dateline Crossing (Kamchatka)",
-            lat_extent=[50.0, 62.0],
-            lon_extent=[175.0, -175.0],
-            merit_cg=30,
-            description="±180° longitude over Kamchatka Peninsula"
-        ))
+        results.append(
+            test_region(
+                name="Dateline Crossing (Kamchatka)",
+                lat_extent=[50.0, 62.0],
+                lon_extent=[175.0, -175.0],
+                merit_cg=30,
+                description="±180° longitude over Kamchatka Peninsula",
+            )
+        )
 
         # 3. North Pole
-        results.append(test_region(
-            name="North Pole (Greenland)",
-            lat_extent=[75.0, 85.0],
-            lon_extent=[-50.0, -20.0],
-            merit_cg=40,
-            description="High Arctic over northern Greenland"
-        ))
+        results.append(
+            test_region(
+                name="North Pole (Greenland)",
+                lat_extent=[75.0, 85.0],
+                lon_extent=[-50.0, -20.0],
+                merit_cg=40,
+                description="High Arctic over northern Greenland",
+            )
+        )
 
         success = print_summary(results)
         sys.exit(0 if success else 1)

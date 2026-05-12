@@ -11,9 +11,10 @@ Usage:
 """
 
 import os
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 import sys
 import argparse
@@ -22,6 +23,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm, LinearSegmentedColormap
 import matplotlib.colors as mcolors
 from pathlib import Path
+
 
 def get_topo_colormap():
     """
@@ -44,7 +46,7 @@ def get_topo_colormap():
 
     # Combine: 120 ocean + 16 transition + 120 land = 256 total
     colors = np.vstack((ocean_colors, transition_colors, land_colors))
-    return mcolors.LinearSegmentedColormap.from_list('topo', colors)
+    return mcolors.LinearSegmentedColormap.from_list("topo", colors)
 
 
 def count_land_ocean_cells(grid, params, reader):
@@ -145,7 +147,9 @@ def count_land_ocean_cells(grid, params, reader):
     return len(land_cells), len(ocean_cells), land_cells, ocean_cells, land_fractions
 
 
-def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land_fractions, output_dir):
+def create_comprehensive_plots(
+    clat_deg, clon_deg, land_cells, ocean_cells, land_fractions, output_dir
+):
     """
     Create comprehensive plots of land/ocean classification.
 
@@ -171,13 +175,23 @@ def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land
 
     # Convert to Mollweide projection coordinates
     lon_plot = np.deg2rad(clon_deg)
-    lon_plot[lon_plot > np.pi] -= 2*np.pi
+    lon_plot[lon_plot > np.pi] -= 2 * np.pi
     lat_plot = np.deg2rad(clat_deg)
 
     # Custom colormap from blue (ocean) to green (land)
-    colors_gradient = ['#0033aa', '#0066cc', '#3399ff', '#66ccff',
-                       '#99ff99', '#66cc66', '#339933', '#006600']
-    cmap_land_ocean = LinearSegmentedColormap.from_list('land_ocean', colors_gradient, N=256)
+    colors_gradient = [
+        "#0033aa",
+        "#0066cc",
+        "#3399ff",
+        "#66ccff",
+        "#99ff99",
+        "#66cc66",
+        "#339933",
+        "#006600",
+    ]
+    cmap_land_ocean = LinearSegmentedColormap.from_list(
+        "land_ocean", colors_gradient, N=256
+    )
 
     # ========================================================================
     # Figure 1: Multiple global views with different thresholds
@@ -186,80 +200,121 @@ def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land
     fig = plt.figure(figsize=(20, 12))
 
     # Plot 1: Continuous land fraction
-    ax1 = fig.add_subplot(231, projection='mollweide')
-    scatter1 = ax1.scatter(lon_plot, lat_plot,
-                          c=land_fractions,
-                          cmap=cmap_land_ocean,
-                          s=5,
-                          alpha=0.9,
-                          vmin=0.0,
-                          vmax=1.0,
-                          edgecolors='none')
-    cbar1 = plt.colorbar(scatter1, ax=ax1, orientation='horizontal', pad=0.05, shrink=0.7)
-    cbar1.set_label('Land Fraction', fontsize=10)
-    ax1.set_title(f'Continuous Land Fraction\n(All gradations)', fontsize=11, fontweight='bold')
+    ax1 = fig.add_subplot(231, projection="mollweide")
+    scatter1 = ax1.scatter(
+        lon_plot,
+        lat_plot,
+        c=land_fractions,
+        cmap=cmap_land_ocean,
+        s=5,
+        alpha=0.9,
+        vmin=0.0,
+        vmax=1.0,
+        edgecolors="none",
+    )
+    cbar1 = plt.colorbar(
+        scatter1, ax=ax1, orientation="horizontal", pad=0.05, shrink=0.7
+    )
+    cbar1.set_label("Land Fraction", fontsize=10)
+    ax1.set_title(
+        f"Continuous Land Fraction\n(All gradations)", fontsize=11, fontweight="bold"
+    )
     ax1.grid(True, alpha=0.3)
 
     # Plot 2: Binary classification (>50% land = green, else blue)
-    ax2 = fig.add_subplot(232, projection='mollweide')
-    binary_colors = np.where(land_fractions > 0.5, '#228B22', '#1E90FF')
-    ax2.scatter(lon_plot, lat_plot,
-               c=binary_colors,
-               s=5,
-               alpha=0.9,
-               edgecolors='none')
-    ax2.set_title(f'Binary: >50% Land = Green\nLand: {land_count}, Ocean: {ocean_count}',
-                  fontsize=11, fontweight='bold')
+    ax2 = fig.add_subplot(232, projection="mollweide")
+    binary_colors = np.where(land_fractions > 0.5, "#228B22", "#1E90FF")
+    ax2.scatter(lon_plot, lat_plot, c=binary_colors, s=5, alpha=0.9, edgecolors="none")
+    ax2.set_title(
+        f"Binary: >50% Land = Green\nLand: {land_count}, Ocean: {ocean_count}",
+        fontsize=11,
+        fontweight="bold",
+    )
     ax2.grid(True, alpha=0.3)
 
     # Plot 3: Highlight mixed coastal cells (10-90% land)
-    ax3 = fig.add_subplot(233, projection='mollweide')
+    ax3 = fig.add_subplot(233, projection="mollweide")
     coastal_mask = (land_fractions > 0.1) & (land_fractions < 0.9)
     pure_land_mask = land_fractions >= 0.9
     pure_ocean_mask = land_fractions <= 0.1
 
     if np.any(pure_ocean_mask):
-        ax3.scatter(lon_plot[pure_ocean_mask], lat_plot[pure_ocean_mask],
-                   c='#B0E0E6', s=4, alpha=0.5, label='Pure Ocean (<10% land)')
+        ax3.scatter(
+            lon_plot[pure_ocean_mask],
+            lat_plot[pure_ocean_mask],
+            c="#B0E0E6",
+            s=4,
+            alpha=0.5,
+            label="Pure Ocean (<10% land)",
+        )
     if np.any(pure_land_mask):
-        ax3.scatter(lon_plot[pure_land_mask], lat_plot[pure_land_mask],
-                   c='#90EE90', s=4, alpha=0.5, label='Pure Land (>90% land)')
+        ax3.scatter(
+            lon_plot[pure_land_mask],
+            lat_plot[pure_land_mask],
+            c="#90EE90",
+            s=4,
+            alpha=0.5,
+            label="Pure Land (>90% land)",
+        )
     if np.any(coastal_mask):
-        ax3.scatter(lon_plot[coastal_mask], lat_plot[coastal_mask],
-                   c='#FF6347', s=8, alpha=0.9, label=f'Mixed Coastal (10-90% land)')
+        ax3.scatter(
+            lon_plot[coastal_mask],
+            lat_plot[coastal_mask],
+            c="#FF6347",
+            s=8,
+            alpha=0.9,
+            label=f"Mixed Coastal (10-90% land)",
+        )
 
-    ax3.set_title(f'Coastal/Mixed Cells Highlighted\n{np.sum(coastal_mask)} mixed cells',
-                  fontsize=11, fontweight='bold')
-    ax3.legend(loc='lower left', fontsize=8, markerscale=2)
+    ax3.set_title(
+        f"Coastal/Mixed Cells Highlighted\n{np.sum(coastal_mask)} mixed cells",
+        fontsize=11,
+        fontweight="bold",
+    )
+    ax3.legend(loc="lower left", fontsize=8, markerscale=2)
     ax3.grid(True, alpha=0.3)
 
     # Plot 4: Grid structure
-    ax4 = fig.add_subplot(234, projection='mollweide')
-    ax4.scatter(lon_plot, lat_plot,
-               c='gray', s=2, alpha=0.6)
-    ax4.set_title(f'ICON R2B4 Grid Structure\n{len(clat_deg)} cells total',
-                  fontsize=11, fontweight='bold')
+    ax4 = fig.add_subplot(234, projection="mollweide")
+    ax4.scatter(lon_plot, lat_plot, c="gray", s=2, alpha=0.6)
+    ax4.set_title(
+        f"ICON R2B4 Grid Structure\n{len(clat_deg)} cells total",
+        fontsize=11,
+        fontweight="bold",
+    )
     ax4.grid(True, alpha=0.3)
 
     # Plot 5: Only cells with ANY land (>5% threshold)
-    ax5 = fig.add_subplot(235, projection='mollweide')
+    ax5 = fig.add_subplot(235, projection="mollweide")
     any_land_mask = land_fractions > 0.05
     if np.any(~any_land_mask):
-        ax5.scatter(lon_plot[~any_land_mask], lat_plot[~any_land_mask],
-                   c='#1E90FF', s=3, alpha=0.3, label='Pure Ocean')
+        ax5.scatter(
+            lon_plot[~any_land_mask],
+            lat_plot[~any_land_mask],
+            c="#1E90FF",
+            s=3,
+            alpha=0.3,
+            label="Pure Ocean",
+        )
     if np.any(any_land_mask):
-        scatter5 = ax5.scatter(lon_plot[any_land_mask], lat_plot[any_land_mask],
-                              c=land_fractions[any_land_mask],
-                              cmap=cmap_land_ocean,
-                              s=8,
-                              alpha=0.9,
-                              vmin=0.0,
-                              vmax=1.0,
-                              edgecolors='none',
-                              label='Has Land')
-    ax5.set_title(f'Cells with >5% Land Highlighted\n{np.sum(any_land_mask)} cells with land',
-                  fontsize=11, fontweight='bold')
-    ax5.legend(loc='lower left', fontsize=8)
+        scatter5 = ax5.scatter(
+            lon_plot[any_land_mask],
+            lat_plot[any_land_mask],
+            c=land_fractions[any_land_mask],
+            cmap=cmap_land_ocean,
+            s=8,
+            alpha=0.9,
+            vmin=0.0,
+            vmax=1.0,
+            edgecolors="none",
+            label="Has Land",
+        )
+    ax5.set_title(
+        f"Cells with >5% Land Highlighted\n{np.sum(any_land_mask)} cells with land",
+        fontsize=11,
+        fontweight="bold",
+    )
+    ax5.legend(loc="lower left", fontsize=8)
     ax5.grid(True, alpha=0.3)
 
     # Plot 6: Latitude distribution
@@ -273,24 +328,43 @@ def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land
     bin_centers = (lat_bins[:-1] + lat_bins[1:]) / 2
     width = 5
 
-    ax6.barh(bin_centers, pure_ocean_hist, height=width,
-            color='#1E90FF', alpha=0.6, label='Pure Ocean (≤10% land)')
-    ax6.barh(bin_centers, coastal_hist, height=width, left=pure_ocean_hist,
-            color='#FF6347', alpha=0.6, label='Coastal (10-90% land)')
-    ax6.barh(bin_centers, pure_land_hist, height=width,
-            left=pure_ocean_hist+coastal_hist,
-            color='#228B22', alpha=0.6, label='Pure Land (≥90% land)')
+    ax6.barh(
+        bin_centers,
+        pure_ocean_hist,
+        height=width,
+        color="#1E90FF",
+        alpha=0.6,
+        label="Pure Ocean (≤10% land)",
+    )
+    ax6.barh(
+        bin_centers,
+        coastal_hist,
+        height=width,
+        left=pure_ocean_hist,
+        color="#FF6347",
+        alpha=0.6,
+        label="Coastal (10-90% land)",
+    )
+    ax6.barh(
+        bin_centers,
+        pure_land_hist,
+        height=width,
+        left=pure_ocean_hist + coastal_hist,
+        color="#228B22",
+        alpha=0.6,
+        label="Pure Land (≥90% land)",
+    )
 
-    ax6.set_xlabel('Number of cells', fontsize=10)
-    ax6.set_ylabel('Latitude [degrees]', fontsize=10)
-    ax6.set_title('Cell Distribution by Latitude', fontsize=11, fontweight='bold')
+    ax6.set_xlabel("Number of cells", fontsize=10)
+    ax6.set_ylabel("Latitude [degrees]", fontsize=10)
+    ax6.set_title("Cell Distribution by Latitude", fontsize=11, fontweight="bold")
     ax6.legend(fontsize=8)
     ax6.grid(True, alpha=0.3)
 
     plt.tight_layout()
 
     output_file = output_dir / "improved_verification_plots.png"
-    plt.savefig(output_file, dpi=150, bbox_inches='tight')
+    plt.savefig(output_file, dpi=150, bbox_inches="tight")
     print(f"  Saved: {output_file}")
     plt.close()
 
@@ -300,10 +374,10 @@ def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land
     print("  Creating Pacific region detail plots...")
 
     regions = {
-        'Hawaii': (15, 25, -165, -150),
-        'Micronesia': (0, 15, 130, 170),
-        'Polynesia': (-30, 0, -180, -130),
-        'Indonesia': (-10, 10, 95, 140),
+        "Hawaii": (15, 25, -165, -150),
+        "Micronesia": (0, 15, 130, 170),
+        "Polynesia": (-30, 0, -180, -130),
+        "Indonesia": (-10, 10, 95, 140),
     }
 
     fig2, axes = plt.subplots(2, 2, figsize=(16, 12))
@@ -314,8 +388,10 @@ def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land
 
         # Find cells in region
         mask = (
-            (clat_deg >= lat_min) & (clat_deg <= lat_max) &
-            (clon_deg >= lon_min) & (clon_deg <= lon_max)
+            (clat_deg >= lat_min)
+            & (clat_deg <= lat_max)
+            & (clon_deg >= lon_min)
+            & (clon_deg <= lon_max)
         )
 
         # Separate by land fraction
@@ -324,61 +400,78 @@ def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land
 
         # Plot
         if np.any(pure_ocean):
-            ax.scatter(clon_deg[pure_ocean], clat_deg[pure_ocean],
-                      c='#E0F2F7', s=80, alpha=0.5,
-                      edgecolors='gray', linewidths=0.3,
-                      label='Ocean (<5% land)')
+            ax.scatter(
+                clon_deg[pure_ocean],
+                clat_deg[pure_ocean],
+                c="#E0F2F7",
+                s=80,
+                alpha=0.5,
+                edgecolors="gray",
+                linewidths=0.3,
+                label="Ocean (<5% land)",
+            )
 
         sc = None  # Initialize scatter plot variable
         if np.any(has_land):
-            sc = ax.scatter(clon_deg[has_land], clat_deg[has_land],
-                           c=land_fractions[has_land],
-                           cmap=cmap_land_ocean,
-                           s=120,
-                           alpha=0.95,
-                           vmin=0.0,
-                           vmax=1.0,
-                           edgecolors='black',
-                           linewidths=0.8)
+            sc = ax.scatter(
+                clon_deg[has_land],
+                clat_deg[has_land],
+                c=land_fractions[has_land],
+                cmap=cmap_land_ocean,
+                s=120,
+                alpha=0.95,
+                vmin=0.0,
+                vmax=1.0,
+                edgecolors="black",
+                linewidths=0.8,
+            )
 
             # Add cell percentages for high land fraction
             high_land = has_land & (land_fractions > 0.3)
             for cell_idx in np.where(high_land)[0]:
-                ax.text(clon_deg[cell_idx], clat_deg[cell_idx],
-                       f'{100*land_fractions[cell_idx]:.0f}%',
-                       fontsize=7, ha='center', va='center',
-                       bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.7))
+                ax.text(
+                    clon_deg[cell_idx],
+                    clat_deg[cell_idx],
+                    f"{100*land_fractions[cell_idx]:.0f}%",
+                    fontsize=7,
+                    ha="center",
+                    va="center",
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.7),
+                )
 
         # Format
-        ax.set_xlabel('Longitude [°]', fontsize=10)
-        ax.set_ylabel('Latitude [°]', fontsize=10)
-        ax.set_title(f'{name} Region\n{np.sum(has_land)} cells with ≥5% land, '
-                    f'{np.sum(pure_ocean)} pure ocean cells',
-                    fontsize=11, fontweight='bold')
+        ax.set_xlabel("Longitude [°]", fontsize=10)
+        ax.set_ylabel("Latitude [°]", fontsize=10)
+        ax.set_title(
+            f"{name} Region\n{np.sum(has_land)} cells with ≥5% land, "
+            f"{np.sum(pure_ocean)} pure ocean cells",
+            fontsize=11,
+            fontweight="bold",
+        )
         ax.grid(True, alpha=0.3)
         ax.set_xlim(lon_min, lon_max)
         ax.set_ylim(lat_min, lat_max)
 
         if idx == 0:
-            ax.legend(loc='best', fontsize=8)
+            ax.legend(loc="best", fontsize=8)
 
     plt.tight_layout()
 
     # Add colorbar at the bottom (if we have scatter data)
     if sc is not None:
         cbar_ax = fig2.add_axes([0.25, -0.02, 0.5, 0.02])
-        cbar = fig2.colorbar(sc, cax=cbar_ax, orientation='horizontal')
-        cbar.set_label('Land Fraction (0=Ocean, 1=Land)', fontsize=11)
+        cbar = fig2.colorbar(sc, cax=cbar_ax, orientation="horizontal")
+        cbar.set_label("Land Fraction (0=Ocean, 1=Land)", fontsize=11)
 
     output_file2 = output_dir / "pacific_islands_detail.png"
-    plt.savefig(output_file2, dpi=200, bbox_inches='tight')
+    plt.savefig(output_file2, dpi=200, bbox_inches="tight")
     print(f"  Saved: {output_file2}")
     plt.close()
 
     # Print statistics
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("STATISTICS")
-    print("="*80)
+    print("=" * 80)
     print(f"Pure ocean cells (≤10% land): {np.sum(land_fractions <= 0.1)}")
     print(f"Coastal/mixed cells (10-90% land): {np.sum(coastal_mask)}")
     print(f"Pure land cells (≥90% land): {np.sum(land_fractions >= 0.9)}")
@@ -390,8 +483,10 @@ def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land
     # Pacific statistics
     for name, (lat_min, lat_max, lon_min, lon_max) in regions.items():
         mask = (
-            (clat_deg >= lat_min) & (clat_deg <= lat_max) &
-            (clon_deg >= lon_min) & (clon_deg <= lon_max)
+            (clat_deg >= lat_min)
+            & (clat_deg <= lat_max)
+            & (clon_deg >= lon_min)
+            & (clon_deg <= lon_max)
         )
         has_land = mask & (land_fractions >= 0.05)
 
@@ -401,7 +496,7 @@ def create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land
             print(f"  Max land fraction: {np.max(land_fractions[has_land]):.1%}")
             print(f"  Mean land fraction: {np.mean(land_fractions[has_land]):.1%}")
 
-    print("="*80)
+    print("=" * 80)
 
 
 def load_saved_data(data_file):
@@ -420,32 +515,35 @@ def load_saved_data(data_file):
     print()
 
     return (
-        data['clat_deg'],
-        data['clon_deg'],
-        list(data['land_cells']),
-        list(data['ocean_cells']),
-        data['land_fractions']
+        data["clat_deg"],
+        data["clon_deg"],
+        list(data["land_cells"]),
+        list(data["ocean_cells"]),
+        data["land_fractions"],
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description='Verify ETOPO land/ocean classification and create plots',
+        description="Verify ETOPO land/ocean classification and create plots",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   python verify_icon_etopo_land_ocean.py              # Full verification + plotting
   python verify_icon_etopo_land_ocean.py --plot-only  # Load saved data and plot only
-        """
+        """,
     )
-    parser.add_argument('--plot-only', action='store_true',
-                        help='Only create plots from saved data (skip verification)')
+    parser.add_argument(
+        "--plot-only",
+        action="store_true",
+        help="Only create plots from saved data (skip verification)",
+    )
     args = parser.parse_args()
 
-    print("="*80)
+    print("=" * 80)
     print("ETOPO LAND/OCEAN VERIFICATION")
-    print("="*80)
+    print("=" * 80)
 
     output_dir = Path("outputs") / "verification"
     data_file = output_dir / "verification_data.npz"
@@ -453,13 +551,15 @@ Examples:
     if args.plot_only:
         # Plot-only mode: Load saved data
         print("\nMode: PLOT ONLY (loading saved data)")
-        print("="*80)
-        clat_deg, clon_deg, land_cells, ocean_cells, land_fractions = load_saved_data(data_file)
+        print("=" * 80)
+        clat_deg, clon_deg, land_cells, ocean_cells, land_fractions = load_saved_data(
+            data_file
+        )
 
     else:
         # Full verification mode
         print("\nMode: FULL VERIFICATION (compute + save + plot)")
-        print("="*80)
+        print("=" * 80)
 
         # Import modules needed for verification
         from pycsa.core import io, var, utils
@@ -486,20 +586,22 @@ Examples:
 
         # Count land/ocean cells
         print("\nCounting land/ocean cells...")
-        land_count, ocean_count, land_cells, ocean_cells, land_fractions = count_land_ocean_cells(
-            grid, params, reader
+        land_count, ocean_count, land_cells, ocean_cells, land_fractions = (
+            count_land_ocean_cells(grid, params, reader)
         )
 
         # Print results
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("RESULTS")
-        print("="*80)
+        print("=" * 80)
         print(f"Total cells: {n_cells}")
         print(f"Land cells (is_land=1): {land_count}")
         print(f"Ocean cells (is_land=0): {ocean_count}")
-        print(f"Land/Ocean ratio: {land_count}/{ocean_count} = {land_count/ocean_count:.3f}")
+        print(
+            f"Land/Ocean ratio: {land_count}/{ocean_count} = {land_count/ocean_count:.3f}"
+        )
         print(f"Land percentage: {100*land_count/(land_count+ocean_count):.2f}%")
-        print("="*80)
+        print("=" * 80)
 
         # Save plotting data for debugging
         print("\nSaving verification data...")
@@ -520,14 +622,18 @@ Examples:
             n_cells=n_cells,
             land_count=land_count,
             ocean_count=ocean_count,
-            etopo_cg=params.etopo_cg
+            etopo_cg=params.etopo_cg,
         )
         print(f"  Data saved: {data_file}")
-        print(f"  Contains: cell coordinates, land/ocean classifications, land fractions, and counts")
+        print(
+            f"  Contains: cell coordinates, land/ocean classifications, land fractions, and counts"
+        )
 
     # Create comprehensive plots (both modes)
     print("\nCreating comprehensive plots...")
-    create_comprehensive_plots(clat_deg, clon_deg, land_cells, ocean_cells, land_fractions, output_dir)
+    create_comprehensive_plots(
+        clat_deg, clon_deg, land_cells, ocean_cells, land_fractions, output_dir
+    )
 
     print("\n✓ Complete!")
     print(f"  Output directory: {output_dir}")

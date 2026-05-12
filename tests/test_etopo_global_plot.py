@@ -42,6 +42,7 @@ def create_global_params(etopo_cg=8):
     params : object
         Parameter object with required attributes
     """
+
     class Params:
         def __init__(self):
             # Path to ETOPO data directory
@@ -100,15 +101,14 @@ def test_global_etopo_load_and_plot():
 
     # Step 3: Load ETOPO data
     print("Step 3: Loading ETOPO data...")
-    print("  (This will load all tiles for full global coverage - may take a few minutes even with coarse-graining)")
+    print(
+        "  (This will load all tiles for full global coverage - may take a few minutes even with coarse-graining)"
+    )
     start_time = time.time()
 
     try:
         loader = io.ncdata.read_etopo_topo(
-            cell,
-            params,
-            verbose=True,  # Show progress
-            is_parallel=False
+            cell, params, verbose=True, is_parallel=False  # Show progress
         )
         load_time = time.time() - start_time
         print()
@@ -118,6 +118,7 @@ def test_global_etopo_load_and_plot():
     except Exception as e:
         print(f"ERROR during loading: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -174,10 +175,10 @@ def test_global_etopo_load_and_plot():
         print("  Some validation checks failed!")
         return False
 
-
     # Step 5: Optionally clip ocean cells before plotting
     print("Step 5: Optionally clip ocean cells before plotting...")
     import os
+
     clip_ocean = True  # Default: clip ocean cells to -500m
     # Allow override via environment variable or function argument in future
 
@@ -218,7 +219,7 @@ def test_global_etopo_load_and_plot():
             cell,
             fs=(14, 8),  # Larger figure for global view
             int=plot_stride,
-            colorbar_margins=[0.92, 0.22, 0.035, 0.55]  # More visible colorbar
+            colorbar_margins=[0.92, 0.22, 0.035, 0.55],  # More visible colorbar
         )
         print("  - Plot displayed successfully!")
         print()
@@ -226,6 +227,7 @@ def test_global_etopo_load_and_plot():
     except Exception as e:
         print(f"ERROR during plotting: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -241,7 +243,9 @@ def test_global_etopo_load_and_plot():
         print(f"  - Mean ocean depth: {cell.topo[ocean_mask].mean():.1f} m")
     print()
     print(f"  - Highest point: {cell.topo.max():.1f} m (should be near Mt. Everest)")
-    print(f"  - Lowest point: {cell.topo.min():.1f} m (should be near Mariana Trench or -500m if clipped)")
+    print(
+        f"  - Lowest point: {cell.topo.min():.1f} m (should be near Mariana Trench or -500m if clipped)"
+    )
     print()
 
     # Step 8: Report success
@@ -289,7 +293,9 @@ def test_different_coarse_graining_factors():
             print(f"  Load time: {load_time:.2f} seconds")
             print(f"  Grid size: {cell.topo.shape}")
             print(f"  Memory usage: ~{cell.topo.nbytes / 1e6:.1f} MB")
-            print(f"  Elevation range: [{cell.topo.min():.1f}, {cell.topo.max():.1f}] m")
+            print(
+                f"  Elevation range: [{cell.topo.min():.1f}, {cell.topo.max():.1f}] m"
+            )
 
         except Exception as e:
             print(f"  ERROR: {e}")
@@ -304,13 +310,17 @@ if __name__ == "__main__":
     success = test_global_etopo_load_and_plot()
 
     if success:
-        print("\nAll tests passed! The ETOPO loader successfully loaded global coverage.")
+        print(
+            "\nAll tests passed! The ETOPO loader successfully loaded global coverage."
+        )
         print()
         print("=" * 80)
         print("RECOMMENDED APPROACH FOR FULL GLOBAL COVERAGE")
         print("=" * 80)
         print()
-        print("The dateline handling has been improved, but for best elevation accuracy")
+        print(
+            "The dateline handling has been improved, but for best elevation accuracy"
+        )
         print("with full global coverage, use the two-hemisphere approach:")
         print()
         print("    # Load Western Hemisphere")
@@ -329,7 +339,9 @@ if __name__ == "__main__":
         print("    cell_global = var.topo_cell()")
         print("    cell_global.lon = np.concatenate([cell_west.lon, cell_east.lon])")
         print("    cell_global.lat = cell_west.lat  # Same for both")
-        print("    cell_global.topo = np.concatenate([cell_west.topo, cell_east.topo], axis=1)")
+        print(
+            "    cell_global.topo = np.concatenate([cell_west.topo, cell_east.topo], axis=1)"
+        )
         print()
         print("This approach preserves elevation accuracy better than loading")
         print("all 288 tiles in a single operation.")
@@ -338,10 +350,12 @@ if __name__ == "__main__":
         # Optionally run coarse-graining comparison (only if running interactively)
         if sys.stdin.isatty():
             user_input = input("\nRun coarse-graining comparison test? (y/n): ")
-            if user_input.lower() == 'y':
+            if user_input.lower() == "y":
                 test_different_coarse_graining_factors()
         else:
-            print("\nNote: Run interactively to test different coarse-graining factors.")
+            print(
+                "\nNote: Run interactively to test different coarse-graining factors."
+            )
     else:
         print("\nTest failed! Please check the errors above.")
         sys.exit(1)

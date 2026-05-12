@@ -38,7 +38,7 @@ class BufferPool:
     def __init__(self):
         """Initialize empty buffer pool."""
         self.buffers = {}  # key -> (max_shape, array)
-        self.stats = {}    # key -> {hits, misses, grows}
+        self.stats = {}  # key -> {hits, misses, grows}
 
     def get_or_create(self, key, shape, dtype=np.float64):
         """Get buffer from pool, creating or growing as needed.
@@ -65,7 +65,7 @@ class BufferPool:
         """
         # Initialize stats for new keys
         if key not in self.stats:
-            self.stats[key] = {'hits': 0, 'misses': 0, 'grows': 0}
+            self.stats[key] = {"hits": 0, "misses": 0, "grows": 0}
 
         if key in self.buffers:
             current_shape, buf = self.buffers[key]
@@ -73,13 +73,13 @@ class BufferPool:
             # Check if requested size fits in current buffer
             if all(req <= curr for req, curr in zip(shape, current_shape)):
                 # Cache hit! Return view of existing buffer
-                self.stats[key]['hits'] += 1
+                self.stats[key]["hits"] += 1
                 # Create view with appropriate slice for each dimension
                 slices = tuple(slice(0, s) for s in shape)
                 return buf[slices]
 
             # Need bigger buffer - reallocate
-            self.stats[key]['grows'] += 1
+            self.stats[key]["grows"] += 1
             # Keep maximum of current and requested for each dimension
             new_shape = tuple(max(c, r) for c, r in zip(current_shape, shape))
             self.buffers[key] = (new_shape, np.empty(new_shape, dtype=dtype))
@@ -89,7 +89,7 @@ class BufferPool:
             return self.buffers[key][1][slices]
 
         # First allocation for this key
-        self.stats[key]['misses'] += 1
+        self.stats[key]["misses"] += 1
         self.buffers[key] = (shape, np.empty(shape, dtype=dtype))
         return self.buffers[key][1]
 
@@ -142,7 +142,4 @@ class BufferPool:
             total_bytes += size_bytes
             buffer_sizes[key] = size_bytes / (1024**2)  # Convert to MB
 
-        return {
-            'total_mb': total_bytes / (1024**2),
-            'buffers': buffer_sizes
-        }
+        return {"total_mb": total_bytes / (1024**2), "buffers": buffer_sizes}

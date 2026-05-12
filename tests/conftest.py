@@ -30,8 +30,13 @@ except ImportError:
     _stub_attrs(_crs, "PlateCarree", "Mollweide", "Robinson", "Geodetic")
     _stub_pkg("cartopy.mpl")
     _ticker = _stub_pkg("cartopy.mpl.ticker")
-    _stub_attrs(_ticker, "LongitudeFormatter", "LatitudeFormatter",
-                "LongitudeLocator", "LatitudeLocator")
+    _stub_attrs(
+        _ticker,
+        "LongitudeFormatter",
+        "LatitudeFormatter",
+        "LongitudeLocator",
+        "LatitudeLocator",
+    )
     _stub_pkg("cartopy.feature")
     _stub_pkg("cartopy.io")
     _stub_pkg("cartopy.io.shapereader")
@@ -81,7 +86,7 @@ def assert_arrays_close(actual, expected, rtol=1e-5, atol=1e-8, name="array"):
         expected,
         rtol=rtol,
         atol=atol,
-        err_msg=f"{name} does not match baseline within tolerance (rtol={rtol}, atol={atol})"
+        err_msg=f"{name} does not match baseline within tolerance (rtol={rtol}, atol={atol})",
     )
 
 
@@ -107,7 +112,7 @@ def assert_values_close(actual, expected, rtol=1e-5, atol=1e-8, name="value"):
         expected,
         rtol=rtol,
         atol=atol,
-        err_msg=f"{name} = {actual} does not match baseline {expected} within tolerance"
+        err_msg=f"{name} = {actual} does not match baseline {expected} within tolerance",
     )
 
 
@@ -131,46 +136,27 @@ class BaselineComparison:
 
     def add_result(self, name, actual, expected):
         """Add a result to compare."""
-        self.results[name] = {
-            'actual': actual,
-            'expected': expected,
-            'passed': None
-        }
+        self.results[name] = {"actual": actual, "expected": expected, "passed": None}
 
     def compare_all(self):
         """Compare all added results and return summary."""
-        summary = {
-            'passed': 0,
-            'failed': 0,
-            'failures': []
-        }
+        summary = {"passed": 0, "failed": 0, "failures": []}
 
         for name, data in self.results.items():
             try:
-                if isinstance(data['actual'], np.ndarray):
+                if isinstance(data["actual"], np.ndarray):
                     assert_arrays_close(
-                        data['actual'],
-                        data['expected'],
-                        self.rtol,
-                        self.atol,
-                        name
+                        data["actual"], data["expected"], self.rtol, self.atol, name
                     )
                 else:
                     assert_values_close(
-                        data['actual'],
-                        data['expected'],
-                        self.rtol,
-                        self.atol,
-                        name
+                        data["actual"], data["expected"], self.rtol, self.atol, name
                     )
-                self.results[name]['passed'] = True
-                summary['passed'] += 1
+                self.results[name]["passed"] = True
+                summary["passed"] += 1
             except AssertionError as e:
-                self.results[name]['passed'] = False
-                summary['failed'] += 1
-                summary['failures'].append({
-                    'name': name,
-                    'error': str(e)
-                })
+                self.results[name]["passed"] = False
+                summary["failed"] += 1
+                summary["failures"].append({"name": name, "error": str(e)})
 
         return summary

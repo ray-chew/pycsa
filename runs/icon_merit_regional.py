@@ -16,9 +16,11 @@ if ipython is not None:
 else:
     print(ipython)
 
+
 def autoreload():
     if ipython is not None:
         ipython.run_line_magic("autoreload", "2")
+
 
 from sys import exit
 
@@ -111,9 +113,7 @@ for tri_idx in params.tri_set:
     simplex_lon = triangles[tri_idx, :, 0]
     simplex_lat = triangles[tri_idx, :, 1]
 
-    utils.get_lat_lon_segments(
-        simplex_lat, simplex_lon, cell, topo, rect=params.rect
-    )
+    utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, topo, rect=params.rect)
 
     topo_orig = np.copy(cell.topo)
 
@@ -151,9 +151,7 @@ for tri_idx in params.tri_set:
         max_val = fq_cpy[max_idx]
         fq_cpy[max_idx] = 0.0
 
-    utils.get_lat_lon_segments(
-        simplex_lat, simplex_lon, cell, topo, rect=False
-    )
+    utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, topo, rect=False)
 
     k_idxs = [pair[1] for pair in indices]
     l_idxs = [pair[0] for pair in indices]
@@ -172,7 +170,7 @@ for tri_idx in params.tri_set:
     cell.topo = topo_orig
 
     writer.output(tri_idx, clat_rad[tri_idx], clon_rad[tri_idx], cell.analysis)
-    
+
     cell.uw = uw
 
     if params.plot:

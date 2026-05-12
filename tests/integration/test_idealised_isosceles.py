@@ -19,18 +19,30 @@ class TestIdealisedIsosceles:
     def baseline_results(self):
         """Baseline numerical results from the JAMES paper."""
         return {
-            'num_modes': 22,
-            'amplitudes': np.array([
-                1243.29667409, 1110972.57606147, 1861.67185697,
-                1243.32433928, 1146.82593374, 1110972.57606147
-            ]),
-            'l2_errors': np.array([
-                0., 164291.56804783, 115.71273229,
-                85.67668202, 111.37226442, 164291.56804783
-            ]),
-            'percentage_errors': np.array([
-                0., 89256.997, 49.737, 0.002, 7.759, 89256.997
-            ])
+            "num_modes": 22,
+            "amplitudes": np.array(
+                [
+                    1243.29667409,
+                    1110972.57606147,
+                    1861.67185697,
+                    1243.32433928,
+                    1146.82593374,
+                    1110972.57606147,
+                ]
+            ),
+            "l2_errors": np.array(
+                [
+                    0.0,
+                    164291.56804783,
+                    115.71273229,
+                    85.67668202,
+                    111.37226442,
+                    164291.56804783,
+                ]
+            ),
+            "percentage_errors": np.array(
+                [0.0, 89256.997, 49.737, 0.002, 7.759, 89256.997]
+            ),
         }
 
     @pytest.fixture
@@ -59,14 +71,14 @@ class TestIdealisedIsosceles:
         scl = np.random.randint(0, 2, size=sz)
 
         return {
-            'nk': nk,
-            'nl': nl,
-            'Ak': Ak,
-            'Al': Al,
-            'sck': sck,
-            'scl': scl,
-            'sz': sz,
-            'pts': pts
+            "nk": nk,
+            "nl": nl,
+            "Ak": Ak,
+            "Al": Al,
+            "sck": sck,
+            "scl": scl,
+            "sz": sz,
+            "pts": pts,
         }
 
     @pytest.fixture
@@ -100,11 +112,13 @@ class TestIdealisedIsosceles:
             return bf
 
         terrain = synthetic_terrain
-        for ii in range(terrain['sz']):
+        for ii in range(terrain["sz"]):
             cell.topo += sinusoidal_basis(
-                terrain['Ak'][ii], terrain['nk'][ii],
-                terrain['Al'][ii], terrain['nl'][ii],
-                terrain['sck'][ii]
+                terrain["Ak"][ii],
+                terrain["nk"][ii],
+                terrain["Al"][ii],
+                terrain["nl"][ii],
+                terrain["sck"][ii],
             )
 
         # Define triangle mask
@@ -114,9 +128,11 @@ class TestIdealisedIsosceles:
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
 
-        return cell, triangle, terrain['sz']
+        return cell, triangle, terrain["sz"]
 
-    def test_spectral_approximation(self, isosceles_cell, synthetic_terrain, baseline_results):
+    def test_spectral_approximation(
+        self, isosceles_cell, synthetic_terrain, baseline_results
+    ):
         """Test that CSA pipeline runs and produces consistent results."""
         cell, triangle, sz = isosceles_cell
         terrain = synthetic_terrain
@@ -134,10 +150,10 @@ class TestIdealisedIsosceles:
         # Build reference spectrum from known terrain components
         freqs_ref = np.zeros((nhi, nhj))
         cnt = 0
-        for pt in terrain['pts']:
+        for pt in terrain["pts"]:
             kk, ll = pt
             ll += 5  # Offset as in original script
-            freqs_ref[ll, kk] = terrain['Ak'][cnt]
+            freqs_ref[ll, kk] = terrain["Ak"][cnt]
             cnt += 1
 
         # Run pure LSFF
@@ -148,16 +164,14 @@ class TestIdealisedIsosceles:
 
         # Run regularized LSFF
         reg_lsff = interface.get_pmf(nhi, nhj, U, V)
-        freqs_rlsff, _, _ = reg_lsff.sappx(
-            cell, lmbda=lmbda_reg, iter_solve=False
-        )
+        freqs_rlsff, _, _ = reg_lsff.sappx(cell, lmbda=lmbda_reg, iter_solve=False)
 
         # Run CSA (first approximation + mode selection + second approximation)
         first_guess = interface.get_pmf(nhi, nhj, U, V)
 
         # First approximation on quadrilateral domain
         cell_fa = deepcopy(cell)
-        cell_fa.get_masked(mask=np.ones_like(cell.topo).astype('bool'))
+        cell_fa.get_masked(mask=np.ones_like(cell.topo).astype("bool"))
         cell_fa.wlat = np.diff(cell_fa.lat).mean()
         cell_fa.wlon = np.diff(cell_fa.lon).mean()
 
@@ -212,7 +226,9 @@ class TestIdealisedIsosceles:
         assert err_csa < err_plsff, "CSA should perform better than pure LSFF"
 
         # Check that we're in the right ballpark (within factor of 2)
-        assert 50 < err_csa < 250, f"CSA L2 error {err_csa:.2f} should be ~111 (baseline)"
+        assert (
+            50 < err_csa < 250
+        ), f"CSA L2 error {err_csa:.2f} should be ~111 (baseline)"
 
         # Amplitude sums should be positive
         sum_plsff = freqs_plsff.sum()
@@ -225,11 +241,12 @@ class TestIdealisedIsosceles:
 
     def test_mode_count(self, synthetic_terrain, baseline_results):
         """Test that the correct number of unique modes are generated."""
-        sz = synthetic_terrain['sz']
+        sz = synthetic_terrain["sz"]
 
         # Should match baseline number of unique modes
-        assert sz == baseline_results['num_modes'], \
-            f"Expected {baseline_results['num_modes']} unique modes, got {sz}"
+        assert (
+            sz == baseline_results["num_modes"]
+        ), f"Expected {baseline_results['num_modes']} unique modes, got {sz}"
 
     def test_deterministic_terrain_generation(self):
         """Test that terrain generation is deterministic with fixed seed."""
@@ -246,5 +263,9 @@ class TestIdealisedIsosceles:
         nk2 = np.random.randint(0, 12, size=sz2)
         nl2 = np.random.randint(-5, 7, size=sz2)
 
-        np.testing.assert_array_equal(nk1, nk2, err_msg="Terrain generation is not deterministic")
-        np.testing.assert_array_equal(nl1, nl2, err_msg="Terrain generation is not deterministic")
+        np.testing.assert_array_equal(
+            nk1, nk2, err_msg="Terrain generation is not deterministic"
+        )
+        np.testing.assert_array_equal(
+            nl1, nl2, err_msg="Terrain generation is not deterministic"
+        )

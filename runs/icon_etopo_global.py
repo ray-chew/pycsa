@@ -5,22 +5,26 @@ ICON ETOPO Global Processing Script
 IMPORTANT: Thread control environment variables must be set BEFORE numpy/numba import
 to prevent thread over-subscription with Dask workers.
 """
+
 import os
 
 # ============================================================================
 # CRITICAL: Set thread limits BEFORE importing numpy/numba/scipy
 # This prevents thread over-subscription when using Dask with threads_per_worker > 1
 # ============================================================================
-os.environ['OMP_NUM_THREADS'] = '1'
-os.environ['MKL_NUM_THREADS'] = '1'
-os.environ['OPENBLAS_NUM_THREADS'] = '1'
-os.environ['NUMEXPR_NUM_THREADS'] = '1'
-os.environ['NUMBA_NUM_THREADS'] = '1'  # Critical: prevents Numba parallel=True conflicts
-os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["NUMBA_NUM_THREADS"] = (
+    "1"  # Critical: prevents Numba parallel=True conflicts
+)
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
 
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # Use non-GUI backend for parallel processing
+
+matplotlib.use("Agg")  # Use non-GUI backend for parallel processing
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import matplotlib.colors as mcolors
@@ -67,18 +71,17 @@ def setup_logger(log_dir="logs"):
     logger.handlers.clear()
 
     # File handler - logs everything
-    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler = logging.FileHandler(log_file, mode="w")
     file_handler.setLevel(logging.INFO)
     file_formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
 
     # Also silence matplotlib and other libraries from console
-    logging.getLogger('matplotlib').setLevel(logging.WARNING)
-    logging.getLogger('distributed').setLevel(logging.WARNING)
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    logging.getLogger("distributed").setLevel(logging.WARNING)
 
     return log_file
 
@@ -110,7 +113,7 @@ def get_topo_colormap():
     # Combine: 120 ocean + 16 transition + 120 land = 256 total
     # Transition centered at index 128 (sea level)
     colors = np.vstack((ocean_colors, transition_colors, land_colors))
-    return mcolors.LinearSegmentedColormap.from_list('topo', colors)
+    return mcolors.LinearSegmentedColormap.from_list("topo", colors)
 
 
 def plot_cell_diagnostics(c_idx, cell_sa, ampls_sa, dat_2D_sa, output_dir, params):
@@ -158,14 +161,18 @@ def plot_cell_diagnostics(c_idx, cell_sa, ampls_sa, dat_2D_sa, output_dir, param
     topo_original = cell_sa.topo.copy()
     topo_original[~cell_sa.mask] = np.nan
 
-    im1 = axs[0].imshow(topo_original, origin='lower', cmap=topo_cmap,
-                        norm=norm, aspect='auto')
-    axs[0].set_title(f'Cell {c_idx}: Loaded Topography\nRange: [{vmin:.0f}, {vmax:.0f}] m',
-                     fontsize=11, fontweight='bold')
-    axs[0].set_xlabel('Longitude index')
-    axs[0].set_ylabel('Latitude index')
+    im1 = axs[0].imshow(
+        topo_original, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[0].set_title(
+        f"Cell {c_idx}: Loaded Topography\nRange: [{vmin:.0f}, {vmax:.0f}] m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[0].set_xlabel("Longitude index")
+    axs[0].set_ylabel("Latitude index")
     cbar1 = plt.colorbar(im1, ax=axs[0], fraction=0.046, pad=0.04)
-    cbar1.set_label('Elevation [m]', rotation=270, labelpad=15)
+    cbar1.set_label("Elevation [m]", rotation=270, labelpad=15)
 
     # Panel 2: Reconstructed topography (masked)
     dat_2D_masked = dat_2D_sa.copy()
@@ -173,32 +180,33 @@ def plot_cell_diagnostics(c_idx, cell_sa, ampls_sa, dat_2D_sa, output_dir, param
 
     # Compute reconstruction error
     diff = cell_sa.topo - dat_2D_sa
-    rmse = np.sqrt(np.mean(diff[cell_sa.mask]**2))
+    rmse = np.sqrt(np.mean(diff[cell_sa.mask] ** 2))
     rel_rmse = rmse / (vmax - vmin) * 100
 
-    im2 = axs[1].imshow(dat_2D_masked, origin='lower', cmap=topo_cmap,
-                        norm=norm, aspect='auto')
-    axs[1].set_title(f'Reconstructed (2nd Approx)\nRMSE: {rmse:.1f} m ({rel_rmse:.1f}%)',
-                     fontsize=11, fontweight='bold')
-    axs[1].set_xlabel('Longitude index')
-    axs[1].set_ylabel('Latitude index')
+    im2 = axs[1].imshow(
+        dat_2D_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[1].set_title(
+        f"Reconstructed (2nd Approx)\nRMSE: {rmse:.1f} m ({rel_rmse:.1f}%)",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[1].set_xlabel("Longitude index")
+    axs[1].set_ylabel("Latitude index")
     cbar2 = plt.colorbar(im2, ax=axs[1], fraction=0.046, pad=0.04)
-    cbar2.set_label('Elevation [m]', rotation=270, labelpad=15)
+    cbar2.set_label("Elevation [m]", rotation=270, labelpad=15)
 
     # Panel 3: Amplitude spectrum in (k,l) wavenumber space
     fig_obj = plotter.fig_obj(fig, params.nhi, params.nhj, cbar=True, set_label=True)
     axs[2] = fig_obj.freq_panel(
-        axs[2],
-        ampls_sa,
-        title="Amplitude Spectrum",
-        v_extent=None
+        axs[2], ampls_sa, title="Amplitude Spectrum", v_extent=None
     )
 
     plt.tight_layout()
 
     # Save figure
     output_path = output_dir / f"cell_{c_idx:05d}.png"
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
     # Explicit memory cleanup - delete ALL objects to prevent memory leaks
@@ -209,15 +217,16 @@ def plot_cell_diagnostics(c_idx, cell_sa, ampls_sa, dat_2D_sa, output_dir, param
     logger.info(f"  Plot saved: {output_path}")
 
 
-def do_cell(c_idx,
-            grid,
-            params,
-            reader,
-            writer,
-            chunk_output_dir,
-            clat_rad,
-            clon_rad,
-            ):
+def do_cell(
+    c_idx,
+    grid,
+    params,
+    reader,
+    writer,
+    chunk_output_dir,
+    clat_rad,
+    clon_rad,
+):
     """
     Process a single ICON grid cell with ETOPO topography.
 
@@ -285,7 +294,9 @@ def do_cell(c_idx,
             lon_verts[lon_verts < 0.0] += 360.0
 
         # Process vertices for CSA (after dateline correction!)
-        lat_verts, lon_verts = utils.handle_latlon_expansion(lat_verts, lon_verts, lat_expand = 0.0, lon_expand = 0.0)
+        lat_verts, lon_verts = utils.handle_latlon_expansion(
+            lat_verts, lon_verts, lat_expand=0.0, lon_expand=0.0
+        )
 
         # Set up cell center and vertices
         clon = np.array([grid.clon[c_idx]])
@@ -321,13 +332,17 @@ def do_cell(c_idx,
 
         if not utils.is_land(cell, simplex_lat, simplex_lon, topo):
             logger.info(f"[OCEAN] Cell {c_idx} is ocean, skipping")
-            return writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], 0, None, grid.cell_area[c_idx])
+            return writer.grp_struct(
+                c_idx, clat_rad[c_idx], clon_rad[c_idx], 0, None, grid.cell_area[c_idx]
+            )
         else:
             is_land = 1
             logger.info(f"[LAND] Cell {c_idx} is land, processing...")
 
         # First approximation
-        cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(simplex_lat, simplex_lon, use_center=True)
+        cell_fa, ampls_fa, uw_fa, dat_2D_fa = fa.do(
+            simplex_lat, simplex_lon, use_center=True
+        )
 
         # Second approximation
         if USE_MODE_SELECTION:
@@ -350,14 +365,26 @@ def do_cell(c_idx,
 
             # Step 1: Load topo with rectangular mask
             utils.get_lat_lon_segments(
-                simplex_lat, simplex_lon, cell_sa, topo,
-                rect=True, filtered=True, padding=0, use_center=True
+                simplex_lat,
+                simplex_lon,
+                cell_sa,
+                topo,
+                rect=True,
+                filtered=True,
+                padding=0,
+                use_center=True,
             )
 
             # Step 2: Apply triangular mask
             utils.get_lat_lon_segments(
-                simplex_lat, simplex_lon, cell_sa, topo,
-                rect=False, filtered=False, padding=0, use_center=True
+                simplex_lat,
+                simplex_lon,
+                cell_sa,
+                topo,
+                rect=False,
+                filtered=False,
+                padding=0,
+                use_center=True,
             )
 
             # Run SA with ALL wavenumbers
@@ -366,7 +393,7 @@ def do_cell(c_idx,
                 cell_sa,
                 lmbda=params.lmbda_sa,
                 iter_solve=params.sa_iter_solve,
-                updt_analysis=True  # Populate cell_sa.analysis for NetCDF output
+                updt_analysis=True,  # Populate cell_sa.analysis for NetCDF output
             )
 
             # Exclude ocean from spectral analysis for orographic gravity waves
@@ -379,19 +406,35 @@ def do_cell(c_idx,
             cell_sa.get_masked(mask=cell_sa.mask)
 
         # Store analysis results
-        result = writer.grp_struct(c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell_sa.analysis, grid.cell_area[c_idx])
+        result = writer.grp_struct(
+            c_idx,
+            clat_rad[c_idx],
+            clon_rad[c_idx],
+            is_land,
+            cell_sa.analysis,
+            grid.cell_area[c_idx],
+        )
 
         # Generate 3-panel plot
         if params.plot_output:
             plot_cell_diagnostics(
-                c_idx, cell_sa, ampls_sa, dat_2D_sa,
-                chunk_output_dir, params
+                c_idx, cell_sa, ampls_sa, dat_2D_sa, chunk_output_dir, params
             )
 
         logger.info(f"[DONE] Cell {c_idx} analysis complete")
 
         # Explicit memory cleanup to help Dask workers
-        del topo, cell_fa, cell_sa, ampls_fa, ampls_sa, uw_fa, uw_sa, dat_2D_fa, dat_2D_sa
+        del (
+            topo,
+            cell_fa,
+            cell_sa,
+            ampls_fa,
+            ampls_sa,
+            uw_fa,
+            uw_sa,
+            dat_2D_fa,
+            dat_2D_sa,
+        )
         del fa, sa, tri, cell, etopo_reader
         gc.collect()  # Force garbage collection
 
@@ -399,7 +442,9 @@ def do_cell(c_idx,
 
     except Exception as e:
         # Catch ALL exceptions and log them before worker dies
-        error_msg = f"[FATAL ERROR] Cell {c_idx} crashed with {type(e).__name__}: {str(e)}"
+        error_msg = (
+            f"[FATAL ERROR] Cell {c_idx} crashed with {type(e).__name__}: {str(e)}"
+        )
         logger.error(error_msg)
         logger.error(traceback.format_exc())
 
@@ -508,15 +553,21 @@ def group_cells_by_memory(clat_rad, max_memory_per_batch_gb=240.0):
                 avg_mem_current = np.mean(current_batch_memory)
                 # Use 30% safety margin for diskless NetCDF loading
                 safety_factor = 1.0
-                n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem_current * safety_factor)))
+                n_workers = max(
+                    1, int(max_memory_per_batch_gb / (avg_mem_current * safety_factor))
+                )
                 mem_per_worker = avg_mem_current * safety_factor
 
-                batches.append({
-                    'cell_indices': sorted(current_batch_indices),  # Sort by original index order
-                    'memory_per_cell_gb': avg_mem_current,
-                    'n_workers': n_workers,
-                    'memory_per_worker_gb': mem_per_worker
-                })
+                batches.append(
+                    {
+                        "cell_indices": sorted(
+                            current_batch_indices
+                        ),  # Sort by original index order
+                        "memory_per_cell_gb": avg_mem_current,
+                        "n_workers": n_workers,
+                        "memory_per_worker_gb": mem_per_worker,
+                    }
+                )
 
                 # Start new batch
                 current_batch_indices = [idx]
@@ -536,18 +587,24 @@ def group_cells_by_memory(clat_rad, max_memory_per_batch_gb=240.0):
         n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem * safety_factor)))
         mem_per_worker = avg_mem * safety_factor
 
-        batches.append({
-            'cell_indices': sorted(current_batch_indices),
-            'memory_per_cell_gb': avg_mem,
-            'n_workers': n_workers,
-            'memory_per_worker_gb': mem_per_worker
-        })
+        batches.append(
+            {
+                "cell_indices": sorted(current_batch_indices),
+                "memory_per_cell_gb": avg_mem,
+                "n_workers": n_workers,
+                "memory_per_worker_gb": mem_per_worker,
+            }
+        )
 
     return batches
 
 
-def parallel_wrapper(grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad):
-    return lambda ii : do_cell(ii, grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad)
+def parallel_wrapper(
+    grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad
+):
+    return lambda ii: do_cell(
+        ii, grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad
+    )
 
 
 from inputs.icon_global_run import params
@@ -555,12 +612,12 @@ from dask.distributed import Client, progress
 import dask
 from tqdm import tqdm
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # ========================================================================
     # CONFIGURATION SELECTOR
     # ========================================================================
     # Choose one: 'generic_laptop', 'dkrz_hpc', 'laptop_performance'
-    SYSTEM_CONFIG = 'laptop_performance'  # ← Edit this line to switch configs
+    SYSTEM_CONFIG = "laptop_performance"  # ← Edit this line to switch configs
     # ========================================================================
 
     # ========================================================================
@@ -584,35 +641,37 @@ if __name__ == '__main__':
     # ========================================================================
 
     CONFIGS = {
-        'generic_laptop': {
-            'total_cores': 12,  # Conservative: use 12 of 16 threads
-            'total_memory_gb': 12.0,
-            'netcdf_chunk_size': 100,
-            'threads_per_worker': 1,  # Set to None for auto-compute
-            'memory_per_cpu_mb': None,  # Will calculate dynamically
-            'description': 'Generic laptop (16 threads, 16GB RAM)'
+        "generic_laptop": {
+            "total_cores": 12,  # Conservative: use 12 of 16 threads
+            "total_memory_gb": 12.0,
+            "netcdf_chunk_size": 100,
+            "threads_per_worker": 1,  # Set to None for auto-compute
+            "memory_per_cpu_mb": None,  # Will calculate dynamically
+            "description": "Generic laptop (16 threads, 16GB RAM)",
         },
-        'dkrz_hpc': {
-            'total_cores': 250,
-            'total_memory_gb': 240.0,
-            'netcdf_chunk_size': 100,
-            'threads_per_worker': None,  # Auto-compute based on worker memory
-            'memory_per_cpu_mb': None,  # SLURM quota on interactive partition
-            'description': 'DKRZ HPC interactive partition (standard memory node)'
+        "dkrz_hpc": {
+            "total_cores": 250,
+            "total_memory_gb": 240.0,
+            "netcdf_chunk_size": 100,
+            "threads_per_worker": None,  # Auto-compute based on worker memory
+            "memory_per_cpu_mb": None,  # SLURM quota on interactive partition
+            "description": "DKRZ HPC interactive partition (standard memory node)",
         },
-        'laptop_performance': {
-            'total_cores': 20,  # Use 20 of 24 threads (leave 4 for background)
-            'total_memory_gb': 80.0,
-            'netcdf_chunk_size': 100,
-            'threads_per_worker': None,  # Auto-compute based on worker memory
-            'memory_per_cpu_mb': None,  # Will calculate dynamically
-            'description': 'AMD Ryzen AI 9 HX 370 (24 threads, 94GB RAM)'
-        }
+        "laptop_performance": {
+            "total_cores": 20,  # Use 20 of 24 threads (leave 4 for background)
+            "total_memory_gb": 80.0,
+            "netcdf_chunk_size": 100,
+            "threads_per_worker": None,  # Auto-compute based on worker memory
+            "memory_per_cpu_mb": None,  # Will calculate dynamically
+            "description": "AMD Ryzen AI 9 HX 370 (24 threads, 94GB RAM)",
+        },
     }
 
     # Validate configuration selection
     if SYSTEM_CONFIG not in CONFIGS:
-        raise ValueError(f"Invalid SYSTEM_CONFIG '{SYSTEM_CONFIG}'. Choose from: {list(CONFIGS.keys())}")
+        raise ValueError(
+            f"Invalid SYSTEM_CONFIG '{SYSTEM_CONFIG}'. Choose from: {list(CONFIGS.keys())}"
+        )
 
     config = CONFIGS[SYSTEM_CONFIG]
 
@@ -627,7 +686,9 @@ if __name__ == '__main__':
 
     # Override/add ETOPO-specific parameters
     params.fn_output = "icon_etopo_global"
-    params.etopo_cg = 4  # Coarse-graining factor (1.8km at equator, ~0.9-1.8km at Drake Passage)
+    params.etopo_cg = (
+        4  # Coarse-graining factor (1.8km at equator, ~0.9-1.8km at Drake Passage)
+    )
 
     # Use traditional first approximation
     params.dfft_first_guess = False
@@ -652,7 +713,9 @@ if __name__ == '__main__':
     USE_FULL_SPECTRUM = False  # Set to True to disable spectral compression
 
     if USE_FULL_SPECTRUM:
-        logger.info("*** FULL SPECTRUM MODE: Using ALL wavenumbers (no compression) ***")
+        logger.info(
+            "*** FULL SPECTRUM MODE: Using ALL wavenumbers (no compression) ***"
+        )
         params.n_modes = params.nhi * params.nhj  # 2048 modes
         USE_MODE_SELECTION = False  # Use all modes in SA
     else:
@@ -692,9 +755,9 @@ if __name__ == '__main__':
     import os
 
     # Use configuration values
-    total_cores = config['total_cores']
-    total_memory_gb = config['total_memory_gb']
-    netcdf_chunk_size = config['netcdf_chunk_size']
+    total_cores = config["total_cores"]
+    total_memory_gb = config["total_memory_gb"]
+    netcdf_chunk_size = config["netcdf_chunk_size"]
 
     logger.info("=" * 80)
     logger.info(f"RESOURCE CONFIGURATION: {SYSTEM_CONFIG}")
@@ -704,24 +767,30 @@ if __name__ == '__main__':
     logger.info(f"  NetCDF chunk size: {netcdf_chunk_size} cells")
 
     # Threading configuration display
-    if config['threads_per_worker'] is not None:
-        logger.info(f"  Threading mode: MANUAL (threads_per_worker = {config['threads_per_worker']})")
+    if config["threads_per_worker"] is not None:
+        logger.info(
+            f"  Threading mode: MANUAL (threads_per_worker = {config['threads_per_worker']})"
+        )
     else:
         logger.info(f"  Threading mode: AUTO (will compute based on worker count)")
 
-    if config['memory_per_cpu_mb'] is not None:
+    if config["memory_per_cpu_mb"] is not None:
         logger.info(f"  SLURM quota: {config['memory_per_cpu_mb']} MB per CPU")
     logger.info("=" * 80)
 
     # Group cells by memory requirements for dynamic worker allocation
     logger.info(f"\nAnalyzing cells by latitude for dynamic memory allocation...")
-    memory_batches = group_cells_by_memory(clat_rad, max_memory_per_batch_gb=total_memory_gb)
+    memory_batches = group_cells_by_memory(
+        clat_rad, max_memory_per_batch_gb=total_memory_gb
+    )
 
     logger.info(f"Created {len(memory_batches)} memory-based batches:")
     for i, batch in enumerate(memory_batches):
-        logger.info(f"  Batch {i}: {len(batch['cell_indices'])} cells, "
-                   f"{batch['memory_per_cell_gb']:.1f} GB/cell, "
-                   f"{batch['n_workers']} workers × {batch['memory_per_worker_gb']:.1f} GB")
+        logger.info(
+            f"  Batch {i}: {len(batch['cell_indices'])} cells, "
+            f"{batch['memory_per_cell_gb']:.1f} GB/cell, "
+            f"{batch['n_workers']} workers × {batch['memory_per_worker_gb']:.1f} GB"
+        )
 
     # We'll create Dask client dynamically for each memory batch
     # Start with None (will be created per batch)
@@ -738,8 +807,8 @@ if __name__ == '__main__':
     #   cell_start = 0,    cell_end = None     → Process all cells (0 to n_cells-1)
     #   cell_start = 2900, cell_end = 3000     → Process cells 2900-2999 only
     #   cell_start = 0,    cell_end = 100      → Process cells 0-99 only
-    cell_start = 0      # First cell to process (inclusive)
-    cell_end = None     # Last cell to process (exclusive), None means process to end
+    cell_start = 0  # First cell to process (inclusive)
+    cell_end = None  # Last cell to process (exclusive), None means process to end
     # ========================================================================
 
     # Validate and set cell_end
@@ -749,13 +818,21 @@ if __name__ == '__main__':
         cell_end = min(cell_end, n_cells)  # Don't exceed total cells
 
     if cell_start >= cell_end:
-        raise ValueError(f"Invalid cell range: cell_start ({cell_start}) >= cell_end ({cell_end})")
+        raise ValueError(
+            f"Invalid cell range: cell_start ({cell_start}) >= cell_end ({cell_end})"
+        )
 
     # Progress tracking
     cells_to_process = cell_end - cell_start
-    total_netcdf_chunks = (cells_to_process + netcdf_chunk_size - 1) // netcdf_chunk_size
-    logger.info(f"\nProcessing cell range: {cell_start} to {cell_end-1} ({cells_to_process} cells)")
-    logger.info(f"  NetCDF chunks: {total_netcdf_chunks} files ({netcdf_chunk_size} cells each)\n")
+    total_netcdf_chunks = (
+        cells_to_process + netcdf_chunk_size - 1
+    ) // netcdf_chunk_size
+    logger.info(
+        f"\nProcessing cell range: {cell_start} to {cell_end-1} ({cells_to_process} cells)"
+    )
+    logger.info(
+        f"  NetCDF chunks: {total_netcdf_chunks} files ({netcdf_chunk_size} cells each)\n"
+    )
 
     # Statistics
     total_land_cells = 0
@@ -764,13 +841,14 @@ if __name__ == '__main__':
     # Configure task retries and logging (do this once)
     import dask
     import logging
-    dask.config.set({'distributed.scheduler.allowed-failures': 0})
-    logging.getLogger('distributed.worker.memory').setLevel(logging.ERROR)
+
+    dask.config.set({"distributed.scheduler.allowed-failures": 0})
+    logging.getLogger("distributed.worker.memory").setLevel(logging.ERROR)
 
     # Create a mapping from cell_idx to memory batch index for quick lookup
     cell_to_batch = {}
     for batch_idx, batch in enumerate(memory_batches):
-        for cell_idx in batch['cell_indices']:
+        for cell_idx in batch["cell_indices"]:
             cell_to_batch[cell_idx] = batch_idx
 
     # ========================================================================
@@ -781,26 +859,30 @@ if __name__ == '__main__':
     # memory batches are complete and can skip to the current batch.
     # ========================================================================
 
-    logger.info("\n" + "="*80)
+    logger.info("\n" + "=" * 80)
     logger.info("PROCESSING STRATEGY: Sequential by Memory Batch")
-    logger.info("="*80)
+    logger.info("=" * 80)
     for batch_idx, batch_config in enumerate(memory_batches):
         logger.info(f"\n{'='*80}")
-        logger.info(f"MEMORY BATCH {batch_idx}/{len(memory_batches)-1}: {len(batch_config['cell_indices'])} cells")
+        logger.info(
+            f"MEMORY BATCH {batch_idx}/{len(memory_batches)-1}: {len(batch_config['cell_indices'])} cells"
+        )
         logger.info(f"  Memory per cell: {batch_config['memory_per_cell_gb']:.1f} GB")
         logger.info(f"  Workers: {batch_config['n_workers']}")
         logger.info(f"{'='*80}\n")
 
         # Get all cells in this memory batch
-        batch_cell_indices = set(batch_config['cell_indices'])
+        batch_cell_indices = set(batch_config["cell_indices"])
 
         # Create Dask client for this memory batch
-        n_workers = batch_config['n_workers']
+        n_workers = batch_config["n_workers"]
         # Single-worker batches (high-memory polar cells) get the full machine
         # memory; multi-worker batches share by config.
         if n_workers == 1:
             memory_per_worker = f"{int(total_memory_gb)}GB"
-            logger.info(f"  Single-worker mode: allowing full memory access ({total_memory_gb} GB)")
+            logger.info(
+                f"  Single-worker mode: allowing full memory access ({total_memory_gb} GB)"
+            )
         else:
             memory_per_worker = f"{int(batch_config['memory_per_worker_gb'])}GB"
         threads_per_worker = 1  # HDF5 not thread-safe
@@ -814,7 +896,7 @@ if __name__ == '__main__':
             n_workers=n_workers,
             processes=True,
             memory_limit=memory_per_worker,
-            silence_logs='ERROR',
+            silence_logs="ERROR",
         )
         logger.info(f"  Dashboard: {client.dashboard_link}\n")
 
@@ -833,11 +915,13 @@ if __name__ == '__main__':
 
         # Inner loop: NetCDF file creation (one file per netcdf_chunk_size cells)
         # Only process NetCDF chunks that contain cells from this memory batch
-        for netcdf_chunk_idx, netcdf_chunk_start in enumerate(tqdm(
+        for netcdf_chunk_idx, netcdf_chunk_start in enumerate(
+            tqdm(
                 range(cell_start, n_cells, netcdf_chunk_size),
                 desc=f"NetCDF chunks (batch {batch_idx})",
-                total=total_netcdf_chunks
-            )):
+                total=total_netcdf_chunks,
+            )
+        ):
             netcdf_chunk_end = min(netcdf_chunk_start + netcdf_chunk_size, n_cells)
 
             # Filter: only process cells in this NetCDF chunk that belong to current memory batch
@@ -850,24 +934,31 @@ if __name__ == '__main__':
             if not cell_indices_in_chunk:
                 continue
 
-            logger.info(f"\n  Processing NetCDF chunk {netcdf_chunk_idx}: cells {netcdf_chunk_start}-{netcdf_chunk_end-1}")
+            logger.info(
+                f"\n  Processing NetCDF chunk {netcdf_chunk_idx}: cells {netcdf_chunk_start}-{netcdf_chunk_end-1}"
+            )
             logger.info(f"    Cells in this batch: {len(cell_indices_in_chunk)}")
 
             # Create subdirectory for this NetCDF chunk's plots
-            chunk_output_dir = base_output_dir / f"cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
+            chunk_output_dir = (
+                base_output_dir
+                / f"cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
+            )
             chunk_output_dir.mkdir(parents=True, exist_ok=True)
 
             # Writer object for this NetCDF chunk
             sfx = f"_cells_{netcdf_chunk_start:05d}-{netcdf_chunk_end-1:05d}"
             writer = io.nc_writer(params, sfx)
 
-            pw_run = parallel_wrapper(grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad)
+            pw_run = parallel_wrapper(
+                grid, params, reader, writer, chunk_output_dir, clat_rad, clon_rad
+            )
 
             # Process cells in smaller batches to avoid overwhelming scheduler
             processing_batch_size = min(n_workers * 2, len(cell_indices_in_chunk))
 
             for i in range(0, len(cell_indices_in_chunk), processing_batch_size):
-                batch_cells = cell_indices_in_chunk[i:i+processing_batch_size]
+                batch_cells = cell_indices_in_chunk[i : i + processing_batch_size]
 
                 # Submit batch to Dask
                 lazy_results = []
@@ -887,13 +978,17 @@ if __name__ == '__main__':
                         total_ocean_cells += 1
 
             # Cleanup after each NetCDF chunk
-            if hasattr(reader, 'close_cached_files'):
+            if hasattr(reader, "close_cached_files"):
                 reader.close_cached_files()
 
             gc.collect()
 
-            logger.info(f"    NetCDF chunk complete: {len(cell_indices_in_chunk)} cells processed")
-            logger.info(f"    Running totals - Land: {total_land_cells}, Ocean: {total_ocean_cells}")
+            logger.info(
+                f"    NetCDF chunk complete: {len(cell_indices_in_chunk)} cells processed"
+            )
+            logger.info(
+                f"    Running totals - Land: {total_land_cells}, Ocean: {total_ocean_cells}"
+            )
 
         # Close Dask client after finishing this memory batch
         client.close()
@@ -903,9 +998,9 @@ if __name__ == '__main__':
         logger.info(f"{'='*80}\n")
 
     # Cleanup: close all cached NetCDF files
-    logger.info("\n" + "="*80)
+    logger.info("\n" + "=" * 80)
     logger.info("PROCESSING COMPLETE")
-    logger.info("="*80)
+    logger.info("=" * 80)
     logger.info(f"Total cells processed: {total_land_cells + total_ocean_cells}")
     logger.info(f"  Land cells: {total_land_cells}")
     logger.info(f"  Ocean cells: {total_ocean_cells}")
@@ -914,13 +1009,13 @@ if __name__ == '__main__':
     logger.info(f"  Pattern: icon_etopo_global_cells_XXXXX-XXXXX.nc")
     logger.info(f"\nTo merge into single file, run:")
     logger.info(f"  python3 -m runs.merge_netcdf_chunks")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
-    if hasattr(reader, 'close_cached_files'):
+    if hasattr(reader, "close_cached_files"):
         reader.close_cached_files()
         logger.info("\n✓ Closed cached topography files")
 
     # Final console message
-    print("="*80)
+    print("=" * 80)
     print(f"PROCESSING COMPLETE - Check log file: {log_file}")
-    print("="*80)
+    print("=" * 80)

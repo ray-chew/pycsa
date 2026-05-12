@@ -7,7 +7,8 @@ in pyCSA RMSE when using centered projection instead of corner-based projection.
 
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import TwoSlopeNorm
 import matplotlib.colors as mcolors
@@ -16,7 +17,6 @@ from pathlib import Path
 from pycsa.core import io, var, utils
 from pycsa.wrappers import interface
 from scipy import interpolate
-
 
 # Pre-selected cell indices from ICON grid
 # Users can comment/uncomment cells to test different scenarios
@@ -32,21 +32,18 @@ POLAR_CELLS = [
     # 3107,   # Arctic: 79.77°N, -78.37°E - Greenland
     # 3108,   # Arctic: 81.28°N, -57.03°E - Greenland
     # 3109,   # Arctic: 82.56°N, -45.32°E - Greenland
-
     # ========================================================================
     # EXTREME ANTARCTIC CELLS (87-89°S)
     # ========================================================================
     # These cells are within 1-3 degrees of the South Pole where corner
     # projection creates MAXIMUM distortion. This is where centered projection
     # should show the biggest improvement!
-
     # MOST EXTREME: -88.90°S (within 1.1° of South Pole!)
     17408,  # Antarctic: -88.90°S, -108.00°E - Interior plateau, 100% land, elev=2699m
     16384,  # Antarctic: -88.90°S, 180.00°E - Interior plateau, 100% land, elev=2761m
     18432,  # Antarctic: -88.90°S, -36.00°E - Interior plateau, 100% land, elev=2649m
     15360,  # Antarctic: -88.90°S, 108.00°E - Interior plateau, 100% land, elev=2941m
     19456,  # Antarctic: -88.90°S, 36.00°E - Interior plateau, 100% land, elev=2835m
-
     # VERY EXTREME: -88.07°S
     15362,  # Antarctic: -88.07°S, 108.00°E - Interior plateau, 100% land, elev=3055m
     16386,  # Antarctic: -88.07°S, 180.00°E - Interior plateau, 100% land, elev=2754m
@@ -54,14 +51,12 @@ POLAR_CELLS = [
     17410,  # Antarctic: -88.07°S, -108.00°E - Interior plateau, 100% land, elev=2554m
     19458,  # Antarctic: -88.07°S, 36.00°E - Interior plateau, 100% land, elev=2882m
     18434,  # Antarctic: -88.07°S, -36.00°E - Interior plateau, 100% land, elev=2445m
-
     # EXTREME: -87.21°S
     15361,  # Antarctic: -87.21°S, 129.75°E - Interior plateau, 100% land, elev=3023m
     15363,  # Antarctic: -87.21°S, 86.25°E - Interior plateau, 100% land, elev=3105m
     16387,  # Antarctic: -87.21°S, 158.25°E - Interior plateau, 100% land, elev=2698m
     17409,  # Antarctic: -87.21°S, -86.25°E - Interior plateau, 100% land, elev=2384m
     19457,  # Antarctic: -87.21°S, 57.75°E - Interior plateau, 100% land, elev=3059m
-
     # ========================================================================
     # LESS EXTREME ANTARCTIC CELLS (85-86°S)
     # ========================================================================
@@ -78,6 +73,7 @@ POLAR_CELLS = [
 EQUATORIAL_CELLS_CANDIDATES = list(range(0, 25000))  # Will filter for equatorial land
 # EQUATORIAL_CELLS = [340, 992, 1015]  # To be filled in
 
+
 def get_topo_colormap():
     """Create topography colormap with blue for ocean, terrain for land."""
     ocean_colors = plt.cm.Blues_r(np.linspace(0.4, 0.95, 120))
@@ -90,7 +86,7 @@ def get_topo_colormap():
 
     land_colors = plt.cm.terrain(np.linspace(0.28, 1.0, 120))
     colors = np.vstack((ocean_colors, transition_colors, land_colors))
-    return mcolors.LinearSegmentedColormap.from_list('topo', colors)
+    return mcolors.LinearSegmentedColormap.from_list("topo", colors)
 
 
 def interpolate_to_reference_grid(data_2D, source_cell, target_cell):
@@ -121,25 +117,19 @@ def interpolate_to_reference_grid(data_2D, source_cell, target_cell):
     target_lon_grid, target_lat_grid = np.meshgrid(target_cell.lon, target_cell.lat)
 
     # Flatten source coordinates and data
-    source_points = np.column_stack([
-        source_lon_grid.ravel(),
-        source_lat_grid.ravel()
-    ])
+    source_points = np.column_stack([source_lon_grid.ravel(), source_lat_grid.ravel()])
     source_values = data_2D.ravel()
 
     # Flatten target coordinates
-    target_points = np.column_stack([
-        target_lon_grid.ravel(),
-        target_lat_grid.ravel()
-    ])
+    target_points = np.column_stack([target_lon_grid.ravel(), target_lat_grid.ravel()])
 
     # Interpolate using griddata (linear interpolation)
     interpolated_values = interpolate.griddata(
         source_points,
         source_values,
         target_points,
-        method='linear',
-        fill_value=0.0  # Fill any out-of-bounds points with 0
+        method="linear",
+        fill_value=0.0,  # Fill any out-of-bounds points with 0
     )
 
     # Reshape back to 2D grid
@@ -176,11 +166,14 @@ def create_cell_with_projection(lat_verts, lon_verts, topo, use_center=True, rec
     if rect:
         # FA: Create rectangular cell with filtered topography
         utils.get_lat_lon_segments(
-            lat_verts, lon_verts, cell, topo,
+            lat_verts,
+            lon_verts,
+            cell,
+            topo,
             rect=True,
             filtered=True,  # Remove features < 5km
             padding=0,
-            use_center=use_center
+            use_center=use_center,
         )
     else:
         # SA: Create triangular cell
@@ -188,23 +181,31 @@ def create_cell_with_projection(lat_verts, lon_verts, topo, use_center=True, rec
         # then rect=False to apply triangular mask
         # We'll do the same
         utils.get_lat_lon_segments(
-            lat_verts, lon_verts, cell, topo,
+            lat_verts,
+            lon_verts,
+            cell,
+            topo,
             rect=True,
             filtered=True,
             padding=0,
-            use_center=use_center
+            use_center=use_center,
         )
         # Now apply triangular mask
         utils.get_lat_lon_segments(
-            lat_verts, lon_verts, cell, topo,
+            lat_verts,
+            lon_verts,
+            cell,
+            topo,
             rect=False,
             filtered=False,
             padding=0,
-            use_center=use_center
+            use_center=use_center,
         )
 
     print(f"    use_center={use_center}, rect={rect}")
-    print(f"    Mask: {cell.mask.sum()} / {cell.mask.size} points ({100*cell.mask.sum()/cell.mask.size:.1f}%)")
+    print(
+        f"    Mask: {cell.mask.sum()} / {cell.mask.size} points ({100*cell.mask.sum()/cell.mask.size:.1f}%)"
+    )
     print(f"    cell.lat range: [{cell.lat.min():.1f}, {cell.lat.max():.1f}] m")
     print(f"    cell.lon range: [{cell.lon.min():.1f}, {cell.lon.max():.1f}] m")
 
@@ -238,8 +239,8 @@ def run_full_csa(cell, params, use_mode_selection=False):
 
     # Compute first approximation RMSE
     diff_fa = cell.topo - dat_2D_fa
-    mask = cell.mask if hasattr(cell, 'mask') else np.ones_like(cell.topo, dtype=bool)
-    rmse_fa = np.sqrt(np.mean(diff_fa[mask]**2))
+    mask = cell.mask if hasattr(cell, "mask") else np.ones_like(cell.topo, dtype=bool)
+    rmse_fa = np.sqrt(np.mean(diff_fa[mask] ** 2))
 
     # Second approximation
     if use_mode_selection:
@@ -274,13 +275,23 @@ def run_full_csa(cell, params, use_mode_selection=False):
 
     # Compute second approximation RMSE
     diff_sa = cell.topo - dat_2D_sa
-    rmse_sa = np.sqrt(np.mean(diff_sa[mask]**2))
+    rmse_sa = np.sqrt(np.mean(diff_sa[mask] ** 2))
 
     return ampls_fa, ampls_sa, dat_2D_sa, rmse_fa, rmse_sa
 
 
-def plot_single_method(c_idx, lat, topo_orig, recon_fa, recon_sa,
-                       rmse_fa, rmse_sa, mask, output_dir, method_name):
+def plot_single_method(
+    c_idx,
+    lat,
+    topo_orig,
+    recon_fa,
+    recon_sa,
+    rmse_fa,
+    rmse_sa,
+    mask,
+    output_dir,
+    method_name,
+):
     """
     Create 5-panel plot for a single projection method.
 
@@ -330,57 +341,100 @@ def plot_single_method(c_idx, lat, topo_orig, recon_fa, recon_sa,
     method_label = "Corner-based" if method_name == "OLD" else "Centered"
 
     # Panel 1: Reference topography
-    im1 = axs[0, 0].imshow(topo_orig_masked, origin='lower', cmap=topo_cmap, norm=norm, aspect='auto')
-    axs[0, 0].set_title(f'Cell {c_idx} at {lat:.1f}°: Reference Topo\nRange: [{vmin:.0f}, {vmax:.0f}] m',
-                        fontsize=11, fontweight='bold')
-    axs[0, 0].set_xlabel('Longitude index')
-    axs[0, 0].set_ylabel('Latitude index')
-    plt.colorbar(im1, ax=axs[0, 0], fraction=0.046, pad=0.04).set_label('Elevation [m]', rotation=270, labelpad=15)
+    im1 = axs[0, 0].imshow(
+        topo_orig_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[0, 0].set_title(
+        f"Cell {c_idx} at {lat:.1f}°: Reference Topo\nRange: [{vmin:.0f}, {vmax:.0f}] m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[0, 0].set_xlabel("Longitude index")
+    axs[0, 0].set_ylabel("Latitude index")
+    plt.colorbar(im1, ax=axs[0, 0], fraction=0.046, pad=0.04).set_label(
+        "Elevation [m]", rotation=270, labelpad=15
+    )
 
     # Panel 2: First Approximation
-    im2 = axs[0, 1].imshow(recon_fa_masked, origin='lower', cmap=topo_cmap, norm=norm, aspect='auto')
-    axs[0, 1].set_title(f'{method_name} ({method_label}): 1st Approx\nRMSE: {rmse_fa:.1f} m',
-                        fontsize=11, fontweight='bold')
-    axs[0, 1].set_xlabel('Longitude index')
-    axs[0, 1].set_ylabel('Latitude index')
-    plt.colorbar(im2, ax=axs[0, 1], fraction=0.046, pad=0.04).set_label('Elevation [m]', rotation=270, labelpad=15)
+    im2 = axs[0, 1].imshow(
+        recon_fa_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[0, 1].set_title(
+        f"{method_name} ({method_label}): 1st Approx\nRMSE: {rmse_fa:.1f} m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[0, 1].set_xlabel("Longitude index")
+    axs[0, 1].set_ylabel("Latitude index")
+    plt.colorbar(im2, ax=axs[0, 1], fraction=0.046, pad=0.04).set_label(
+        "Elevation [m]", rotation=270, labelpad=15
+    )
 
     # Panel 3: Second Approximation
-    im3 = axs[0, 2].imshow(recon_sa_masked, origin='lower', cmap=topo_cmap, norm=norm, aspect='auto')
-    axs[0, 2].set_title(f'{method_name} ({method_label}): 2nd Approx\nRMSE: {rmse_sa:.1f} m',
-                        fontsize=11, fontweight='bold')
-    axs[0, 2].set_xlabel('Longitude index')
-    axs[0, 2].set_ylabel('Latitude index')
-    plt.colorbar(im3, ax=axs[0, 2], fraction=0.046, pad=0.04).set_label('Elevation [m]', rotation=270, labelpad=15)
+    im3 = axs[0, 2].imshow(
+        recon_sa_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[0, 2].set_title(
+        f"{method_name} ({method_label}): 2nd Approx\nRMSE: {rmse_sa:.1f} m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[0, 2].set_xlabel("Longitude index")
+    axs[0, 2].set_ylabel("Latitude index")
+    plt.colorbar(im3, ax=axs[0, 2], fraction=0.046, pad=0.04).set_label(
+        "Elevation [m]", rotation=270, labelpad=15
+    )
 
     # Panel 4: First Approximation Error Map
     error_fa = np.abs(topo_orig - recon_fa)
     error_fa_masked = np.ma.masked_where(~mask, error_fa)
     error_max_fa = error_fa[mask].max()
 
-    im4 = axs[1, 0].imshow(error_fa_masked, origin='lower', cmap='Reds',
-                           vmin=0, vmax=error_max_fa, aspect='auto')
-    axs[1, 0].set_title(f'1st Approx: Absolute Error\nMax: {error_max_fa:.1f} m',
-                        fontsize=11, fontweight='bold')
-    axs[1, 0].set_xlabel('Longitude index')
-    axs[1, 0].set_ylabel('Latitude index')
-    plt.colorbar(im4, ax=axs[1, 0], fraction=0.046, pad=0.04).set_label('Absolute Error [m]', rotation=270, labelpad=15)
+    im4 = axs[1, 0].imshow(
+        error_fa_masked,
+        origin="lower",
+        cmap="Reds",
+        vmin=0,
+        vmax=error_max_fa,
+        aspect="auto",
+    )
+    axs[1, 0].set_title(
+        f"1st Approx: Absolute Error\nMax: {error_max_fa:.1f} m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[1, 0].set_xlabel("Longitude index")
+    axs[1, 0].set_ylabel("Latitude index")
+    plt.colorbar(im4, ax=axs[1, 0], fraction=0.046, pad=0.04).set_label(
+        "Absolute Error [m]", rotation=270, labelpad=15
+    )
 
     # Panel 5: Second Approximation Error Map
     error_sa = np.abs(topo_orig - recon_sa)
     error_sa_masked = np.ma.masked_where(~mask, error_sa)
     error_max_sa = error_sa[mask].max()
 
-    im5 = axs[1, 1].imshow(error_sa_masked, origin='lower', cmap='Reds',
-                           vmin=0, vmax=error_max_sa, aspect='auto')
-    axs[1, 1].set_title(f'2nd Approx: Absolute Error\nMax: {error_max_sa:.1f} m',
-                        fontsize=11, fontweight='bold')
-    axs[1, 1].set_xlabel('Longitude index')
-    axs[1, 1].set_ylabel('Latitude index')
-    plt.colorbar(im5, ax=axs[1, 1], fraction=0.046, pad=0.04).set_label('Absolute Error [m]', rotation=270, labelpad=15)
+    im5 = axs[1, 1].imshow(
+        error_sa_masked,
+        origin="lower",
+        cmap="Reds",
+        vmin=0,
+        vmax=error_max_sa,
+        aspect="auto",
+    )
+    axs[1, 1].set_title(
+        f"2nd Approx: Absolute Error\nMax: {error_max_sa:.1f} m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[1, 1].set_xlabel("Longitude index")
+    axs[1, 1].set_ylabel("Latitude index")
+    plt.colorbar(im5, ax=axs[1, 1], fraction=0.046, pad=0.04).set_label(
+        "Absolute Error [m]", rotation=270, labelpad=15
+    )
 
     # Panel 6: Statistics summary (text panel)
-    axs[1, 2].axis('off')
+    axs[1, 2].axis("off")
     stats_text = f"""
     Method: {method_name} ({method_label})
     Cell: {c_idx}
@@ -404,21 +458,41 @@ def plot_single_method(c_idx, lat, topo_orig, recon_fa, recon_sa,
       RMSE: {rmse_fa - rmse_sa:.1f} m
       Reduction: {((rmse_fa - rmse_sa)/rmse_fa*100):.1f}%
     """
-    axs[1, 2].text(0.1, 0.5, stats_text, fontsize=10, family='monospace',
-                   verticalalignment='center', transform=axs[1, 2].transAxes)
+    axs[1, 2].text(
+        0.1,
+        0.5,
+        stats_text,
+        fontsize=10,
+        family="monospace",
+        verticalalignment="center",
+        transform=axs[1, 2].transAxes,
+    )
 
     plt.tight_layout()
-    output_path = output_dir / f"{method_name.lower()}_cell_{c_idx}_lat_{lat:.1f}deg.png"
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    output_path = (
+        output_dir / f"{method_name.lower()}_cell_{c_idx}_lat_{lat:.1f}deg.png"
+    )
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
     print(f"  Plot saved: {output_path}")
 
 
-def plot_comparison(c_idx, lat, topo_orig, recon_old_fa, recon_old_sa,
-                    recon_new_fa, recon_new_sa,
-                    rmse_old_fa, rmse_old_sa, rmse_new_fa, rmse_new_sa,
-                    mask, output_dir):
+def plot_comparison(
+    c_idx,
+    lat,
+    topo_orig,
+    recon_old_fa,
+    recon_old_sa,
+    recon_new_fa,
+    recon_new_sa,
+    rmse_old_fa,
+    rmse_old_sa,
+    rmse_new_fa,
+    rmse_new_sa,
+    mask,
+    output_dir,
+):
     """
     Create 6-panel comparison plot (FA and SA for both methods).
 
@@ -441,65 +515,120 @@ def plot_comparison(c_idx, lat, topo_orig, recon_old_fa, recon_old_sa,
     norm = TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
 
     # Panel 1: Reference topography (centered projection)
-    im1 = axs[0, 0].imshow(topo_orig_masked, origin='lower', cmap=topo_cmap, norm=norm, aspect='auto')
-    axs[0, 0].set_title(f'Cell {c_idx} at {lat:.1f}°: Reference (Centered)\nRange: [{vmin:.0f}, {vmax:.0f}] m',
-                        fontsize=11, fontweight='bold')
-    axs[0, 0].set_xlabel('Longitude index')
-    axs[0, 0].set_ylabel('Latitude index')
-    plt.colorbar(im1, ax=axs[0, 0], fraction=0.046, pad=0.04).set_label('Elevation [m]', rotation=270, labelpad=15)
+    im1 = axs[0, 0].imshow(
+        topo_orig_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[0, 0].set_title(
+        f"Cell {c_idx} at {lat:.1f}°: Reference (Centered)\nRange: [{vmin:.0f}, {vmax:.0f}] m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[0, 0].set_xlabel("Longitude index")
+    axs[0, 0].set_ylabel("Latitude index")
+    plt.colorbar(im1, ax=axs[0, 0], fraction=0.046, pad=0.04).set_label(
+        "Elevation [m]", rotation=270, labelpad=15
+    )
 
     # Panel 2: OLD - First Approximation
-    im2 = axs[0, 1].imshow(recon_old_fa_masked, origin='lower', cmap=topo_cmap, norm=norm, aspect='auto')
-    axs[0, 1].set_title(f'OLD (Corner): 1st Approx\nRMSE: {rmse_old_fa:.1f} m',
-                        fontsize=11, fontweight='bold')
-    axs[0, 1].set_xlabel('Longitude index')
-    axs[0, 1].set_ylabel('Latitude index')
-    plt.colorbar(im2, ax=axs[0, 1], fraction=0.046, pad=0.04).set_label('Elevation [m]', rotation=270, labelpad=15)
+    im2 = axs[0, 1].imshow(
+        recon_old_fa_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[0, 1].set_title(
+        f"OLD (Corner): 1st Approx\nRMSE: {rmse_old_fa:.1f} m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[0, 1].set_xlabel("Longitude index")
+    axs[0, 1].set_ylabel("Latitude index")
+    plt.colorbar(im2, ax=axs[0, 1], fraction=0.046, pad=0.04).set_label(
+        "Elevation [m]", rotation=270, labelpad=15
+    )
 
     # Panel 3: OLD - Second Approximation
-    im3 = axs[0, 2].imshow(recon_old_sa_masked, origin='lower', cmap=topo_cmap, norm=norm, aspect='auto')
-    axs[0, 2].set_title(f'OLD (Corner): 2nd Approx\nRMSE: {rmse_old_sa:.1f} m',
-                        fontsize=11, fontweight='bold')
-    axs[0, 2].set_xlabel('Longitude index')
-    axs[0, 2].set_ylabel('Latitude index')
-    plt.colorbar(im3, ax=axs[0, 2], fraction=0.046, pad=0.04).set_label('Elevation [m]', rotation=270, labelpad=15)
+    im3 = axs[0, 2].imshow(
+        recon_old_sa_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[0, 2].set_title(
+        f"OLD (Corner): 2nd Approx\nRMSE: {rmse_old_sa:.1f} m",
+        fontsize=11,
+        fontweight="bold",
+    )
+    axs[0, 2].set_xlabel("Longitude index")
+    axs[0, 2].set_ylabel("Latitude index")
+    plt.colorbar(im3, ax=axs[0, 2], fraction=0.046, pad=0.04).set_label(
+        "Elevation [m]", rotation=270, labelpad=15
+    )
 
     # Panel 4: Error map (FA)
     error_old_fa = np.abs(topo_orig - recon_old_fa)
     error_new_fa = np.abs(topo_orig - recon_new_fa)
     error_diff_fa = error_old_fa - error_new_fa
     error_diff_fa_masked = np.ma.masked_where(~mask, error_diff_fa)
-    error_max_fa = max(np.abs(error_diff_fa[mask].min()), np.abs(error_diff_fa[mask].max()))
+    error_max_fa = max(
+        np.abs(error_diff_fa[mask].min()), np.abs(error_diff_fa[mask].max())
+    )
 
-    im4 = axs[1, 0].imshow(error_diff_fa_masked, origin='lower', cmap='RdYlGn',
-                           vmin=-error_max_fa, vmax=error_max_fa, aspect='auto')
-    imp_fa = ((rmse_old_fa - rmse_new_fa) / rmse_old_fa * 100) if rmse_old_fa > 0 else 0.0
-    axs[1, 0].set_title(f'1st Approx Improvement\nGreen=Better | Imp: {imp_fa:.1f}%',
-                        fontsize=11, fontweight='bold', color='green' if imp_fa > 0 else 'red')
-    axs[1, 0].set_xlabel('Longitude index')
-    axs[1, 0].set_ylabel('Latitude index')
-    plt.colorbar(im4, ax=axs[1, 0], fraction=0.046, pad=0.04).set_label('Error Reduction [m]', rotation=270, labelpad=15)
+    im4 = axs[1, 0].imshow(
+        error_diff_fa_masked,
+        origin="lower",
+        cmap="RdYlGn",
+        vmin=-error_max_fa,
+        vmax=error_max_fa,
+        aspect="auto",
+    )
+    imp_fa = (
+        ((rmse_old_fa - rmse_new_fa) / rmse_old_fa * 100) if rmse_old_fa > 0 else 0.0
+    )
+    axs[1, 0].set_title(
+        f"1st Approx Improvement\nGreen=Better | Imp: {imp_fa:.1f}%",
+        fontsize=11,
+        fontweight="bold",
+        color="green" if imp_fa > 0 else "red",
+    )
+    axs[1, 0].set_xlabel("Longitude index")
+    axs[1, 0].set_ylabel("Latitude index")
+    plt.colorbar(im4, ax=axs[1, 0], fraction=0.046, pad=0.04).set_label(
+        "Error Reduction [m]", rotation=270, labelpad=15
+    )
 
     # Panel 5: NEW - First Approximation
-    im5 = axs[1, 1].imshow(recon_new_fa_masked, origin='lower', cmap=topo_cmap, norm=norm, aspect='auto')
-    axs[1, 1].set_title(f'NEW (Centered): 1st Approx\nRMSE: {rmse_new_fa:.1f} m',
-                        fontsize=11, fontweight='bold', color='green')
-    axs[1, 1].set_xlabel('Longitude index')
-    axs[1, 1].set_ylabel('Latitude index')
-    plt.colorbar(im5, ax=axs[1, 1], fraction=0.046, pad=0.04).set_label('Elevation [m]', rotation=270, labelpad=15)
+    im5 = axs[1, 1].imshow(
+        recon_new_fa_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    axs[1, 1].set_title(
+        f"NEW (Centered): 1st Approx\nRMSE: {rmse_new_fa:.1f} m",
+        fontsize=11,
+        fontweight="bold",
+        color="green",
+    )
+    axs[1, 1].set_xlabel("Longitude index")
+    axs[1, 1].set_ylabel("Latitude index")
+    plt.colorbar(im5, ax=axs[1, 1], fraction=0.046, pad=0.04).set_label(
+        "Elevation [m]", rotation=270, labelpad=15
+    )
 
     # Panel 6: NEW - Second Approximation
-    im6 = axs[1, 2].imshow(recon_new_sa_masked, origin='lower', cmap=topo_cmap, norm=norm, aspect='auto')
-    imp_sa = ((rmse_old_sa - rmse_new_sa) / rmse_old_sa * 100) if rmse_old_sa > 0 else 0.0
-    axs[1, 2].set_title(f'NEW (Centered): 2nd Approx\nRMSE: {rmse_new_sa:.1f} m | Imp: {imp_sa:.1f}%',
-                        fontsize=11, fontweight='bold', color='green')
-    axs[1, 2].set_xlabel('Longitude index')
-    axs[1, 2].set_ylabel('Latitude index')
-    plt.colorbar(im6, ax=axs[1, 2], fraction=0.046, pad=0.04).set_label('Elevation [m]', rotation=270, labelpad=15)
+    im6 = axs[1, 2].imshow(
+        recon_new_sa_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
+    )
+    imp_sa = (
+        ((rmse_old_sa - rmse_new_sa) / rmse_old_sa * 100) if rmse_old_sa > 0 else 0.0
+    )
+    axs[1, 2].set_title(
+        f"NEW (Centered): 2nd Approx\nRMSE: {rmse_new_sa:.1f} m | Imp: {imp_sa:.1f}%",
+        fontsize=11,
+        fontweight="bold",
+        color="green",
+    )
+    axs[1, 2].set_xlabel("Longitude index")
+    axs[1, 2].set_ylabel("Latitude index")
+    plt.colorbar(im6, ax=axs[1, 2], fraction=0.046, pad=0.04).set_label(
+        "Elevation [m]", rotation=270, labelpad=15
+    )
 
     plt.tight_layout()
     output_path = output_dir / f"comparison_cell_{c_idx}_lat_{lat:.1f}deg.png"
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
 
     print(f"  Plot saved: {output_path}")
@@ -527,7 +656,7 @@ def main():
     # - 'BOTH': Compare OLD (corner-based) vs NEW (centered) methods side-by-side
     # - 'OLD': Run only OLD (corner-based) projection method
     # - 'NEW': Run only NEW (centered) projection method
-    RUN_METHOD = 'NEW'  # Change to 'OLD' or 'NEW' to run single method
+    RUN_METHOD = "NEW"  # Change to 'OLD' or 'NEW' to run single method
 
     # TOPOGRAPHY COARSENING FACTOR
     # Higher values = coarser topography (faster, less memory)
@@ -550,18 +679,20 @@ def main():
     # END USER CONFIGURATION
     # ========================================================================
 
-    print("="*80)
+    print("=" * 80)
     print("CENTERED PROJECTION TEST: Old vs. New Planar Projection")
     print("Testing polar cells (Arctic + Antarctic) at extreme latitudes")
-    if RUN_METHOD == 'BOTH':
+    if RUN_METHOD == "BOTH":
         print("Both methods compared against SHARED REFERENCE (centered projection)")
-    elif RUN_METHOD == 'OLD':
+    elif RUN_METHOD == "OLD":
         print("Running ONLY OLD (corner-based) projection method")
-    elif RUN_METHOD == 'NEW':
+    elif RUN_METHOD == "NEW":
         print("Running ONLY NEW (centered) projection method")
     else:
-        raise ValueError(f"Invalid RUN_METHOD='{RUN_METHOD}'. Must be 'BOTH', 'OLD', or 'NEW'")
-    print("="*80)
+        raise ValueError(
+            f"Invalid RUN_METHOD='{RUN_METHOD}'. Must be 'BOTH', 'OLD', or 'NEW'"
+        )
+    print("=" * 80)
 
     # Setup parameters
     from inputs.icon_global_run import params
@@ -581,7 +712,9 @@ def main():
     if USE_MODE_SELECTION:
         print(f"*** COMPRESSED MODE: Using top {params.n_modes} wavenumbers ***")
     else:
-        print(f"*** FULL SPECTRUM MODE: Using ALL {params.nhi * params.nhj} wavenumbers ***")
+        print(
+            f"*** FULL SPECTRUM MODE: Using ALL {params.nhi * params.nhj} wavenumbers ***"
+        )
 
     if not params.self_test():
         print("ERROR: Parameters failed self-test")
@@ -622,13 +755,17 @@ def main():
         actual_lon = grid.clon[c_idx]
 
         print(f"\n{'='*80}")
-        print(f"Testing cell {c_idx} at latitude {actual_lat:.2f}°, longitude {actual_lon:.2f}°")
+        print(
+            f"Testing cell {c_idx} at latitude {actual_lat:.2f}°, longitude {actual_lon:.2f}°"
+        )
         print(f"{'='*80}")
 
         # Get cell vertices
         lat_verts = grid.clat_vertices[c_idx]
         lon_verts = grid.clon_vertices[c_idx]
-        lat_extent, lon_extent = utils.handle_latlon_expansion(lat_verts, lon_verts, lat_expand=0.0, lon_expand=0.0)
+        lat_extent, lon_extent = utils.handle_latlon_expansion(
+            lat_verts, lon_verts, lat_expand=0.0, lon_expand=0.0
+        )
 
         params.lat_extent = lat_extent
         params.lon_extent = lon_extent
@@ -648,11 +785,15 @@ def main():
 
         # Process vertices exactly like production code (using dateline-corrected lon_verts!)
         lat_verts_processed, lon_verts_processed = utils.handle_latlon_expansion(
-            lat_verts, lon_verts,  # Use corrected vertices, not grid originals
-            lat_expand=0.0, lon_expand=0.0
+            lat_verts,
+            lon_verts,  # Use corrected vertices, not grid originals
+            lat_expand=0.0,
+            lon_expand=0.0,
         )
 
-        print(f"  Vertices (degrees): lat={lat_verts_processed}, lon={lon_verts_processed}")
+        print(
+            f"  Vertices (degrees): lat={lat_verts_processed}, lon={lon_verts_processed}"
+        )
 
         # ================================================================
         # CREATE SHARED REFERENCE CELL (Centered Projection - Ground Truth)
@@ -662,12 +803,17 @@ def main():
         # especially at polar latitudes where corner projection introduces maximum distortion.
         print(f"  Creating shared reference cell (centered projection)...")
         cell_reference = create_cell_with_projection(
-            lat_verts_processed, lon_verts_processed, topo,
-            use_center=True, rect=False  # Triangular mask for final comparison
+            lat_verts_processed,
+            lon_verts_processed,
+            topo,
+            use_center=True,
+            rect=False,  # Triangular mask for final comparison
         )
-        print(f"  REFERENCE: {cell_reference.mask.sum()} masked points, "
-              f"topo range: [{cell_reference.topo[cell_reference.mask].min():.1f}, "
-              f"{cell_reference.topo[cell_reference.mask].max():.1f}] m")
+        print(
+            f"  REFERENCE: {cell_reference.mask.sum()} masked points, "
+            f"topo range: [{cell_reference.topo[cell_reference.mask].min():.1f}, "
+            f"{cell_reference.topo[cell_reference.mask].max():.1f}] m"
+        )
 
         # Initialize variables for optional methods
         rmse_old_fa, rmse_old_sa = None, None
@@ -676,14 +822,19 @@ def main():
         dat_2D_new_fa, dat_2D_new_sa = None, None
 
         # TEST 1: OLD projection (corner-based)
-        if RUN_METHOD in ['BOTH', 'OLD']:
+        if RUN_METHOD in ["BOTH", "OLD"]:
             print(f"  Running CSA with OLD projection (corner-based)...")
 
             # FA: Rectangular domain
-            print(f"    [FA] Creating cell with OLD (corner) projection + rectangular mask...")
+            print(
+                f"    [FA] Creating cell with OLD (corner) projection + rectangular mask..."
+            )
             cell_old_fa = create_cell_with_projection(
-                lat_verts_processed, lon_verts_processed, topo,
-                use_center=False, rect=True
+                lat_verts_processed,
+                lon_verts_processed,
+                topo,
+                use_center=False,
+                rect=True,
             )
 
             # Run FA
@@ -693,10 +844,15 @@ def main():
             )
 
             # SA: Triangular domain
-            print(f"    [SA] Creating cell with OLD (corner) projection + triangular mask...")
+            print(
+                f"    [SA] Creating cell with OLD (corner) projection + triangular mask..."
+            )
             cell_old_sa = create_cell_with_projection(
-                lat_verts_processed, lon_verts_processed, topo,
-                use_center=False, rect=False
+                lat_verts_processed,
+                lon_verts_processed,
+                topo,
+                use_center=False,
+                rect=False,
             )
 
             # Run SA
@@ -706,7 +862,9 @@ def main():
                 ampls_old_fa_copy[np.isnan(ampls_old_fa_copy)] = 0.0
                 indices = []
                 for _ in range(params.n_modes):
-                    max_idx = np.unravel_index(ampls_old_fa_copy.argmax(), ampls_old_fa_copy.shape)
+                    max_idx = np.unravel_index(
+                        ampls_old_fa_copy.argmax(), ampls_old_fa_copy.shape
+                    )
                     indices.append(max_idx)
                     ampls_old_fa_copy[max_idx] = 0.0
                 k_idxs = [pair[1] for pair in indices]
@@ -725,27 +883,40 @@ def main():
 
             # Interpolate OLD method outputs from corner-projection grid to reference grid
             print(f"    Interpolating OLD method outputs to reference grid...")
-            dat_2D_old_fa_interp = interpolate_to_reference_grid(dat_2D_old_fa, cell_old_sa, cell_reference)
-            dat_2D_old_sa_interp = interpolate_to_reference_grid(dat_2D_old_sa, cell_old_sa, cell_reference)
+            dat_2D_old_fa_interp = interpolate_to_reference_grid(
+                dat_2D_old_fa, cell_old_sa, cell_reference
+            )
+            dat_2D_old_sa_interp = interpolate_to_reference_grid(
+                dat_2D_old_sa, cell_old_sa, cell_reference
+            )
 
             # Compute RMSE against shared reference (centered projection)
             diff_fa = cell_reference.topo - dat_2D_old_fa_interp
             diff_sa = cell_reference.topo - dat_2D_old_sa_interp
-            rmse_old_fa = np.sqrt(np.mean(diff_fa[cell_reference.mask]**2))
-            rmse_old_sa = np.sqrt(np.mean(diff_sa[cell_reference.mask]**2))
+            rmse_old_fa = np.sqrt(np.mean(diff_fa[cell_reference.mask] ** 2))
+            rmse_old_sa = np.sqrt(np.mean(diff_sa[cell_reference.mask] ** 2))
 
-            print(f"    OLD - 1st Approx RMSE (vs shared reference): {rmse_old_fa:.1f} m")
-            print(f"    OLD - 2nd Approx RMSE (vs shared reference): {rmse_old_sa:.1f} m")
+            print(
+                f"    OLD - 1st Approx RMSE (vs shared reference): {rmse_old_fa:.1f} m"
+            )
+            print(
+                f"    OLD - 2nd Approx RMSE (vs shared reference): {rmse_old_sa:.1f} m"
+            )
 
         # TEST 2: NEW projection (centered)
-        if RUN_METHOD in ['BOTH', 'NEW']:
+        if RUN_METHOD in ["BOTH", "NEW"]:
             print(f"  Running CSA with NEW projection (centered)...")
 
             # FA: Rectangular domain
-            print(f"    [FA] Creating cell with NEW (centered) projection + rectangular mask...")
+            print(
+                f"    [FA] Creating cell with NEW (centered) projection + rectangular mask..."
+            )
             cell_new_fa = create_cell_with_projection(
-                lat_verts_processed, lon_verts_processed, topo,
-                use_center=True, rect=True
+                lat_verts_processed,
+                lon_verts_processed,
+                topo,
+                use_center=True,
+                rect=True,
             )
 
             # Run FA
@@ -755,10 +926,15 @@ def main():
             )
 
             # SA: Triangular domain
-            print(f"    [SA] Creating cell with NEW (centered) projection + triangular mask...")
+            print(
+                f"    [SA] Creating cell with NEW (centered) projection + triangular mask..."
+            )
             cell_new_sa = create_cell_with_projection(
-                lat_verts_processed, lon_verts_processed, topo,
-                use_center=True, rect=False
+                lat_verts_processed,
+                lon_verts_processed,
+                topo,
+                use_center=True,
+                rect=False,
             )
 
             # Run SA
@@ -768,7 +944,9 @@ def main():
                 ampls_new_fa_copy[np.isnan(ampls_new_fa_copy)] = 0.0
                 indices = []
                 for _ in range(params.n_modes):
-                    max_idx = np.unravel_index(ampls_new_fa_copy.argmax(), ampls_new_fa_copy.shape)
+                    max_idx = np.unravel_index(
+                        ampls_new_fa_copy.argmax(), ampls_new_fa_copy.shape
+                    )
                     indices.append(max_idx)
                     ampls_new_fa_copy[max_idx] = 0.0
                 k_idxs = [pair[1] for pair in indices]
@@ -790,16 +968,28 @@ def main():
             # so they're on the same planar grid and can be compared directly
             diff_fa = cell_reference.topo - dat_2D_new_fa
             diff_sa = cell_reference.topo - dat_2D_new_sa
-            rmse_new_fa = np.sqrt(np.mean(diff_fa[cell_reference.mask]**2))
-            rmse_new_sa = np.sqrt(np.mean(diff_sa[cell_reference.mask]**2))
+            rmse_new_fa = np.sqrt(np.mean(diff_fa[cell_reference.mask] ** 2))
+            rmse_new_sa = np.sqrt(np.mean(diff_sa[cell_reference.mask] ** 2))
 
-            print(f"    NEW - 1st Approx RMSE (vs shared reference): {rmse_new_fa:.1f} m")
-            print(f"    NEW - 2nd Approx RMSE (vs shared reference): {rmse_new_sa:.1f} m")
+            print(
+                f"    NEW - 1st Approx RMSE (vs shared reference): {rmse_new_fa:.1f} m"
+            )
+            print(
+                f"    NEW - 2nd Approx RMSE (vs shared reference): {rmse_new_sa:.1f} m"
+            )
 
         # Compute improvements (only if BOTH methods were run)
-        if RUN_METHOD == 'BOTH':
-            imp_fa = ((rmse_old_fa - rmse_new_fa) / rmse_old_fa * 100) if rmse_old_fa > 0 else 0.0
-            imp_sa = ((rmse_old_sa - rmse_new_sa) / rmse_old_sa * 100) if rmse_old_sa > 0 else 0.0
+        if RUN_METHOD == "BOTH":
+            imp_fa = (
+                ((rmse_old_fa - rmse_new_fa) / rmse_old_fa * 100)
+                if rmse_old_fa > 0
+                else 0.0
+            )
+            imp_sa = (
+                ((rmse_old_sa - rmse_new_sa) / rmse_old_sa * 100)
+                if rmse_old_sa > 0
+                else 0.0
+            )
             print(f"    IMPROVEMENT - 1st Approx: {imp_fa:.1f}%")
             print(f"    IMPROVEMENT - 2nd Approx: {imp_sa:.1f}%")
 
@@ -807,91 +997,112 @@ def main():
             # Note: All reconstructions are now on the reference grid (centered projection)
             print(f"  Generating comparison plot...")
             plot_comparison(
-                c_idx, actual_lat,
+                c_idx,
+                actual_lat,
                 cell_reference.topo,  # Shared reference (centered projection)
-                dat_2D_old_fa_interp, dat_2D_old_sa_interp,  # OLD method (interpolated to reference grid)
-                dat_2D_new_fa, dat_2D_new_sa,  # NEW method (already on reference grid)
-                rmse_old_fa, rmse_old_sa, rmse_new_fa, rmse_new_sa,
-                cell_reference.mask, output_dir  # Use reference mask
+                dat_2D_old_fa_interp,
+                dat_2D_old_sa_interp,  # OLD method (interpolated to reference grid)
+                dat_2D_new_fa,
+                dat_2D_new_sa,  # NEW method (already on reference grid)
+                rmse_old_fa,
+                rmse_old_sa,
+                rmse_new_fa,
+                rmse_new_sa,
+                cell_reference.mask,
+                output_dir,  # Use reference mask
             )
-        elif RUN_METHOD == 'OLD':
+        elif RUN_METHOD == "OLD":
             imp_fa = 0.0
             imp_sa = 0.0
             print(f"  Generating visualization plot for OLD method...")
             plot_single_method(
-                c_idx, actual_lat,
+                c_idx,
+                actual_lat,
                 cell_reference.topo,  # Reference topography
-                dat_2D_old_fa_interp, dat_2D_old_sa_interp,  # OLD method reconstructions
-                rmse_old_fa, rmse_old_sa,  # RMSE values
-                cell_reference.mask, output_dir,  # Mask and output
-                method_name='OLD'
+                dat_2D_old_fa_interp,
+                dat_2D_old_sa_interp,  # OLD method reconstructions
+                rmse_old_fa,
+                rmse_old_sa,  # RMSE values
+                cell_reference.mask,
+                output_dir,  # Mask and output
+                method_name="OLD",
             )
-        elif RUN_METHOD == 'NEW':
+        elif RUN_METHOD == "NEW":
             imp_fa = 0.0
             imp_sa = 0.0
             print(f"  Generating visualization plot for NEW method...")
             plot_single_method(
-                c_idx, actual_lat,
+                c_idx,
+                actual_lat,
                 cell_reference.topo,  # Reference topography
-                dat_2D_new_fa, dat_2D_new_sa,  # NEW method reconstructions
-                rmse_new_fa, rmse_new_sa,  # RMSE values
-                cell_reference.mask, output_dir,  # Mask and output
-                method_name='NEW'
+                dat_2D_new_fa,
+                dat_2D_new_sa,  # NEW method reconstructions
+                rmse_new_fa,
+                rmse_new_sa,  # RMSE values
+                cell_reference.mask,
+                output_dir,  # Mask and output
+                method_name="NEW",
             )
 
         # Store results with region tag
         if actual_lat > 75.0:
-            region = 'ARCTIC'
+            region = "ARCTIC"
         elif actual_lat < -75.0:
-            region = 'ANTARCTIC'
+            region = "ANTARCTIC"
         else:
-            region = 'MID-LATITUDE'
+            region = "MID-LATITUDE"
 
         # Only store results if we have data to store
-        if RUN_METHOD == 'BOTH':
-            results.append({
-                'cell_idx': c_idx,
-                'lat': actual_lat,
-                'lon': actual_lon,
-                'region': region,
-                'rmse_old_fa': rmse_old_fa,
-                'rmse_old_sa': rmse_old_sa,
-                'rmse_new_fa': rmse_new_fa,
-                'rmse_new_sa': rmse_new_sa,
-                'imp_fa': imp_fa,
-                'imp_sa': imp_sa,
-            })
-        elif RUN_METHOD == 'OLD':
-            results.append({
-                'cell_idx': c_idx,
-                'lat': actual_lat,
-                'lon': actual_lon,
-                'region': region,
-                'rmse_old_fa': rmse_old_fa,
-                'rmse_old_sa': rmse_old_sa,
-                'rmse_new_fa': None,
-                'rmse_new_sa': None,
-                'imp_fa': None,
-                'imp_sa': None,
-            })
-        elif RUN_METHOD == 'NEW':
-            results.append({
-                'cell_idx': c_idx,
-                'lat': actual_lat,
-                'lon': actual_lon,
-                'region': region,
-                'rmse_old_fa': None,
-                'rmse_old_sa': None,
-                'rmse_new_fa': rmse_new_fa,
-                'rmse_new_sa': rmse_new_sa,
-                'imp_fa': None,
-                'imp_sa': None,
-            })
+        if RUN_METHOD == "BOTH":
+            results.append(
+                {
+                    "cell_idx": c_idx,
+                    "lat": actual_lat,
+                    "lon": actual_lon,
+                    "region": region,
+                    "rmse_old_fa": rmse_old_fa,
+                    "rmse_old_sa": rmse_old_sa,
+                    "rmse_new_fa": rmse_new_fa,
+                    "rmse_new_sa": rmse_new_sa,
+                    "imp_fa": imp_fa,
+                    "imp_sa": imp_sa,
+                }
+            )
+        elif RUN_METHOD == "OLD":
+            results.append(
+                {
+                    "cell_idx": c_idx,
+                    "lat": actual_lat,
+                    "lon": actual_lon,
+                    "region": region,
+                    "rmse_old_fa": rmse_old_fa,
+                    "rmse_old_sa": rmse_old_sa,
+                    "rmse_new_fa": None,
+                    "rmse_new_sa": None,
+                    "imp_fa": None,
+                    "imp_sa": None,
+                }
+            )
+        elif RUN_METHOD == "NEW":
+            results.append(
+                {
+                    "cell_idx": c_idx,
+                    "lat": actual_lat,
+                    "lon": actual_lon,
+                    "region": region,
+                    "rmse_old_fa": None,
+                    "rmse_old_sa": None,
+                    "rmse_new_fa": rmse_new_fa,
+                    "rmse_new_sa": rmse_new_sa,
+                    "imp_fa": None,
+                    "imp_sa": None,
+                }
+            )
 
     # Separate results by region
-    arctic_results = [r for r in results if r['region'] == 'ARCTIC']
-    antarctic_results = [r for r in results if r['region'] == 'ANTARCTIC']
-    mid_lat_results = [r for r in results if r['region'] == 'MID-LATITUDE']
+    arctic_results = [r for r in results if r["region"] == "ARCTIC"]
+    antarctic_results = [r for r in results if r["region"] == "ANTARCTIC"]
+    mid_lat_results = [r for r in results if r["region"] == "MID-LATITUDE"]
 
     # Print summary
     print(f"\n{'='*80}")
@@ -907,50 +1118,82 @@ def main():
 
     if arctic_results:
         print("\nARCTIC CELLS (lat > 75°N):")
-        print(f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}")
+        print(
+            f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}"
+        )
         print(f"{'-'*80}")
         for r in arctic_results:
-            print(f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
-                  f"{fmt_rmse(r['rmse_old_fa'])} {fmt_rmse(r['rmse_new_fa'])} {fmt_imp(r['imp_fa'])} "
-                  f"{fmt_rmse(r['rmse_old_sa'])} {fmt_rmse(r['rmse_new_sa'])} {fmt_imp(r['imp_sa'])}")
-        if RUN_METHOD == 'BOTH':
-            avg_arctic_fa = np.mean([r['imp_fa'] for r in arctic_results if r['imp_fa'] is not None])
-            avg_arctic_sa = np.mean([r['imp_sa'] for r in arctic_results if r['imp_sa'] is not None])
+            print(
+                f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
+                f"{fmt_rmse(r['rmse_old_fa'])} {fmt_rmse(r['rmse_new_fa'])} {fmt_imp(r['imp_fa'])} "
+                f"{fmt_rmse(r['rmse_old_sa'])} {fmt_rmse(r['rmse_new_sa'])} {fmt_imp(r['imp_sa'])}"
+            )
+        if RUN_METHOD == "BOTH":
+            avg_arctic_fa = np.mean(
+                [r["imp_fa"] for r in arctic_results if r["imp_fa"] is not None]
+            )
+            avg_arctic_sa = np.mean(
+                [r["imp_sa"] for r in arctic_results if r["imp_sa"] is not None]
+            )
             print(f"  {'Arctic Average - 1st Approx:':>58} {avg_arctic_fa:>7.1f}%")
             print(f"  {'Arctic Average - 2nd Approx:':>58} {avg_arctic_sa:>7.1f}%")
 
     if antarctic_results:
         print("\nANTARCTIC CELLS (lat < -75°S):")
-        print(f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}")
+        print(
+            f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}"
+        )
         print(f"{'-'*80}")
         for r in antarctic_results:
-            print(f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
-                  f"{fmt_rmse(r['rmse_old_fa'])} {fmt_rmse(r['rmse_new_fa'])} {fmt_imp(r['imp_fa'])} "
-                  f"{fmt_rmse(r['rmse_old_sa'])} {fmt_rmse(r['rmse_new_sa'])} {fmt_imp(r['imp_sa'])}")
-        if RUN_METHOD == 'BOTH':
-            avg_antarctic_fa = np.mean([r['imp_fa'] for r in antarctic_results if r['imp_fa'] is not None])
-            avg_antarctic_sa = np.mean([r['imp_sa'] for r in antarctic_results if r['imp_sa'] is not None])
-            print(f"  {'Antarctic Average - 1st Approx:':>58} {avg_antarctic_fa:>7.1f}%")
-            print(f"  {'Antarctic Average - 2nd Approx:':>58} {avg_antarctic_sa:>7.1f}%")
+            print(
+                f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
+                f"{fmt_rmse(r['rmse_old_fa'])} {fmt_rmse(r['rmse_new_fa'])} {fmt_imp(r['imp_fa'])} "
+                f"{fmt_rmse(r['rmse_old_sa'])} {fmt_rmse(r['rmse_new_sa'])} {fmt_imp(r['imp_sa'])}"
+            )
+        if RUN_METHOD == "BOTH":
+            avg_antarctic_fa = np.mean(
+                [r["imp_fa"] for r in antarctic_results if r["imp_fa"] is not None]
+            )
+            avg_antarctic_sa = np.mean(
+                [r["imp_sa"] for r in antarctic_results if r["imp_sa"] is not None]
+            )
+            print(
+                f"  {'Antarctic Average - 1st Approx:':>58} {avg_antarctic_fa:>7.1f}%"
+            )
+            print(
+                f"  {'Antarctic Average - 2nd Approx:':>58} {avg_antarctic_sa:>7.1f}%"
+            )
 
     if mid_lat_results:
         print("\nMID-LATITUDE CELLS (|lat| < 75°):")
-        print(f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}")
+        print(
+            f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}"
+        )
         print(f"{'-'*80}")
         for r in mid_lat_results:
-            print(f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
-                  f"{fmt_rmse(r['rmse_old_fa'])} {fmt_rmse(r['rmse_new_fa'])} {fmt_imp(r['imp_fa'])} "
-                  f"{fmt_rmse(r['rmse_old_sa'])} {fmt_rmse(r['rmse_new_sa'])} {fmt_imp(r['imp_sa'])}")
-        if RUN_METHOD == 'BOTH':
-            avg_mid_lat_fa = np.mean([r['imp_fa'] for r in mid_lat_results if r['imp_fa'] is not None])
-            avg_mid_lat_sa = np.mean([r['imp_sa'] for r in mid_lat_results if r['imp_sa'] is not None])
-            print(f"  {'Mid-Latitude Average - 1st Approx:':>58} {avg_mid_lat_fa:>7.1f}%")
-            print(f"  {'Mid-Latitude Average - 2nd Approx:':>58} {avg_mid_lat_sa:>7.1f}%")
+            print(
+                f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
+                f"{fmt_rmse(r['rmse_old_fa'])} {fmt_rmse(r['rmse_new_fa'])} {fmt_imp(r['imp_fa'])} "
+                f"{fmt_rmse(r['rmse_old_sa'])} {fmt_rmse(r['rmse_new_sa'])} {fmt_imp(r['imp_sa'])}"
+            )
+        if RUN_METHOD == "BOTH":
+            avg_mid_lat_fa = np.mean(
+                [r["imp_fa"] for r in mid_lat_results if r["imp_fa"] is not None]
+            )
+            avg_mid_lat_sa = np.mean(
+                [r["imp_sa"] for r in mid_lat_results if r["imp_sa"] is not None]
+            )
+            print(
+                f"  {'Mid-Latitude Average - 1st Approx:':>58} {avg_mid_lat_fa:>7.1f}%"
+            )
+            print(
+                f"  {'Mid-Latitude Average - 2nd Approx:':>58} {avg_mid_lat_sa:>7.1f}%"
+            )
 
     # Calculate overall averages (only for BOTH mode)
-    if RUN_METHOD == 'BOTH':
-        avg_imp_fa = np.mean([r['imp_fa'] for r in results if r['imp_fa'] is not None])
-        avg_imp_sa = np.mean([r['imp_sa'] for r in results if r['imp_sa'] is not None])
+    if RUN_METHOD == "BOTH":
+        avg_imp_fa = np.mean([r["imp_fa"] for r in results if r["imp_fa"] is not None])
+        avg_imp_sa = np.mean([r["imp_sa"] for r in results if r["imp_sa"] is not None])
         print(f"\n{'OVERALL Average - 1st Approx:':>60} {avg_imp_fa:>7.1f}%")
         print(f"{'OVERALL Average - 2nd Approx:':>60} {avg_imp_sa:>7.1f}%")
 
@@ -960,26 +1203,38 @@ def main():
 
     # Save results to file
     results_file = output_dir / "results_summary.txt"
-    with open(results_file, 'w') as f:
+    with open(results_file, "w") as f:
         f.write("CENTERED PROJECTION TEST RESULTS\n")
-        f.write("="*80 + "\n\n")
+        f.write("=" * 80 + "\n\n")
         f.write(f"Testing {len(results)} cells:\n")
         f.write(f"  Arctic cells (lat > 75°N): {len(arctic_results)}\n")
         f.write(f"  Antarctic cells (lat < -75°S): {len(antarctic_results)}\n")
         f.write(f"  Mid-latitude cells (|lat| < 75°): {len(mid_lat_results)}\n\n")
 
-        if RUN_METHOD == 'BOTH':
-            f.write(f"Comparing OLD (corner-based) vs NEW (centered) planar projection\n")
-            f.write(f"Running FULL pyCSA: First Approximation + Second Approximation\n\n")
-            f.write(f"IMPORTANT: Both methods are compared against the SAME reference topography\n")
+        if RUN_METHOD == "BOTH":
+            f.write(
+                f"Comparing OLD (corner-based) vs NEW (centered) planar projection\n"
+            )
+            f.write(
+                f"Running FULL pyCSA: First Approximation + Second Approximation\n\n"
+            )
+            f.write(
+                f"IMPORTANT: Both methods are compared against the SAME reference topography\n"
+            )
             f.write(f"           (centered projection, geometrically accurate).\n")
-            f.write(f"           OLD method reconstructions interpolated to reference grid.\n\n")
-        elif RUN_METHOD == 'OLD':
+            f.write(
+                f"           OLD method reconstructions interpolated to reference grid.\n\n"
+            )
+        elif RUN_METHOD == "OLD":
             f.write(f"Testing OLD (corner-based) planar projection ONLY\n")
-            f.write(f"Running FULL pyCSA: First Approximation + Second Approximation\n\n")
-        elif RUN_METHOD == 'NEW':
+            f.write(
+                f"Running FULL pyCSA: First Approximation + Second Approximation\n\n"
+            )
+        elif RUN_METHOD == "NEW":
             f.write(f"Testing NEW (centered) planar projection ONLY\n")
-            f.write(f"Running FULL pyCSA: First Approximation + Second Approximation\n\n")
+            f.write(
+                f"Running FULL pyCSA: First Approximation + Second Approximation\n\n"
+            )
 
         # Helper function for file writing
         def fmt_rmse_file(val):
@@ -990,61 +1245,101 @@ def main():
 
         if arctic_results:
             f.write("ARCTIC CELLS (lat > 75°N):\n")
-            f.write(f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}\n")
-            f.write("-"*80 + "\n")
+            f.write(
+                f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}\n"
+            )
+            f.write("-" * 80 + "\n")
             for r in arctic_results:
-                f.write(f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
-                       f"{fmt_rmse_file(r['rmse_old_fa'])} {fmt_rmse_file(r['rmse_new_fa'])} {fmt_imp_file(r['imp_fa'])} "
-                       f"{fmt_rmse_file(r['rmse_old_sa'])} {fmt_rmse_file(r['rmse_new_sa'])} {fmt_imp_file(r['imp_sa'])}\n")
-            if RUN_METHOD == 'BOTH':
-                avg_arctic_fa = np.mean([r['imp_fa'] for r in arctic_results if r['imp_fa'] is not None])
-                avg_arctic_sa = np.mean([r['imp_sa'] for r in arctic_results if r['imp_sa'] is not None])
-                f.write(f"  {'Arctic Average - 1st Approx:':>58} {avg_arctic_fa:>7.1f}%\n")
-                f.write(f"  {'Arctic Average - 2nd Approx:':>58} {avg_arctic_sa:>7.1f}%\n\n")
+                f.write(
+                    f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
+                    f"{fmt_rmse_file(r['rmse_old_fa'])} {fmt_rmse_file(r['rmse_new_fa'])} {fmt_imp_file(r['imp_fa'])} "
+                    f"{fmt_rmse_file(r['rmse_old_sa'])} {fmt_rmse_file(r['rmse_new_sa'])} {fmt_imp_file(r['imp_sa'])}\n"
+                )
+            if RUN_METHOD == "BOTH":
+                avg_arctic_fa = np.mean(
+                    [r["imp_fa"] for r in arctic_results if r["imp_fa"] is not None]
+                )
+                avg_arctic_sa = np.mean(
+                    [r["imp_sa"] for r in arctic_results if r["imp_sa"] is not None]
+                )
+                f.write(
+                    f"  {'Arctic Average - 1st Approx:':>58} {avg_arctic_fa:>7.1f}%\n"
+                )
+                f.write(
+                    f"  {'Arctic Average - 2nd Approx:':>58} {avg_arctic_sa:>7.1f}%\n\n"
+                )
             else:
                 f.write("\n")
 
         if antarctic_results:
             f.write("ANTARCTIC CELLS (lat < -75°S):\n")
-            f.write(f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}\n")
-            f.write("-"*80 + "\n")
+            f.write(
+                f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}\n"
+            )
+            f.write("-" * 80 + "\n")
             for r in antarctic_results:
-                f.write(f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
-                       f"{fmt_rmse_file(r['rmse_old_fa'])} {fmt_rmse_file(r['rmse_new_fa'])} {fmt_imp_file(r['imp_fa'])} "
-                       f"{fmt_rmse_file(r['rmse_old_sa'])} {fmt_rmse_file(r['rmse_new_sa'])} {fmt_imp_file(r['imp_sa'])}\n")
-            if RUN_METHOD == 'BOTH':
-                avg_antarctic_fa = np.mean([r['imp_fa'] for r in antarctic_results if r['imp_fa'] is not None])
-                avg_antarctic_sa = np.mean([r['imp_sa'] for r in antarctic_results if r['imp_sa'] is not None])
-                f.write(f"  {'Antarctic Average - 1st Approx:':>58} {avg_antarctic_fa:>7.1f}%\n")
-                f.write(f"  {'Antarctic Average - 2nd Approx:':>58} {avg_antarctic_sa:>7.1f}%\n\n")
+                f.write(
+                    f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
+                    f"{fmt_rmse_file(r['rmse_old_fa'])} {fmt_rmse_file(r['rmse_new_fa'])} {fmt_imp_file(r['imp_fa'])} "
+                    f"{fmt_rmse_file(r['rmse_old_sa'])} {fmt_rmse_file(r['rmse_new_sa'])} {fmt_imp_file(r['imp_sa'])}\n"
+                )
+            if RUN_METHOD == "BOTH":
+                avg_antarctic_fa = np.mean(
+                    [r["imp_fa"] for r in antarctic_results if r["imp_fa"] is not None]
+                )
+                avg_antarctic_sa = np.mean(
+                    [r["imp_sa"] for r in antarctic_results if r["imp_sa"] is not None]
+                )
+                f.write(
+                    f"  {'Antarctic Average - 1st Approx:':>58} {avg_antarctic_fa:>7.1f}%\n"
+                )
+                f.write(
+                    f"  {'Antarctic Average - 2nd Approx:':>58} {avg_antarctic_sa:>7.1f}%\n\n"
+                )
             else:
                 f.write("\n")
 
         if mid_lat_results:
             f.write("MID-LATITUDE CELLS (|lat| < 75°):\n")
-            f.write(f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}\n")
-            f.write("-"*80 + "\n")
+            f.write(
+                f"{'Cell':>6} {'Lat':>8} {'Lon':>8} {'OLD FA':>10} {'NEW FA':>10} {'Imp FA':>8} {'OLD SA':>10} {'NEW SA':>10} {'Imp SA':>8}\n"
+            )
+            f.write("-" * 80 + "\n")
             for r in mid_lat_results:
-                f.write(f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
-                       f"{fmt_rmse_file(r['rmse_old_fa'])} {fmt_rmse_file(r['rmse_new_fa'])} {fmt_imp_file(r['imp_fa'])} "
-                       f"{fmt_rmse_file(r['rmse_old_sa'])} {fmt_rmse_file(r['rmse_new_sa'])} {fmt_imp_file(r['imp_sa'])}\n")
-            if RUN_METHOD == 'BOTH':
-                avg_mid_lat_fa = np.mean([r['imp_fa'] for r in mid_lat_results if r['imp_fa'] is not None])
-                avg_mid_lat_sa = np.mean([r['imp_sa'] for r in mid_lat_results if r['imp_sa'] is not None])
-                f.write(f"  {'Mid-Latitude Average - 1st Approx:':>58} {avg_mid_lat_fa:>7.1f}%\n")
-                f.write(f"  {'Mid-Latitude Average - 2nd Approx:':>58} {avg_mid_lat_sa:>7.1f}%\n\n")
+                f.write(
+                    f"{r['cell_idx']:>6d} {r['lat']:>8.2f} {r['lon']:>8.2f} "
+                    f"{fmt_rmse_file(r['rmse_old_fa'])} {fmt_rmse_file(r['rmse_new_fa'])} {fmt_imp_file(r['imp_fa'])} "
+                    f"{fmt_rmse_file(r['rmse_old_sa'])} {fmt_rmse_file(r['rmse_new_sa'])} {fmt_imp_file(r['imp_sa'])}\n"
+                )
+            if RUN_METHOD == "BOTH":
+                avg_mid_lat_fa = np.mean(
+                    [r["imp_fa"] for r in mid_lat_results if r["imp_fa"] is not None]
+                )
+                avg_mid_lat_sa = np.mean(
+                    [r["imp_sa"] for r in mid_lat_results if r["imp_sa"] is not None]
+                )
+                f.write(
+                    f"  {'Mid-Latitude Average - 1st Approx:':>58} {avg_mid_lat_fa:>7.1f}%\n"
+                )
+                f.write(
+                    f"  {'Mid-Latitude Average - 2nd Approx:':>58} {avg_mid_lat_sa:>7.1f}%\n\n"
+                )
             else:
                 f.write("\n")
 
-        f.write("-"*80 + "\n")
-        if RUN_METHOD == 'BOTH':
-            avg_imp_fa = np.mean([r['imp_fa'] for r in results if r['imp_fa'] is not None])
-            avg_imp_sa = np.mean([r['imp_sa'] for r in results if r['imp_sa'] is not None])
+        f.write("-" * 80 + "\n")
+        if RUN_METHOD == "BOTH":
+            avg_imp_fa = np.mean(
+                [r["imp_fa"] for r in results if r["imp_fa"] is not None]
+            )
+            avg_imp_sa = np.mean(
+                [r["imp_sa"] for r in results if r["imp_sa"] is not None]
+            )
             f.write(f"{'OVERALL Average - 1st Approx:':>60} {avg_imp_fa:>7.1f}%\n")
             f.write(f"{'OVERALL Average - 2nd Approx:':>60} {avg_imp_sa:>7.1f}%\n")
 
     print(f"\nResults summary saved to: {results_file}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -31,7 +31,6 @@ def lat_lon(topo, fs=(10, 6), int=1, colorbar_margins=None):
         for high-resolution datasets, do we only plot every `int` pixel? By default 1, i.e., everything is plotted.
     """
 
-
     fig = plt.figure(figsize=fs)
     ax = plt.axes(projection=ccrs.PlateCarree())
 

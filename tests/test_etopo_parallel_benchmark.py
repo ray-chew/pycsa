@@ -14,7 +14,8 @@ import time
 import os
 from pathlib import Path
 import matplotlib
-matplotlib.use('Agg')  # Non-interactive backend
+
+matplotlib.use("Agg")  # Non-interactive backend
 import matplotlib.pyplot as plt
 from datetime import datetime
 
@@ -53,14 +54,17 @@ class TestETOPOParallelBenchmark:
         # Import local paths
         try:
             from pycsa import local_paths
+
             utils.transfer_attributes(params, local_paths.paths, prefix="path")
         except ImportError as e:
             print(f"ERROR: Could not import local_paths: {e}")
             raise
 
         # Verify ETOPO path exists
-        if not hasattr(params, 'path_etopo') or not Path(params.path_etopo).exists():
-            pytest.skip(f"ETOPO data path not found: {params.path_etopo if hasattr(params, 'path_etopo') else 'not set'}")
+        if not hasattr(params, "path_etopo") or not Path(params.path_etopo).exists():
+            pytest.skip(
+                f"ETOPO data path not found: {params.path_etopo if hasattr(params, 'path_etopo') else 'not set'}"
+            )
 
         # Test region: Alaska (good for testing, has varied topography)
         params.lat_extent = [48.0, 64.0, 64.0]
@@ -119,14 +123,14 @@ class TestETOPOParallelBenchmark:
             threads_per_worker=1,
             n_workers=n_workers,
             processes=True,
-            memory_limit='4GB'
+            memory_limit="4GB",
         )
 
         # Verify client is running
-        assert client.status == 'running', "Dask client not running!"
+        assert client.status == "running", "Dask client not running!"
 
         # Verify workers
-        workers = client.scheduler_info()['workers']
+        workers = client.scheduler_info()["workers"]
         assert len(workers) >= 16, f"Only {len(workers)} workers started (expected 16+)"
 
         print(f"✓ Dask running with {len(workers)} workers")
@@ -156,12 +160,20 @@ class TestETOPOParallelBenchmark:
 
         # Initialize ETOPO reader with caching
         reader = io.ncdata(padding=test_params.padding)
-        etopo_reader = reader.read_etopo_topo(test_cell, test_params, verbose=True, is_parallel=True)
+        etopo_reader = reader.read_etopo_topo(
+            test_cell, test_params, verbose=True, is_parallel=True
+        )
 
         # Verify cache exists
-        assert hasattr(etopo_reader, 'file_cache'), "ETOPO reader missing file_cache attribute!"
-        assert hasattr(etopo_reader, '_get_cached_file'), "ETOPO reader missing _get_cached_file method!"
-        assert hasattr(etopo_reader, 'close_cached_files'), "ETOPO reader missing close_cached_files method!"
+        assert hasattr(
+            etopo_reader, "file_cache"
+        ), "ETOPO reader missing file_cache attribute!"
+        assert hasattr(
+            etopo_reader, "_get_cached_file"
+        ), "ETOPO reader missing _get_cached_file method!"
+        assert hasattr(
+            etopo_reader, "close_cached_files"
+        ), "ETOPO reader missing close_cached_files method!"
 
         # Load data (this should populate the cache)
         etopo_reader.get_topo(test_cell)
@@ -182,13 +194,17 @@ class TestETOPOParallelBenchmark:
 
         # Cache size should not have increased
         cache_size_after = len(etopo_reader.file_cache)
-        assert cache_size_after == cache_size, f"Cache size increased ({cache_size} -> {cache_size_after}), files not being reused!"
+        assert (
+            cache_size_after == cache_size
+        ), f"Cache size increased ({cache_size} -> {cache_size_after}), files not being reused!"
 
         print(f"✓ File cache correctly reused (size unchanged: {cache_size})")
 
         # Clean up
         etopo_reader.close_cached_files()
-        assert len(etopo_reader.file_cache) == 0, "Cache not cleared after close_cached_files()!"
+        assert (
+            len(etopo_reader.file_cache) == 0
+        ), "Cache not cleared after close_cached_files()!"
         print("✓ Cache cleared successfully")
 
         # Save cache info
@@ -215,6 +231,7 @@ class TestETOPOParallelBenchmark:
 
         # Initialize Dask
         import multiprocessing
+
         n_workers = min(multiprocessing.cpu_count() - 2, 20)
         print(f"  Starting Dask with {n_workers} workers...")
 
@@ -222,12 +239,14 @@ class TestETOPOParallelBenchmark:
             threads_per_worker=1,
             n_workers=n_workers,
             processes=True,
-            memory_limit='4GB'
+            memory_limit="4GB",
         )
         print(f"  Dashboard: {client.dashboard_link}")
 
         # Initialize reader with ETOPO
-        reader = io.ncdata(padding=test_params.padding, padding_tol=(60 - test_params.padding))
+        reader = io.ncdata(
+            padding=test_params.padding, padding_tol=(60 - test_params.padding)
+        )
 
         # Store pre-computation info
         clat_rad = np.copy(test_grid.clat)
@@ -256,7 +275,12 @@ class TestETOPOParallelBenchmark:
         for c_idx in cell_indices:
             future = client.submit(
                 self._process_single_cell,
-                c_idx, grid_future, params_future, reader, clat_rad_future, clon_rad_future
+                c_idx,
+                grid_future,
+                params_future,
+                reader,
+                clat_rad_future,
+                clon_rad_future,
             )
             futures.append((c_idx, future))
 
@@ -266,20 +290,20 @@ class TestETOPOParallelBenchmark:
                 result = future.result(timeout=120)  # 2 min timeout per cell
                 if result is not None:
                     cell_results.append(result)
-                    if 'error' not in result:
-                        processing_times.append(result['processing_time'])
+                    if "error" not in result:
+                        processing_times.append(result["processing_time"])
                     else:
                         error_cells.append(result)
                         if len(error_cells) <= 3:  # Only print first 3 errors
                             print(f"\n  Cell {c_idx} error: {result['error']}")
             except Exception as e:
                 print(f"\n  Warning: Cell {c_idx} timed out: {e}")
-                error_cells.append({'c_idx': c_idx, 'error': f'Timeout: {e}'})
+                error_cells.append({"c_idx": c_idx, "error": f"Timeout: {e}"})
 
         total_time = time.time() - start_time
 
         # Close cached files
-        if hasattr(reader, 'close_cached_files'):
+        if hasattr(reader, "close_cached_files"):
             reader.close_cached_files()
 
         # Shut down Dask
@@ -288,22 +312,28 @@ class TestETOPOParallelBenchmark:
         # Analysis
         n_total = len(cell_results)
         n_errors = len(error_cells)
-        valid_results = [r for r in cell_results if 'error' not in r]
+        valid_results = [r for r in cell_results if "error" not in r]
         n_successful = len(valid_results)
-        n_land = sum(1 for r in valid_results if r.get('is_land', False))
-        n_ocean = sum(1 for r in valid_results if r.get('is_land') == False)
+        n_land = sum(1 for r in valid_results if r.get("is_land", False))
+        n_ocean = sum(1 for r in valid_results if r.get("is_land") == False)
         success_rate = 100 * n_successful / n_test_cells
 
         # Separate land and ocean processing times
-        land_times = [r['processing_time'] for r in valid_results if r.get('is_land') == True]
-        ocean_times = [r['processing_time'] for r in valid_results if r.get('is_land') == False]
+        land_times = [
+            r["processing_time"] for r in valid_results if r.get("is_land") == True
+        ]
+        ocean_times = [
+            r["processing_time"] for r in valid_results if r.get("is_land") == False
+        ]
 
         print(f"\n📊 Results:")
         print(f"  Total time: {total_time:.1f}s")
         print(f"  Cells processed: {n_successful}/{n_test_cells} ({success_rate:.1f}%)")
         if n_successful > 0:
             print(f"    - Land cells: {n_land} ({100*n_land/n_successful:.0f}%)")
-            print(f"    - Ocean cells: {n_ocean} ({100*n_ocean/n_successful:.0f}%) [skipped CSA]")
+            print(
+                f"    - Ocean cells: {n_ocean} ({100*n_ocean/n_successful:.0f}%) [skipped CSA]"
+            )
         print(f"  Errors/failures: {n_errors}")
 
         if land_times:
@@ -319,20 +349,35 @@ class TestETOPOParallelBenchmark:
         if processing_times:
             print(f"\n  Overall throughput: {n_successful / total_time:.1f} cells/sec")
             if land_times:
-                print(f"  Land-only throughput: {n_land / sum(land_times):.1f} cells/sec")
+                print(
+                    f"  Land-only throughput: {n_land / sum(land_times):.1f} cells/sec"
+                )
 
         # Assertions (relaxed for initial benchmarking)
         # Note: Success rate depends on grid coverage of test region
-        assert success_rate >= 60, f"Success rate too low: {success_rate:.1f}% (expected ≥60%)"
+        assert (
+            success_rate >= 60
+        ), f"Success rate too low: {success_rate:.1f}% (expected ≥60%)"
         if processing_times:
-            assert np.mean(processing_times) < 10, f"Average processing time too high: {np.mean(processing_times):.1f}s"
+            assert (
+                np.mean(processing_times) < 10
+            ), f"Average processing time too high: {np.mean(processing_times):.1f}s"
 
         # Print error summary if needed
         if n_errors > 0:
-            print(f"\n⚠️  Warning: {n_errors} cells had errors. Check outputs/benchmark_etopo/*/errors.txt for details")
+            print(
+                f"\n⚠️  Warning: {n_errors} cells had errors. Check outputs/benchmark_etopo/*/errors.txt for details"
+            )
 
         # Save results
-        self._save_benchmark_results(output_dir, valid_results, processing_times, total_time, n_test_cells, error_cells)
+        self._save_benchmark_results(
+            output_dir,
+            valid_results,
+            processing_times,
+            total_time,
+            n_test_cells,
+            error_cells,
+        )
 
         # Generate diagnostic plots
         self._generate_diagnostic_plots(output_dir, cell_results, test_params)
@@ -401,16 +446,18 @@ class TestETOPOParallelBenchmark:
 
             if not is_land:
                 return {
-                    'c_idx': c_idx,
-                    'is_land': False,
-                    'processing_time': time.time() - start_time
+                    "c_idx": c_idx,
+                    "is_land": False,
+                    "processing_time": time.time() - start_time,
                 }
 
             # Run CSA (simplified - just first approximation for benchmark)
             nhi = params.nhi
             nhj = params.nhj
 
-            utils.get_lat_lon_segments(simplex_lat, simplex_lon, cell, topo, rect=params.rect)
+            utils.get_lat_lon_segments(
+                simplex_lat, simplex_lon, cell, topo, rect=params.rect
+            )
 
             # Run spectral approximation
             pmf = interface.get_pmf(nhi, nhj, params.U, params.V)
@@ -420,34 +467,45 @@ class TestETOPOParallelBenchmark:
 
             # Filter out NaNs from spectrum for meaningful statistics
             ampls_valid = ampls[~np.isnan(ampls)]
-            spectrum_max = float(np.max(ampls_valid)) if len(ampls_valid) > 0 else np.nan
+            spectrum_max = (
+                float(np.max(ampls_valid)) if len(ampls_valid) > 0 else np.nan
+            )
             n_valid_modes = len(ampls_valid)
 
             return {
-                'c_idx': c_idx,
-                'is_land': True,
-                'processing_time': processing_time,
-                'topo_shape': topo.topo.shape,
-                'topo_min': float(np.min(topo.topo)),
-                'topo_max': float(np.max(topo.topo)),
-                'spectrum_max': spectrum_max,
-                'n_modes': ampls.size,
-                'n_valid_modes': n_valid_modes,
-                'lat_extent': params.lat_extent,
-                'lon_extent': params.lon_extent,
+                "c_idx": c_idx,
+                "is_land": True,
+                "processing_time": processing_time,
+                "topo_shape": topo.topo.shape,
+                "topo_min": float(np.min(topo.topo)),
+                "topo_max": float(np.max(topo.topo)),
+                "spectrum_max": spectrum_max,
+                "n_modes": ampls.size,
+                "n_valid_modes": n_valid_modes,
+                "lat_extent": params.lat_extent,
+                "lon_extent": params.lon_extent,
             }
 
         except Exception as e:
             import traceback
+
             return {
-                'c_idx': c_idx,
-                'is_land': None,
-                'processing_time': time.time() - start_time,
-                'error': str(e),
-                'traceback': traceback.format_exc()
+                "c_idx": c_idx,
+                "is_land": None,
+                "processing_time": time.time() - start_time,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
             }
 
-    def _save_benchmark_results(self, output_dir, cell_results, processing_times, total_time, n_test_cells, error_cells):
+    def _save_benchmark_results(
+        self,
+        output_dir,
+        cell_results,
+        processing_times,
+        total_time,
+        n_test_cells,
+        error_cells,
+    ):
         """Save benchmark results to file."""
         with open(output_dir / "benchmark_results.txt", "w") as f:
             f.write("ETOPO Parallel Processing Benchmark\n")
@@ -469,8 +527,8 @@ class TestETOPOParallelBenchmark:
             f.write(f"\n")
 
             # Land/ocean statistics
-            land_cells = sum(1 for r in cell_results if r.get('is_land'))
-            ocean_cells = sum(1 for r in cell_results if r.get('is_land') == False)
+            land_cells = sum(1 for r in cell_results if r.get("is_land"))
+            ocean_cells = sum(1 for r in cell_results if r.get("is_land") == False)
             f.write(f"Cell Statistics:\n")
             f.write(f"  Land cells: {land_cells}\n")
             f.write(f"  Ocean cells: {ocean_cells}\n")
@@ -480,12 +538,14 @@ class TestETOPOParallelBenchmark:
                 f.write(f"\nErrors:\n")
                 error_types = {}
                 for err in error_cells:
-                    err_msg = err.get('error', 'Unknown error')
+                    err_msg = err.get("error", "Unknown error")
                     # Group by error type (first line of error)
-                    err_type = err_msg.split('\n')[0][:100]
+                    err_type = err_msg.split("\n")[0][:100]
                     error_types[err_type] = error_types.get(err_type, 0) + 1
 
-                for err_type, count in sorted(error_types.items(), key=lambda x: x[1], reverse=True):
+                for err_type, count in sorted(
+                    error_types.items(), key=lambda x: x[1], reverse=True
+                ):
                     f.write(f"  {count}x: {err_type}\n")
 
         # Save detailed error log
@@ -497,11 +557,13 @@ class TestETOPOParallelBenchmark:
                     f.write(f"Error {i+1}: Cell {err.get('c_idx', 'unknown')}\n")
                     f.write(f"{'-' * 70}\n")
                     f.write(f"{err.get('error', 'No error message')}\n")
-                    if 'traceback' in err:
+                    if "traceback" in err:
                         f.write(f"\nTraceback:\n{err['traceback']}\n")
                     f.write(f"\n{'=' * 70}\n\n")
                 if len(error_cells) > 10:
-                    f.write(f"\n... and {len(error_cells) - 10} more errors (see benchmark_results.txt for summary)\n")
+                    f.write(
+                        f"\n... and {len(error_cells) - 10} more errors (see benchmark_results.txt for summary)\n"
+                    )
 
         print(f"  ✓ Saved benchmark results")
 
@@ -510,7 +572,7 @@ class TestETOPOParallelBenchmark:
         print("\n  Generating diagnostic plots...")
 
         # Filter land cells only
-        land_results = [r for r in cell_results if r['is_land']]
+        land_results = [r for r in cell_results if r["is_land"]]
 
         if len(land_results) < 5:
             print("    Skipping plots (not enough land cells)")
@@ -519,42 +581,53 @@ class TestETOPOParallelBenchmark:
         # Plot 1: Processing time distribution
         fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
-        times = [r['processing_time'] for r in cell_results]
-        axes[0, 0].hist(times, bins=30, edgecolor='black', alpha=0.7)
-        axes[0, 0].set_xlabel('Processing Time (s)')
-        axes[0, 0].set_ylabel('Count')
-        axes[0, 0].set_title('Processing Time Distribution')
-        axes[0, 0].axvline(np.mean(times), color='red', linestyle='--', label=f'Mean: {np.mean(times):.2f}s')
+        times = [r["processing_time"] for r in cell_results]
+        axes[0, 0].hist(times, bins=30, edgecolor="black", alpha=0.7)
+        axes[0, 0].set_xlabel("Processing Time (s)")
+        axes[0, 0].set_ylabel("Count")
+        axes[0, 0].set_title("Processing Time Distribution")
+        axes[0, 0].axvline(
+            np.mean(times),
+            color="red",
+            linestyle="--",
+            label=f"Mean: {np.mean(times):.2f}s",
+        )
         axes[0, 0].legend()
 
         # Plot 2: Topography elevation ranges
-        topo_mins = [r['topo_min'] for r in land_results]
-        topo_maxs = [r['topo_max'] for r in land_results]
+        topo_mins = [r["topo_min"] for r in land_results]
+        topo_maxs = [r["topo_max"] for r in land_results]
         axes[0, 1].scatter(topo_mins, topo_maxs, alpha=0.5)
-        axes[0, 1].set_xlabel('Min Elevation (m)')
-        axes[0, 1].set_ylabel('Max Elevation (m)')
-        axes[0, 1].set_title('Topography Elevation Ranges')
+        axes[0, 1].set_xlabel("Min Elevation (m)")
+        axes[0, 1].set_ylabel("Max Elevation (m)")
+        axes[0, 1].set_title("Topography Elevation Ranges")
         axes[0, 1].grid(True, alpha=0.3)
 
         # Plot 3: Spectrum amplitudes
-        spectrum_maxs = [r['spectrum_max'] for r in land_results if not np.isnan(r['spectrum_max'])]
+        spectrum_maxs = [
+            r["spectrum_max"] for r in land_results if not np.isnan(r["spectrum_max"])
+        ]
         if len(spectrum_maxs) > 0:
-            axes[1, 0].hist(spectrum_maxs, bins=30, edgecolor='black', alpha=0.7)
+            axes[1, 0].hist(spectrum_maxs, bins=30, edgecolor="black", alpha=0.7)
         else:
-            axes[1, 0].text(0.5, 0.5, 'No valid spectrum data', ha='center', va='center')
-        axes[1, 0].set_xlabel('Max Spectrum Amplitude')
-        axes[1, 0].set_ylabel('Count')
-        axes[1, 0].set_title('Spectral Amplitude Distribution')
+            axes[1, 0].text(
+                0.5, 0.5, "No valid spectrum data", ha="center", va="center"
+            )
+        axes[1, 0].set_xlabel("Max Spectrum Amplitude")
+        axes[1, 0].set_ylabel("Count")
+        axes[1, 0].set_title("Spectral Amplitude Distribution")
 
         # Plot 4: Topography grid sizes
-        topo_sizes = [r['topo_shape'][0] * r['topo_shape'][1] for r in land_results]
-        axes[1, 1].hist(topo_sizes, bins=30, edgecolor='black', alpha=0.7)
-        axes[1, 1].set_xlabel('Grid Points')
-        axes[1, 1].set_ylabel('Count')
-        axes[1, 1].set_title('Loaded Topography Grid Sizes')
+        topo_sizes = [r["topo_shape"][0] * r["topo_shape"][1] for r in land_results]
+        axes[1, 1].hist(topo_sizes, bins=30, edgecolor="black", alpha=0.7)
+        axes[1, 1].set_xlabel("Grid Points")
+        axes[1, 1].set_ylabel("Count")
+        axes[1, 1].set_title("Loaded Topography Grid Sizes")
 
         plt.tight_layout()
-        plt.savefig(output_dir / 'diagnostics_summary.png', dpi=150, bbox_inches='tight')
+        plt.savefig(
+            output_dir / "diagnostics_summary.png", dpi=150, bbox_inches="tight"
+        )
         plt.close()
 
         print(f"    ✓ Saved diagnostics_summary.png")
@@ -571,9 +644,13 @@ class TestETOPOParallelBenchmark:
             ax = axes[idx]
 
             # Just show basic info since we don't have the actual topo data
-            spectrum_str = f"{result['spectrum_max']:.2e}" if not np.isnan(result['spectrum_max']) else "N/A"
-            n_valid = result.get('n_valid_modes', '?')
-            n_total = result.get('n_modes', '?')
+            spectrum_str = (
+                f"{result['spectrum_max']:.2e}"
+                if not np.isnan(result["spectrum_max"])
+                else "N/A"
+            )
+            n_valid = result.get("n_valid_modes", "?")
+            n_total = result.get("n_modes", "?")
 
             info_text = (
                 f"Cell {result['c_idx']}\n"
@@ -583,15 +660,22 @@ class TestETOPOParallelBenchmark:
                 f"Valid modes: {n_valid}/{n_total}\n"
                 f"Time: {result['processing_time']:.2f}s"
             )
-            ax.text(0.5, 0.5, info_text, ha='center', va='center',
-                   fontsize=10, family='monospace')
+            ax.text(
+                0.5,
+                0.5,
+                info_text,
+                ha="center",
+                va="center",
+                fontsize=10,
+                family="monospace",
+            )
             ax.set_xlim(0, 1)
             ax.set_ylim(0, 1)
-            ax.axis('off')
+            ax.axis("off")
 
-        plt.suptitle('Sample Cell Results', fontsize=14, fontweight='bold')
+        plt.suptitle("Sample Cell Results", fontsize=14, fontweight="bold")
         plt.tight_layout()
-        plt.savefig(output_dir / 'sample_cells.png', dpi=150, bbox_inches='tight')
+        plt.savefig(output_dir / "sample_cells.png", dpi=150, bbox_inches="tight")
         plt.close()
 
         print(f"    ✓ Saved sample_cells.png")

@@ -69,7 +69,7 @@ def get_land_cells(tri, topo, height_tol=0.5, percent_tol=0.95):
     Parameters
     ----------
     tri : instance containing tuples of the three vertice coordinates of a triangle
-        E.g., :class:`scipy.spatial.qhull.Delaunay` 
+        E.g., :class:`scipy.spatial.qhull.Delaunay`
     topo : array-like
         2D topographic data
     height_tol : float, optional

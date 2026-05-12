@@ -88,6 +88,44 @@ def cache():
     )
 
 
+def test_worker_cache_lifecycle(grid, params):
+    """init_worker_cache / get_worker_cache / close_worker_cache happy path.
+
+    This mirrors what do_cell does inside a Dask worker process: the main
+    loop calls client.run(init_worker_cache, ...), then each cell's do_cell
+    call retrieves the cache via get_worker_cache().
+    """
+    from pycsa.core import tile_cache as tc
+
+    # No cache should be initialised yet (or from a prior test).
+    tc.close_worker_cache()
+    with pytest.raises(RuntimeError):
+        tc.get_worker_cache()
+
+    assert tc.init_worker_cache(str(ETOPO_DIR), "ETOPO") is True
+    cache = tc.get_worker_cache()
+    assert cache.dataset_type == "ETOPO"
+
+    # Idempotency: second init with same dir should be a no-op (same object).
+    assert tc.init_worker_cache(str(ETOPO_DIR), "ETOPO") is True
+    assert tc.get_worker_cache() is cache
+
+    # Functional check: retrieve topo for one cell through the worker-cache
+    # path; should match reader output (this is the same contract used by
+    # the wired do_cell).
+    c_idx = 1086
+    topo_ref, _, lat_extent, lon_extent = _load_via_reader(grid, params, c_idx)
+    lat, lon, topo_arr = cache.get_etopo_data(
+        lat_extent, lon_extent, etopo_cg=params.etopo_cg
+    )
+    np.testing.assert_array_equal(topo_arr, topo_ref.topo)
+
+    # Cleanup leaves get_worker_cache failing again.
+    tc.close_worker_cache()
+    with pytest.raises(RuntimeError):
+        tc.get_worker_cache()
+
+
 @pytest.mark.parametrize("c_idx,description", TEST_CELLS)
 def test_etopo_equivalence(grid, params, cache, c_idx, description):
     """Cache output must match the reference reader byte-for-byte for every cell."""

@@ -29,7 +29,7 @@ import gc
 import logging
 from datetime import datetime
 
-from pycsa.core import io, var, utils
+from pycsa.core import io, var, utils, tile_cache
 from pycsa.wrappers import interface, diagnostics
 from pycsa.plotting import plotter
 
@@ -263,9 +263,15 @@ def do_cell(c_idx,
         params.lat_extent = lat_extent
         params.lon_extent = lon_extent
 
-        # Load topography data for this cell (ETOPO instead of MERIT)
-        etopo_reader = reader.read_etopo_topo(None, params, is_parallel=True)
-        etopo_reader.get_topo(topo)
+        # Load topography for this cell from the worker-local tile cache.
+        # The cache is initialised once per memory batch via init_worker_cache
+        # (see the per-batch loop below); handles stay open across cells in
+        # the same worker so we don't re-open the same ETOPO tile per cell.
+        cache = tile_cache.get_worker_cache()
+        topo.lat, topo.lon, topo.topo = cache.get_etopo_data(
+            lat_extent, lon_extent, etopo_cg=params.etopo_cg
+        )
+        split_EW = tile_cache.compute_split_EW(lon_extent)
 
         # Clip deep bathymetry to -500m (same as test_etopo_pole_cells.py)
         # This prevents issues with extreme ocean depths creating artifacts
@@ -274,7 +280,7 @@ def do_cell(c_idx,
 
         # Handle dateline crossing BEFORE processing vertices for CSA
         # This must be done before handle_latlon_expansion() to ensure consistent coordinates
-        if etopo_reader.split_EW:
+        if split_EW:
             lon_verts = lon_verts.copy()  # Don't modify the grid object
             lon_verts[lon_verts < 0.0] += 360.0
 
@@ -811,6 +817,19 @@ if __name__ == '__main__':
             silence_logs='ERROR',
         )
         logger.info(f"  Dashboard: {client.dashboard_link}\n")
+
+        # Initialise the per-worker tile cache. Each worker is a separate
+        # process, so this populates a module-level _WORKER_CACHE inside that
+        # process; do_cell then reaches it via tile_cache.get_worker_cache().
+        # The cache opens ETOPO tile files lazily on first access and keeps
+        # the handles for the rest of the worker's lifetime.
+        init_results = client.run(
+            tile_cache.init_worker_cache, params.path_etopo, "ETOPO"
+        )
+        logger.info(
+            f"  Initialised tile cache on {sum(bool(v) for v in init_results.values())} "
+            f"of {len(init_results)} workers"
+        )
 
         # Inner loop: NetCDF file creation (one file per netcdf_chunk_size cells)
         # Only process NetCDF chunks that contain cells from this memory batch

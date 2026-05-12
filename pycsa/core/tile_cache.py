@@ -814,3 +814,57 @@ def _get_merit_tiles_for_bounds(
             tile_filenames.append(filename)
 
     return tile_filenames
+
+
+# ---------------------------------------------------------------------------
+# Per-worker cache lifecycle helpers
+# ---------------------------------------------------------------------------
+# The HPC main loop runs under Dask with processes=True, so each worker is a
+# separate process with its own module namespace. init_worker_cache is called
+# via client.run(...) once per memory batch to populate _WORKER_CACHE on each
+# worker; do_cell then reaches it via get_worker_cache(). This keeps NetCDF
+# file handles open across cells within a worker (the actual saving), without
+# trying to share state between processes (which would fail — nc.Dataset
+# handles aren't picklable).
+
+_WORKER_CACHE: Optional[TopographyTileCache] = None
+
+
+def init_worker_cache(data_dir: str, dataset_type: str = "ETOPO") -> bool:
+    """Initialise a lazy tile cache in the current worker process.
+
+    Intended to be called via `client.run(init_worker_cache, path_etopo)` at
+    the start of each memory batch. Idempotent: a second call with the same
+    arguments is a no-op so reinitialisation across batches is cheap.
+
+    Returns True so client.run reports {worker_addr: True, ...} on success.
+    """
+    global _WORKER_CACHE
+    if _WORKER_CACHE is not None and str(_WORKER_CACHE.data_dir) == str(Path(data_dir)):
+        return True
+    _WORKER_CACHE = TopographyTileCache(
+        data_dir=data_dir,
+        tile_filenames=[],
+        dataset_type=dataset_type,
+        verbose=False,
+    )
+    return True
+
+
+def get_worker_cache() -> TopographyTileCache:
+    """Return this worker's tile cache; raise if init_worker_cache wasn't called."""
+    if _WORKER_CACHE is None:
+        raise RuntimeError(
+            "TopographyTileCache not initialised on this worker. "
+            "Call init_worker_cache(data_dir) via client.run(...) first."
+        )
+    return _WORKER_CACHE
+
+
+def close_worker_cache() -> bool:
+    """Close NetCDF handles and drop the worker cache. Returns True."""
+    global _WORKER_CACHE
+    if _WORKER_CACHE is not None:
+        _WORKER_CACHE.close_all()
+        _WORKER_CACHE = None
+    return True

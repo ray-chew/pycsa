@@ -32,7 +32,6 @@ import numpy as np
 
 from pycsa import var, utils, interface
 
-
 EXPERIMENT_LABELS: tuple[str, ...] = (
     "reference",
     "pLSFF",

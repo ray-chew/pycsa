@@ -9,9 +9,8 @@ either:
   (re-run the capture script, embed the fresh figure in a fixture-update PR,
   get human sign-off, then merge).
 
-Currently gates one case (``idealised``). The MERIT and ETOPO single-cell
-cases land in subsequent commits on this branch and will extend the
-``CASES`` table below.
+All three cases gate in CI — input data for the MERIT and ETOPO cases is
+bundled in production schema next to each fixture's ``manifest.yml``.
 """
 
 from __future__ import annotations
@@ -22,25 +21,21 @@ import pytest
 
 from tests.reproducibility.comparator import NetCDFComparator
 
-
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
 CASES: list[dict] = [
-    {
-        "name": "idealised",
-        "needs_local_data": False,
-    },
-    # MERIT and ETOPO entries land in a follow-up commit on this branch.
+    {"name": "idealised", "needs_local_data": False},
+    {"name": "regional_merit", "needs_local_data": True},
+    {"name": "etopo_single_cell", "needs_local_data": True},
 ]
 
 
 def _run_idealised():
+    import numpy as np
     from runs.idealised_isosceles import run
 
     result = run()
-    import numpy as np
-
     return {
         "freqs_arr": result.freqs_arr,
         "errs": result.errs,
@@ -51,7 +46,23 @@ def _run_idealised():
     }
 
 
-RUNNERS = {"idealised": _run_idealised}
+def _run_regional_merit():
+    from tests.reproducibility.capture.capture_regional_merit import _run_pipeline
+
+    return _run_pipeline(FIXTURES_DIR / "regional_merit")
+
+
+def _run_etopo_single_cell():
+    from tests.reproducibility.capture.capture_etopo_single_cell import _run_pipeline
+
+    return _run_pipeline(FIXTURES_DIR / "etopo_single_cell")
+
+
+RUNNERS = {
+    "idealised": _run_idealised,
+    "regional_merit": _run_regional_merit,
+    "etopo_single_cell": _run_etopo_single_cell,
+}
 
 
 @pytest.mark.parametrize("case", [c["name"] for c in CASES])

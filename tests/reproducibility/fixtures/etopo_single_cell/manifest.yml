@@ -1,0 +1,71 @@
+fixture: etopo_single_cell
+captured_at: '2026-05-12T21:28:23Z'
+captured_from: {git_sha: 9d08db81470e5e9d373a541b46b68e38a05c203e, python: 3.12.3,
+  numpy: 2.4.3, scipy: 1.17.1}
+variables:
+  freqs_fa:
+    dtype: float64
+    shape: [64, 32]
+    sha256: cf88cefbdb9ce5bc8bfd38f40b4c3e191b24d2fa44d2c6a413115f22e728e36d
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 52.286907884517696, mean: 0.6487829870510096, nan_count: 0,
+      size: 2048}
+  freqs_sa:
+    dtype: float64
+    shape: [64, 32]
+    sha256: 35dc52b9444287003dab50373017a6886efe7b210302697706495baca143816f
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 21.96465899378675, mean: 0.24861866056099058, nan_count: 0,
+      size: 2048}
+  uw_sa:
+    dtype: float64
+    shape: [64, 32]
+    sha256: 36a14eb6c8d498958aae04777d389b3c79be95c88b0791b4cea8234eda464912
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 0.0007288851283654027, mean: 1.0940044238407468e-06,
+      nan_count: 0, size: 2048}
+  max_ampls:
+    dtype: float64
+    shape: [100]
+    sha256: 704dcb172f11ef2042b7fe4f0fbc6989a6bc37a040c736dc8f35d9a099580f67
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 2.6617402660903102, max: 52.286907884517696, mean: 8.325253129323244,
+      nan_count: 0, size: 100}
+  k_idxs:
+    dtype: int64
+    shape: [100]
+    sha256: 1a24bc80005eabe08cb664552a4d7b336408eb066d63b2bc6aba2b73eb1fd3ce
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 6.0, mean: 1.24, nan_count: 0, size: 100}
+  l_idxs:
+    dtype: int64
+    shape: [100]
+    sha256: f7c2c39b527e4109a918b8d573bfef59bb4603b3e0eafa76e2577610a9615ff6
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {min: 0.0, max: 63.0, mean: 38.32, nan_count: 0, size: 100}
+  uw_comp:
+    dtype: float64
+    shape: []
+    sha256: fb64bf2d2d6a08d4fe16ad1ecdabcd8c1b2fe645fda89b04ac67b761821e0ca4
+    rtol: 1.0e-05
+    atol: 1.0e-08
+    equal_nan: true
+    summary: {value: 0.0022405210600258494}
+notes: "ETOPO single-cell CSA on ICON cell 17408 (south polar ~-89\xB0S \u2014 exercises\
+  \ the loader's polar 5\xD7 multiplier at lat < -85\xB0). Bundled ETOPO tiles pre-downsampled\
+  \ by ETOPO_CG=20; test reads with etopo_cg=1 + loader's polar 5\xD7 \u2192 100\xD7\
+  \ effective downsampling (heavier than production etopo_cg=4 for fast suite runtime\
+  \ \u2014 still gates refactors deterministically). NHI=32, NHJ=64, N_MODES=100,\
+  \ U=10.0, V=0.0, lmbda_sg=0.1."

@@ -184,7 +184,7 @@ def do(
                 a_m, info = gmres(
                     E_tilda_lm,
                     h_tilda_l,
-                    tol=1e-8,  # Convergence tolerance
+                    rtol=1e-8,  # Convergence tolerance (renamed from tol in SciPy 1.12)
                     atol=1e-10,  # Absolute tolerance
                     maxiter=min(szc, 100),
                 )  # Limit iterations

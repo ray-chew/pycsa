@@ -22,7 +22,6 @@ from typing import Any
 import numpy as np
 import yaml
 
-
 DEFAULT_RTOL = 1e-5
 DEFAULT_ATOL = 1e-8
 

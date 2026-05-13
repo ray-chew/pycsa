@@ -8,6 +8,15 @@ the CSA pipeline produces a meaningful spectrum (cell 1074 — the true
 dateline crosser at 80°N — was Arctic Ocean and clamped to a constant -500,
 giving a degenerate signal).
 
+We use ``MERIT_CG=20`` rather than the regional-pipeline default of 100 —
+that default was tuned for *regional* bboxes spanning 14-18°, where 100×
+downsampling still leaves enough resolution. For a single ~3° ICON cell,
+100× collapses Aleutian islands (~10 km wide) to ~2 pixels and the grid
+(~51×37) is below Nyquist for the (24, 48) wavenumber spectrum. 20× gives
+~1.1 km/px (matches the ETOPO single-cell fixture's effective scale of
+15″×4 ≈ 3″×20), ~257×184 grid, and islands ~9 pixels wide so the figure is
+actually verifiable by eye.
+
 Pre-downsamples both MERIT tiles by ``MERIT_CG=100`` (the regional default)
 at capture time and sets the test ``merit_cg=1`` so the loader's
 coarse-graining step is a no-op on the already-downsampled bundle.
@@ -29,7 +38,7 @@ import numpy as np
 CASE = "regional_merit"
 DEFAULT_DIR = Path(__file__).resolve().parents[1] / "fixtures" / CASE
 C_IDX_ORIGINAL = 2311  # Aleutians, ~52°N — false-positive dateline path with real land
-MERIT_CG = 100  # production regional default; applied at capture, set to 1 at test
+MERIT_CG = 20  # ~1.1 km/px at 52°N — matches ETOPO etopo_cg=4 effective scale, satisfies Nyquist for (24, 48) spectrum (production regional default of 100 was tuned for 14-18° bboxes, too coarse for a single ICON cell)
 NHI, NHJ = 24, 48
 N_MODES = 50
 LMBDA_SG = 1e-1
@@ -360,8 +369,11 @@ def capture(out_dir: Path, real_icon_grid: Path, real_merit_dir: Path) -> None:
             f"Regional MERIT CSA on ICON cell {C_IDX_ORIGINAL} "
             f"(Aleutians, ~52°N — exercises the false-positive dateline path: "
             f"lons all-negative near -180° but span < 180°). Bundled MERIT "
-            f"tile pre-downsampled by merit_cg={MERIT_CG}; test reads with "
-            f"merit_cg=1. Equivalent to production at merit_cg={MERIT_CG}. "
+            f"tile pre-downsampled by merit_cg={MERIT_CG} (~1.1 km/px, "
+            f"matches the ETOPO fixture's effective scale; the regional-"
+            f"pipeline default of 100 collapses Aleutian islands to ~2 "
+            f"pixels). Test reads with merit_cg=1 so the loader's own "
+            f"coarse-graining is a no-op. "
             f"NHI={NHI}, NHJ={NHJ}, N_MODES={N_MODES}, U={U}, V={V}, "
             f"lmbda_sg={LMBDA_SG}."
         ),

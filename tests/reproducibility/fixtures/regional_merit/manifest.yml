@@ -1,54 +1,55 @@
 fixture: regional_merit
-captured_at: '2026-05-12T22:07:18Z'
-captured_from: {git_sha: 96b57bb811deea480e2d896b4039a56193b196a6, python: 3.12.3,
+captured_at: '2026-05-13T05:28:44Z'
+captured_from: {git_sha: 6fc325c4a0ac7238ca97a12b70251170b8a35cf0, python: 3.12.3,
   numpy: 2.4.3, scipy: 1.17.1}
 variables:
   freqs_fa:
     dtype: float64
     shape: [48, 24]
-    sha256: 53fb879dc1529f55fd5e3d065f838e846815d1deb73feb9e7047d846219c6e4b
+    sha256: 82dae435e81ae12734a58c4081ce378a62b71ef5cdd32a25d0fc1181eca6f119
     rtol: 1.0e-05
     atol: 1.0e-08
     equal_nan: true
-    summary: {min: 0.0, max: 2.83951607449461, mean: 1.276190527995102, nan_count: 0,
+    summary: {min: 0.0, max: 17.820893887825893, mean: 2.1160142688886925, nan_count: 0,
       size: 1152}
   freqs_sa:
     dtype: float64
     shape: [48, 24]
-    sha256: afcc1448e02d123d62e0ae1a6b54a1f84d6d22c92d97d652cccf8d8e044d2e7c
+    sha256: 26679925ea40ca646cd5f09d49b97b8633c65eea347695539080a8feeb9abdd5
     rtol: 1.0e-05
     atol: 1.0e-08
     equal_nan: true
-    summary: {min: 0.0, max: 6.04192940867934, mean: 0.1676610463845251, nan_count: 0,
+    summary: {min: 0.0, max: 20.361097861271958, mean: 0.4218847883535988, nan_count: 0,
       size: 1152}
   uw_sa:
     dtype: float64
     shape: [48, 24]
-    sha256: 4275217837d08ffdef6ccd5569b28fc19c7aea7e49948e4c0efbfcc9e62c1d11
+    sha256: 7e314ae4fb6181def713db633e3ab8da06712ea9f9e80b0f41c528feb1279265
     rtol: 1.0e-05
     atol: 1.0e-08
     equal_nan: true
-    summary: {min: 0.0, max: 0.00045008623327453916, mean: 6.1516809233384865e-06,
-      nan_count: 0, size: 1152}
+    summary: {min: 0.0, max: 0.0015962806298232743, mean: 1.464117030966797e-05, nan_count: 0,
+      size: 1152}
   max_ampls:
     dtype: float64
     shape: [50]
-    sha256: 216a5d3ee75beddbad01d45be4a7f656f952295693a5fc2eda532d683a5586f9
+    sha256: 645923322c169d3bbe101d737a8677dc48d464f9f8775cb64070fd4aff442c93
     rtol: 1.0e-05
     atol: 1.0e-08
     equal_nan: true
-    summary: {min: 2.408708327157702, max: 2.83951607449461, mean: 2.57195038941592,
+    summary: {min: 5.497919489248474, max: 17.820893887825893, mean: 7.930093336558696,
       nan_count: 0, size: 50}
   uw_comp:
     dtype: float64
     shape: []
-    sha256: 2a62c0a5a64efa9a622a46ae3d24f43f63ba9b356ba99c577cf2cf4c3177548b
+    sha256: 9fe02954b5c54e8cbe8c32a07b732f525e78ea13404b6fa2102461c954effb7c
     rtol: 1.0e-05
     atol: 1.0e-08
     equal_nan: true
-    summary: {value: 0.007086736423685937}
+    summary: {value: 0.016866628196737503}
 notes: "Regional MERIT CSA on ICON cell 2311 (Aleutians, ~52\xB0N \u2014 exercises\
   \ the false-positive dateline path: lons all-negative near -180\xB0 but span < 180\xB0\
-  ). Bundled MERIT tile pre-downsampled by merit_cg=100; test reads with merit_cg=1.\
-  \ Equivalent to production at merit_cg=100. NHI=24, NHJ=48, N_MODES=50, U=10.0,\
-  \ V=0.0, lmbda_sg=0.1."
+  ). Bundled MERIT tile pre-downsampled by merit_cg=20 (~1.1 km/px, matches the ETOPO\
+  \ fixture's effective scale; the regional-pipeline default of 100 collapses Aleutian\
+  \ islands to ~2 pixels). Test reads with merit_cg=1 so the loader's own coarse-graining\
+  \ is a no-op. NHI=24, NHJ=48, N_MODES=50, U=10.0, V=0.0, lmbda_sg=0.1."

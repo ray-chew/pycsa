@@ -1,0 +1,11 @@
+New ``examples/icon_regional_minimal.py`` — a real-data CSA pipeline
+demo on ICON cell 2311 (Aleutian arc, ~52°N) using a bundled MERIT
+slice. Runs in ~10 s on a laptop, ships with all data
+(``examples/data/`` is ~260 KB), produces a 2×3 figure showing
+original topography / first-approx reconstruction / final
+reconstruction across the top row and matching spectra + top-mode
+amplitudes below.
+
+Numerics are computed live (not pinned). The reproducibility suite
+(``tests/reproducibility/regional_merit``) remains the gating
+truth-source; this example is for human inspection.

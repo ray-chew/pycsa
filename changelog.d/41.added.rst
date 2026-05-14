@@ -1,0 +1,5 @@
+``pyproject.toml`` ``[project]`` table now declares the metadata that
+``pip show`` and packaging conventions expect: ``description``,
+``readme``, ``license``, ``requires-python`` (``>=3.10``), ``authors``,
+``maintainers``, ``keywords``, Trove ``classifiers``, and
+``[project.urls]`` (homepage, docs, repo, issues).

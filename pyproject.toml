@@ -1,6 +1,38 @@
 [project]
 name = "pyCSA"
 version = "0.95.1"
+description = "Python package for spectral approximation methods applied to topographic analysis"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Ray Chew", email = "chew@caltech.edu" },
+]
+maintainers = [
+    { name = "Ray Chew", email = "chew@caltech.edu" },
+]
+keywords = [
+    "spectral approximation",
+    "constrained spectral approximation",
+    "topography",
+    "subgrid orography",
+    "ICON",
+    "ETOPO",
+    "MERIT",
+    "gravity waves",
+    "atmospheric science",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
 
 dependencies = [
     "Cartopy==0.25.0",
@@ -22,6 +54,12 @@ test = [
     "pytest-cov>=4.0",
     "pyyaml>=6.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/ray-chew/pyCSA"
+Documentation = "https://ray-chew.github.io/pyCSA"
+Repository = "https://github.com/ray-chew/pyCSA"
+Issues = "https://github.com/ray-chew/pyCSA/issues"
 
 # Packaging
 [build-system]

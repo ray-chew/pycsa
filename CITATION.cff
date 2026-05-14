@@ -1,0 +1,25 @@
+# CFF 1.2.0 — https://citation-file-format.github.io
+# GitHub renders a "Cite this repository" button on the repo page from
+# this file. Validate locally with `cffconvert -i CITATION.cff`.
+cff-version: 1.2.0
+title: pyCSA
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Chew
+    given-names: Ray
+    email: chew@caltech.edu
+version: 0.95.1
+license: GPL-3.0-or-later
+repository-code: https://github.com/ray-chew/pyCSA
+url: https://ray-chew.github.io/pyCSA
+keywords:
+  - spectral approximation
+  - constrained spectral approximation
+  - topography
+  - subgrid orography
+  - ICON
+  - ETOPO
+  - MERIT
+  - gravity waves
+  - atmospheric science

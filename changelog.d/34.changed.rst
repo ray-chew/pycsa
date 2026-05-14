@@ -1,0 +1,10 @@
+``BufferPool`` and the worker-local tile cache are now reached through an
+explicit ``pycsa.compute.ComputeContext`` dataclass threaded through the
+pipeline (``get_pmf`` / ``first_appx`` / ``second_appx`` / ``f_trans`` /
+``lin_reg.do`` / ``lin_reg.get_coeffs``). Replaces the previous pattern
+of implicit ``BufferPool()`` construction inside ``get_pmf.__init__`` and
+module-global ``tile_cache.get_worker_cache()`` calls in ``do_cell``.
+
+The legacy ``buffer_pool=`` keyword on ``f_trans`` / ``lin_reg`` is
+retained as a deprecated alias for one release; passing it emits a
+``DeprecationWarning``.

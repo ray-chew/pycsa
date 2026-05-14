@@ -262,6 +262,16 @@ def do_cell(
     try:
         logger.info(f"[START] Processing cell {c_idx}")
 
+        # Compute context: one BufferPool per cell, shared across the FA/SA
+        # get_pmf instances below; tile_cache accessor resolves to the
+        # worker-local singleton initialised by client.run(...) in the main
+        # loop. Explicit ctx replaces the previous pattern of implicit
+        # BufferPool creation inside each get_pmf + module-global access to
+        # tile_cache.get_worker_cache.
+        from pycsa.compute import ComputeContext
+
+        ctx = ComputeContext.default()
+
         topo = var.topo_cell()
 
         lat_verts = grid.clat_vertices[c_idx]
@@ -277,7 +287,7 @@ def do_cell(
         # The cache is initialised once per memory batch via init_worker_cache
         # (see the per-batch loop below); handles stay open across cells in
         # the same worker so we don't re-open the same ETOPO tile per cell.
-        cache = tile_cache.get_worker_cache()
+        cache = ctx.tile_cache()
         topo.lat, topo.lon, topo.topo = cache.get_etopo_data(
             lat_extent, lon_extent, etopo_cg=params.etopo_cg
         )
@@ -322,8 +332,8 @@ def do_cell(
         nhi = params.nhi
         nhj = params.nhj
 
-        fa = interface.first_appx(nhi, nhj, params, topo)
-        sa = interface.second_appx(nhi, nhj, params, topo, tri)
+        fa = interface.first_appx(nhi, nhj, params, topo, ctx=ctx)
+        sa = interface.second_appx(nhi, nhj, params, topo, tri, ctx=ctx)
 
         tri.tri_lon_verts = triangles[:, :, 0]
         tri.tri_lat_verts = triangles[:, :, 1]
@@ -389,7 +399,9 @@ def do_cell(
             )
 
             # Run SA with ALL wavenumbers
-            sa_pmf = interface.get_pmf(params.nhi, params.nhj, params.U, params.V)
+            sa_pmf = interface.get_pmf(
+                params.nhi, params.nhj, params.U, params.V, ctx=ctx
+            )
             ampls_sa, uw_sa, dat_2D_sa = sa_pmf.sappx(
                 cell_sa,
                 lmbda=params.lmbda_sa,

@@ -55,9 +55,16 @@ The user-defined input parameters are in the [`inputs`](https://github.com/ray-c
 
 ### Execution
 
-A simple setup can be found in [`runs.idealised_isosceles`](https://github.com/ray-chew/pyCSA/blob/main/runs/idealised_isosceles.py). To execute this run script:
+A simple setup can be found in [`runs.idealised_isosceles`](https://github.com/ray-chew/pyCSA/blob/main/runs/idealised_isosceles.py). After `pip install -e .` the easiest way to run it is via the console script:
 
 ```console
+pycsa-idealised
+```
+
+The equivalent direct invocations also work:
+
+```console
+python -m runs.idealised_isosceles
 python3 ./runs/idealised_isosceles.py
 ```
 

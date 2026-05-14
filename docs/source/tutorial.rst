@@ -193,10 +193,10 @@ Where to go next
   runs the full pipeline on a real ICON cell (Aleutians, ~52°N) using
   a bundled MERIT slice. ~10 s end-to-end, no manual data setup.
 
-* **Production HPC runs:** the global ICON+ETOPO pipeline
-  (:mod:`runs.icon_etopo_global`) is the science target. A
-  reproducibility guide consolidating the SLURM submission, memory
-  batching, restart story, and tile-cache lifecycle is forthcoming.
+* **Production HPC runs:** see :doc:`hpc_reproducibility` for the
+  global ICON+ETOPO pipeline (:mod:`runs.icon_etopo_global`) —
+  SLURM submission, memory batching, restart story, and tile-cache
+  lifecycle.
 
 * **Gating numerical refactors:** the reproducibility suite at
   ``tests/reproducibility/`` pins the output of three canonical cases

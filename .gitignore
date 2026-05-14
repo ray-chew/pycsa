@@ -33,3 +33,7 @@ setup_paths_local.sh
 !tests/reproducibility/fixtures/**/*.nc
 !tests/reproducibility/fixtures/**/*.png
 !tests/reproducibility/fixtures/**/*.pdf
+
+# Bundled example data (NetCDF tiles).
+!examples/data/**/*.nc
+!examples/data/**/*.nc4

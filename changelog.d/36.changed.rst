@@ -1,0 +1,27 @@
+``pycsa.core.var`` is split into thematic submodules with proper
+``@dataclass``-based classes:
+
+* :class:`pycsa.data.cell.grid`, :class:`pycsa.data.cell.topo`,
+  :class:`pycsa.data.cell.topo_cell` — grid + topography containers.
+* :class:`pycsa.data.results.analysis` — spectral analysis result.
+* :class:`pycsa.config.params.params` — per-run parameter container.
+
+``pycsa.core.var`` is retained as a thin re-export shim so existing
+``from pycsa.core import var`` and ``var.grid()`` / ``var.params()`` /
+etc. imports keep working through at least one release.
+
+The generic attribute-bag class :class:`pycsa.core.var.obj` is
+**deprecated**. It still works but emits a ``DeprecationWarning`` on
+construction. Use :class:`types.SimpleNamespace` instead.
+
+Behavior preserved:
+
+* :meth:`pycsa.data.cell.grid.apply_f` now skips a ``NON_CONVERTIBLES``
+  ``ClassVar`` exclusion set (``links``, ``cell_area``) instead of
+  setting a runtime instance attribute — 27 ``apply_f`` call sites
+  continue to work unchanged.
+* :attr:`pycsa.config.params.params.rect` is still derived from
+  ``cg_spsp`` via ``__post_init__`` (matches the old
+  ``self.rect = False if self.cg_spsp else True`` inline logic).
+* :meth:`pycsa.config.params.params.print` is retained on the params
+  class directly (previously inherited from ``obj``).

@@ -14,7 +14,7 @@ class get_pmf(object):
     This class is used in the idealised experiments
     """
 
-    def __init__(self, nhi, nhj, U, V, debug=False):
+    def __init__(self, nhi, nhj, U, V, debug=False, ctx=None):
         """
 
         Parameters
@@ -29,14 +29,22 @@ class get_pmf(object):
             wind speed in the second horizontal direction
         debug : bool, optional
             debug flag, by default False
+        ctx : ComputeContext, optional
+            Compute context bundling the buffer pool (and other per-task
+            resources). Default-constructed if absent — preserves the
+            previous behavior of one fresh BufferPool per ``get_pmf``
+            instance. Pass an explicit ctx to share resources across
+            multiple ``get_pmf`` instances (e.g. FA + SA in ``do_cell``).
         """
-        # Initialize buffer pool for memory-efficient array reuse
-        from pycsa.core.buffer_pool import BufferPool
+        from pycsa.compute.context import ComputeContext
 
-        self.buffer_pool = BufferPool()
+        self.ctx = ctx if ctx is not None else ComputeContext()
+        # Retained as an alias so callers that introspect
+        # ``get_pmf_instance.buffer_pool`` continue to work.
+        self.buffer_pool = self.ctx.buffer_pool
 
-        # Initialize Fourier transformer with buffer pool
-        self.fobj = fourier.f_trans(nhi, nhj, buffer_pool=self.buffer_pool)
+        # Initialize Fourier transformer with the shared ctx
+        self.fobj = fourier.f_trans(nhi, nhj, ctx=self.ctx)
 
         self.U = U
         self.V = V
@@ -64,7 +72,7 @@ class get_pmf(object):
             lmbda,
             kwargs.get("iter_solve", True),
             kwargs.get("save_coeffs", False),
-            buffer_pool=self.buffer_pool,
+            ctx=self.ctx,
             use_sparse=kwargs.get("use_sparse", False),
         )
 
@@ -81,7 +89,7 @@ class get_pmf(object):
                 cell,
                 lmbda,
                 kwargs.get("iter_solve", True),
-                buffer_pool=self.buffer_pool,
+                ctx=self.ctx,
             )
 
             self.fobj.get_freq_grid(am)
@@ -356,7 +364,7 @@ class first_appx(object):
     Use this routine to apply tapering and to separate the first and second approximation steps
     """
 
-    def __init__(self, nhi, nhj, params, topo):
+    def __init__(self, nhi, nhj, params, topo, ctx=None):
         """
         Parameters
         ----------
@@ -368,10 +376,14 @@ class first_appx(object):
             instance of the user-defined parameters class
         topo : :class:`src.var.topo` or :class:`src.var.topo_cell`
             instance of an object with topography attribute
+        ctx : ComputeContext, optional
+            Compute context shared with the inner ``get_pmf`` call.
+            Default-constructed if absent.
         """
         self.nhi, self.nhj = nhi, nhj
         self.params = params
         self.topo = topo
+        self.ctx = ctx
 
     def do(self, simplex_lat, simplex_lon, res_topo=None, use_center=True):
         """Do the First Approximation step
@@ -427,7 +439,9 @@ class first_appx(object):
                 use_center=use_center,
             )
 
-        first_guess = get_pmf(self.nhi, self.nhj, self.params.U, self.params.V)
+        first_guess = get_pmf(
+            self.nhi, self.nhj, self.params.U, self.params.V, ctx=self.ctx
+        )
 
         ampls_fa, uw_fa, dat_2D_fa = first_guess.sappx(
             cell_fa, lmbda=self.params.lmbda_fa, iter_solve=self.params.fa_iter_solve
@@ -441,7 +455,7 @@ class second_appx(object):
     Use this routine to apply tapering and to separate the first and second approximation steps
     """
 
-    def __init__(self, nhi, nhj, params, topo, tri):
+    def __init__(self, nhi, nhj, params, topo, tri, ctx=None):
         """
         Parameters
         ----------
@@ -455,11 +469,15 @@ class second_appx(object):
             instance of an object with topography attribute
         tri : :class:`scipy.spatial.qhull.Delaunay`
             instance of the scipy Delaunay triangulation class
+        ctx : ComputeContext, optional
+            Compute context shared with the inner ``get_pmf`` call.
+            Default-constructed if absent.
         """
         self.params = params
         self.topo = topo
         self.tri = tri
         self.nhi, self.nhj = nhi, nhj
+        self.ctx = ctx
         self.n_modes = params.n_modes
 
     def do(self, idx, ampls_fa, res_topo=None, use_center=True):
@@ -531,7 +549,9 @@ class second_appx(object):
                 res_topo=res_topo,
             )
 
-        second_guess = get_pmf(self.nhi, self.nhj, self.params.U, self.params.V)
+        second_guess = get_pmf(
+            self.nhi, self.nhj, self.params.U, self.params.V, ctx=self.ctx
+        )
 
         indices = []
         modes_cnt = 0

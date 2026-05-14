@@ -10,21 +10,33 @@ from scipy.sparse import csr_matrix, eye
 from scipy.sparse.linalg import spsolve
 
 
-def get_coeffs(fobj, buffer_pool=None):
+def get_coeffs(fobj, ctx=None, buffer_pool=None):
     """Assembles the Fourier coefficients from the sine and cosine terms generated in the :class:`Fourier transformer class <src.fourier.f_trans>`.
 
     Parameters
     ----------
     fobj : :class:`src.fourier.f_trans` instance
         instance of the Fourier transformer class.
+    ctx : ComputeContext, optional
+        Compute context bundling the buffer pool. If absent, defaults to
+        ``fobj.ctx`` (set by ``f_trans.__init__``).
     buffer_pool : BufferPool, optional
-        Buffer pool for memory-efficient array reuse
+        **Deprecated.** Pass ``ctx=ComputeContext(buffer_pool=...)`` instead.
 
     Returns
     -------
     array-like
         2D array corresponding to the ``M`` matrix.
     """
+    from pycsa.compute.context import _resolve_ctx
+
+    if ctx is None and buffer_pool is None:
+        # Inherit from fobj when neither is explicitly supplied — that's
+        # the common path now that f_trans owns a ctx.
+        ctx = getattr(fobj, "ctx", None)
+    ctx = _resolve_ctx(ctx, buffer_pool)
+    buffer_pool = ctx.buffer_pool
+
     Ncos = fobj.bf_cos
     Nsin = fobj.bf_sin
 
@@ -64,6 +76,7 @@ def do(
     lmbda=0.0,
     iter_solve=True,
     save_coeffs=False,
+    ctx=None,
     buffer_pool=None,
     use_sparse=False,
 ):
@@ -82,8 +95,11 @@ def do(
         toggles between using direct or iterative solver, by default True
     save_coeffs : bool, optional
         skips the linear regression and just saves the generated ``M`` matrix for diagnostics and debugging, by default False
+    ctx : ComputeContext, optional
+        Compute context bundling the buffer pool. If absent, defaults to
+        ``fobj.ctx``.
     buffer_pool : BufferPool, optional
-        Buffer pool for memory-efficient array reuse
+        **Deprecated.** Pass ``ctx=ComputeContext(buffer_pool=...)`` instead.
     use_sparse : bool, optional
         Use sparse matrix solver (automatic for few modes), by default False
 
@@ -94,13 +110,20 @@ def do(
     data_recons : like
         vector-like topography reconstructed from ``a_m``
     """
+    from pycsa.compute.context import _resolve_ctx
+
+    if ctx is None and buffer_pool is None:
+        ctx = getattr(fobj, "ctx", None)
+    ctx = _resolve_ctx(ctx, buffer_pool)
+    buffer_pool = ctx.buffer_pool
+
     if fobj.grad:
         cell.get_grad()
         data = cell.grad_topo_m
     else:
         data = cell.topo_m
 
-    coeff = get_coeffs(fobj, buffer_pool)
+    coeff = get_coeffs(fobj, ctx=ctx)
 
     if save_coeffs:
         fobj.coeff = coeff

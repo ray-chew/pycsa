@@ -351,7 +351,7 @@ def lat_lon_icon(
     set_global=False,
     fn="../output/icon_lam.pdf",
     output_fig=False,
-    **kwargs
+    **kwargs,
 ):
     """
     Plots the topography given an ICON grid.

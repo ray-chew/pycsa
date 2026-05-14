@@ -1,0 +1,16 @@
+Hygiene cleanup as the v1.0.0 release approaches (the actual ``v1.0.0``
+tag is deferred until the Levante HPC validation succeeds):
+
+* Removed a stale ``TODO`` in ``pycsa/core/tile_cache.py`` that asked
+  for "automatic tile discovery based on bounds" — the function it
+  flagged immediately delegates to ``_get_merit_tiles_for_bounds()``,
+  which does exactly that. The TODO was leftover from an in-progress
+  refactor and contradicted the working code below it.
+* Archived 8 stray untracked files into ``local_archive/`` (gitignored):
+  ``runs/icon_merit_global_old.py``, ``runs/fn`` (orphan HDF5 binary),
+  ``inputs/selected_run_poster.py``, ``scripts/backfill_cell_area.py``,
+  ``docs/source/_static/logo_v2.svg``, ``docs/source/_static/logo_v2.png``,
+  ``rad-deg-converter/``, ``README_SETUP.md``. Reversible via
+  ``mv local_archive/X .`` if any turn out to be needed.
+
+``grep -rn 'TODO\|FIXME\|XXX\|HACK' pycsa/`` now returns nothing.

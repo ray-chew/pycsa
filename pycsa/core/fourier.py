@@ -38,7 +38,7 @@ class f_trans(object):
     Fourier transformer class
     """
 
-    def __init__(self, nhar_i, nhar_j, buffer_pool=None):
+    def __init__(self, nhar_i, nhar_j, ctx=None, buffer_pool=None):
         """
         Initalises a discrete spectral space with the corresponding Fourier coefficients spanning ``nhar_i`` and ``nhar_j``.
 
@@ -48,12 +48,21 @@ class f_trans(object):
             number of spectral modes in the first horizontal direction
         nhar_j : int
             number of spectral modes in the second horizontal direction
+        ctx : ComputeContext, optional
+            Compute context bundling the buffer pool (and other per-task
+            resources). Default-constructed if absent.
         buffer_pool : BufferPool, optional
-            Buffer pool for memory-efficient array reuse
+            **Deprecated.** Pass ``ctx=ComputeContext(buffer_pool=...)``
+            instead. Retained as a compatibility alias for one release.
         """
+        from pycsa.compute.context import _resolve_ctx
+
         self.nhar_i = nhar_i
         self.nhar_j = nhar_j
-        self.buffer_pool = buffer_pool
+        self.ctx = _resolve_ctx(ctx, buffer_pool)
+        # `self.buffer_pool` retained as a read-only alias so call sites that
+        # already reference `fobj.buffer_pool` continue to work.
+        self.buffer_pool = self.ctx.buffer_pool
 
         self.m_i = None
         self.m_j = None

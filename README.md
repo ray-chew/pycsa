@@ -8,8 +8,11 @@
 
 
 <p align="center">
-<a href="https://github.com/ray-chew/pyCSA/actions/workflows/documentation.yml">
-<img alt="GitHub Actions: docs" src=https://img.shields.io/github/actions/workflow/status/ray-chew/pyCSA/documentation.yml?logo=github&label=docs>
+<a href="https://github.com/ray-chew/pyCSA/actions/workflows/ci.yml">
+<img alt="GitHub Actions: CI" src=https://img.shields.io/github/actions/workflow/status/ray-chew/pyCSA/ci.yml?logo=github&label=CI&branch=main>
+</a>
+<a href="https://ray-chew.github.io/pyCSA/index.html">
+<img alt="Documentation" src=https://img.shields.io/badge/docs-online-blue?logo=github>
 </a>
 <a href="https://www.gnu.org/licenses/gpl-3.0">
 <img alt="License: GPL v3" src=https://img.shields.io/badge/License-GPLv3-blue.svg>

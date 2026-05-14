@@ -1,0 +1,5 @@
+``pyproject.toml`` declares a ``pycsa-idealised`` console script (backed
+by a new :mod:`pycsa.cli` module) that runs the idealised isosceles CSA
+experiment. Installed automatically by ``pip install pycsa``. The
+equivalent ``python -m runs.idealised_isosceles`` invocation still
+works.

@@ -37,3 +37,8 @@ setup_paths_local.sh
 # Bundled example data (NetCDF tiles).
 !examples/data/**/*.nc
 !examples/data/**/*.nc4
+
+# Documentation static assets (figures embedded in Sphinx pages).
+!docs/source/_static/**/*.png
+!docs/source/_static/**/*.pdf
+!docs/source/_static/**/*.svg

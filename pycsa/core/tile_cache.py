@@ -785,12 +785,7 @@ def create_tile_cache_from_grid(
         f"Grid spans: lat[{lat_min:.2f}, {lat_max:.2f}], lon[{lon_min:.2f}, {lon_max:.2f}]"
     )
 
-    # Determine which tiles to load (using MERIT tile naming convention)
-    # TODO: Implement automatic tile discovery based on bounds
-    # For now, this is a placeholder - you'll need to implement the logic
-    # to determine required tile filenames based on the grid bounds
-
-    # Example: if using MERIT data with standard 30x30 degree tiles
+    # Determine which MERIT tiles cover the grid bounds (30x30° tiles).
     tile_filenames = _get_merit_tiles_for_bounds(lat_min, lat_max, lon_min, lon_max)
 
     logger.info(f"Loading {len(tile_filenames)} topography tiles for grid coverage")

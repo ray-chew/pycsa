@@ -1,0 +1,9 @@
+CI ``reproducibility`` job now runs as a Python ``3.10`` / ``3.11`` /
+``3.12`` matrix and produces a ``coverage.xml`` artifact (uploaded from
+the 3.12 matrix slot). Coverage is computed with ``pytest --cov=pycsa
+--cov-report=xml --cov-report=term`` (``pytest-cov`` was already pinned
+in test extras).
+
+README CI badge is repointed at ``ci.yml`` (the old badge pointed at the
+deleted ``documentation.yml`` workflow and had been silently broken
+since #30).

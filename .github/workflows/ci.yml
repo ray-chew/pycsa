@@ -32,8 +32,12 @@ jobs:
         run: black --check .
 
   reproducibility:
-    name: Reproducibility Suite (Phase B gate)
+    name: Reproducibility Suite (py${{ matrix.python }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: ConorMacBride/install-package@v1
@@ -41,13 +45,20 @@ jobs:
           apt: libgeos-dev
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python }}
       - name: Install pyCSA + test extras
         run: |
           pip install --upgrade pip
           pip install -e ".[test]"
-      - name: Run reproducibility suite
-        run: pytest tests/reproducibility/ -v
+      - name: Run reproducibility suite with coverage
+        run: pytest tests/reproducibility/ -v --cov=pycsa --cov-report=xml --cov-report=term
+      - name: Upload coverage artifact
+        if: matrix.python == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: warn
 
   docs:
     name: Build Documentation

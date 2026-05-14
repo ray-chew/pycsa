@@ -1,6 +1,11 @@
+import logging
+
 import numpy as np
 from scipy.spatial import Delaunay
+
 from pycsa.core import utils, var
+
+logger = logging.getLogger(__name__)
 
 
 def get_decomposition(topo, xnp=11, ynp=6, padding=0):
@@ -52,8 +57,8 @@ def get_decomposition(topo, xnp=11, ynp=6, padding=0):
     tri.tri_lat_verts = lats[tri.simplices]
     tri.tri_lon_verts = lons[tri.simplices]
 
-    print("Delaunay triangulation object created.")
-    print("Number of triangles =", len(tri.tri_lat_verts))
+    logger.info("Delaunay triangulation object created.")
+    logger.info("Number of triangles = %d", len(tri.tri_lat_verts))
 
     # Compute the centroid for each vertex.
     tri.tri_clats = tri.tri_lat_verts.sum(axis=1) / 3.0
@@ -88,7 +93,7 @@ def get_land_cells(tri, topo, height_tol=0.5, percent_tol=0.95):
     for tri_idx in range(n_tri)[::2]:
         cell = var.topo_cell()
 
-        print("computing idx:", tri_idx)
+        logger.debug("computing idx: %d", tri_idx)
 
         simplex_lat = tri.tri_lat_verts[tri_idx]
         simplex_lon = tri.tri_lon_verts[tri_idx]

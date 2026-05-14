@@ -2,17 +2,20 @@
 Input/Output routines
 """
 
-import netCDF4 as nc
-import numpy as np
-import h5py
+import logging
 import os
 import threading
-
 from datetime import datetime
+
+import h5py
+import netCDF4 as nc
+import numpy as np
 from scipy import interpolate
 from tqdm import tqdm
 
 from pycsa.core import utils
+
+logger = logging.getLogger(__name__)
 
 # ============================================================================
 # CRITICAL: Global lock for NetCDF/HDF5 operations
@@ -134,7 +137,7 @@ class ncdata(object):
         z_res = np.take_along_axis(z_res.reshape(nla, nlo), lon_res_sort_idx, axis=1)
         topo_2D = z_res.reshape(nla, nlo)
 
-        print("Data fetched...")
+        logger.info("Data fetched...")
         cell.lon = lon_uniq
         cell.lat = lat_uniq
         cell.topo = topo_2D
@@ -225,7 +228,7 @@ class ncdata(object):
                     try:
                         ds.close()
                     except Exception as e:
-                        print(f"Warning: Error closing {filepath}: {e}")
+                        logger.warning("Error closing %s: %s", filepath, e)
                 self._thread_local.file_cache.clear()
 
         def get_topo(self, cell):
@@ -810,7 +813,7 @@ class ncdata(object):
                     try:
                         ds.close()
                     except Exception as e:
-                        print(f"Warning: Error closing {filepath}: {e}")
+                        logger.warning("Error closing %s: %s", filepath, e)
                 self._thread_local.file_cache.clear()
 
         def get_topo(self, cell):
@@ -1171,8 +1174,8 @@ class ncdata(object):
                         ).mean(axis=(-1, -2))
                     except (ValueError, MemoryError) as e:
                         # If coarse-graining fails, fall back to no coarse-graining
-                        print(
-                            f"Warning: Coarse-graining failed ({e}), using full resolution"
+                        logger.warning(
+                            "Coarse-graining failed (%s), using full resolution", e
                         )
                         cell.lat = lat_sorted
                         cell.lon = lon_sorted

@@ -43,48 +43,14 @@ logger = logging.getLogger(__name__)
 
 
 def setup_logger(log_dir="logs"):
+    """Thin wrapper around :func:`pycsa.logging_config.configure_logging`
+    that preserves the historical ``icon_etopo_global_*`` filename prefix
+    and the previous default level. New code should call
+    ``configure_logging`` directly.
     """
-    Set up logging configuration for ETOPO global run.
+    from pycsa.logging_config import configure_logging
 
-    Parameters
-    ----------
-    log_dir : str
-        Directory for log files (default: "logs")
-
-    Returns
-    -------
-    Path
-        Path to the log file
-    """
-    # Create log directory
-    log_path = Path(log_dir)
-    log_path.mkdir(parents=True, exist_ok=True)
-
-    # Create timestamped log filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = log_path / f"icon_etopo_global_{timestamp}.log"
-
-    # Configure logger
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
-    # Remove any existing handlers
-    logger.handlers.clear()
-
-    # File handler - logs everything
-    file_handler = logging.FileHandler(log_file, mode="w")
-    file_handler.setLevel(logging.INFO)
-    file_formatter = logging.Formatter(
-        "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-    )
-    file_handler.setFormatter(file_formatter)
-    logger.addHandler(file_handler)
-
-    # Also silence matplotlib and other libraries from console
-    logging.getLogger("matplotlib").setLevel(logging.WARNING)
-    logging.getLogger("distributed").setLevel(logging.WARNING)
-
-    return log_file
+    return configure_logging(log_dir=log_dir, name_prefix="icon_etopo_global")
 
 
 def get_topo_colormap():

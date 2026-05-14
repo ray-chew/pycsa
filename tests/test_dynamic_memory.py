@@ -9,13 +9,9 @@ This verifies that:
 """
 
 import numpy as np
+
 from pycsa.core import io, var, utils
-
-# Import the new functions
-import sys
-
-sys.path.insert(0, "/home/ray/git-projects/spec_appx/runs")
-from icon_etopo_global import estimate_cell_memory_gb, group_cells_by_memory
+from pycsa.scheduling import estimate_cell_memory_gb, group_cells_by_memory
 
 
 def test_memory_estimation():

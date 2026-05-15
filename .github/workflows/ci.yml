@@ -60,6 +60,33 @@ jobs:
           path: coverage.xml
           if-no-files-found: warn
 
+  diagnostic-plots:
+    name: Baseline vs new-defaults plots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ConorMacBride/install-package@v1
+        with:
+          apt: libgeos-dev
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install pyCSA + test extras
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[test]"
+      - name: Generate baseline-vs-new-defaults plots
+        env:
+          MPLBACKEND: Agg
+        run: python scripts/compare_baseline_vs_new_defaults.py
+      - name: Upload plots as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: baseline-vs-new-defaults-${{ github.sha }}
+          path: scripts/validate_outputs/*_baseline_vs_new.png
+          if-no-files-found: error
+
   docs:
     name: Build Documentation
     runs-on: ubuntu-latest

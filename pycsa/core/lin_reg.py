@@ -79,6 +79,7 @@ def do(
     ctx=None,
     buffer_pool=None,
     use_sparse=False,
+    prior=None,
 ):
     """
     Does the linear regression with optional buffer pool and sparse solver
@@ -97,11 +98,19 @@ def do(
         skips the linear regression and just saves the generated ``M`` matrix for diagnostics and debugging, by default False
     ctx : ComputeContext, optional
         Compute context bundling the buffer pool. If absent, defaults to
-        ``fobj.ctx``.
+        ``fobj.ctx``. If ``ctx.prior`` is set and the ``prior`` kwarg is
+        ``None``, the context's prior is used.
     buffer_pool : BufferPool, optional
         **Deprecated.** Pass ``ctx=ComputeContext(buffer_pool=...)`` instead.
     use_sparse : bool, optional
         Use sparse matrix solver (automatic for few modes), by default False
+    prior : :class:`pycsa.core.priors.Prior`, optional
+        Pluggable Tikhonov diagonal generator. When ``None`` (default),
+        the existing scalar-trace branch is used and numerics are
+        bit-identical to historical behavior. When supplied, the prior is
+        called as ``prior(fobj, E_tilda_lm, lmbda=lmbda)`` and the returned
+        diagonal is added to ``diag(E_tilda_lm)``. Opt-in only; no
+        production caller passes this kwarg.
 
     Returns
     -------
@@ -116,6 +125,11 @@ def do(
         ctx = getattr(fobj, "ctx", None)
     ctx = _resolve_ctx(ctx, buffer_pool)
     buffer_pool = ctx.buffer_pool
+
+    # ctx-level prior fallback: explicit kwarg wins, otherwise pick up
+    # whatever the context carries (None for default ComputeContexts).
+    if prior is None:
+        prior = getattr(ctx, "prior", None)
 
     if fobj.grad:
         cell.get_grad()
@@ -151,10 +165,29 @@ def do(
 
         # Add regularization to sparse matrix
         if lmbda > 0:
-            trace = E_tilda_lm_sparse.diagonal().mean() * lmbda
-            E_tilda_lm_sparse = E_tilda_lm_sparse + trace * eye(
-                E_tilda_lm_sparse.shape[0]
-            )
+            if prior is None:
+                trace = E_tilda_lm_sparse.diagonal().mean() * lmbda
+                E_tilda_lm_sparse = E_tilda_lm_sparse + trace * eye(
+                    E_tilda_lm_sparse.shape[0]
+                )
+            else:
+                # Densify just for the prior call (it expects the dense
+                # normal-equations matrix); the actual solve stays sparse.
+                E_dense_view = E_tilda_lm_sparse.toarray()
+                diag_add = np.asarray(
+                    prior(fobj, E_dense_view, lmbda=lmbda), dtype=float
+                )
+                if diag_add.shape != (E_tilda_lm_sparse.shape[0],):
+                    raise ValueError(
+                        "prior returned diag of shape %s; expected %s"
+                        % (diag_add.shape, (E_tilda_lm_sparse.shape[0],))
+                    )
+                # Inject the prior diagonal into the sparse matrix in-place
+                # by adding a sparse diag matrix.
+                from scipy.sparse import diags as _sp_diags
+                E_tilda_lm_sparse = E_tilda_lm_sparse + _sp_diags(
+                    diag_add, 0, shape=E_tilda_lm_sparse.shape
+                )
 
         # Solve with sparse solver (direct solver for sparse SPD matrices)
         # Convert RHS to dense array if it's sparse, otherwise use as-is
@@ -191,8 +224,21 @@ def do(
 
         # Add regularization to diagonal (vectorized for speed)
         if lmbda > 0:
-            trace = np.trace(E_tilda_lm) / E_tilda_lm.shape[0] * lmbda
-            np.fill_diagonal(E_tilda_lm, np.diag(E_tilda_lm) + trace)
+            if prior is None:
+                # Preserved scalar-trace branch — what the reproducibility
+                # fixtures pin down. Bit-identical to historical behavior.
+                trace = np.trace(E_tilda_lm) / E_tilda_lm.shape[0] * lmbda
+                np.fill_diagonal(E_tilda_lm, np.diag(E_tilda_lm) + trace)
+            else:
+                diag_add = np.asarray(
+                    prior(fobj, E_tilda_lm, lmbda=lmbda), dtype=E_tilda_lm.dtype
+                )
+                if diag_add.shape != (E_tilda_lm.shape[0],):
+                    raise ValueError(
+                        "prior returned diag of shape %s; expected %s"
+                        % (diag_add.shape, (E_tilda_lm.shape[0],))
+                    )
+                np.fill_diagonal(E_tilda_lm, np.diag(E_tilda_lm) + diag_add)
 
         # E_tilda_lm is symmetric positive definite (M^T M form with regularization)
         # Use Cholesky decomposition for 2-5x speedup vs GMRES

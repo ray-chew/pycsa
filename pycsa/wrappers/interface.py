@@ -455,7 +455,7 @@ class second_appx(object):
     Use this routine to apply tapering and to separate the first and second approximation steps
     """
 
-    def __init__(self, nhi, nhj, params, topo, tri, ctx=None):
+    def __init__(self, nhi, nhj, params, topo, tri, ctx=None, selector=None):
         """
         Parameters
         ----------
@@ -472,6 +472,13 @@ class second_appx(object):
         ctx : ComputeContext, optional
             Compute context shared with the inner ``get_pmf`` call.
             Default-constructed if absent.
+        selector : :class:`pycsa.core.mode_selection.ModeSelector`, optional
+            Pluggable selector for the FA→SA mode-selection step. When
+            ``None`` (default), the existing inline greedy ``argmax``
+            loop is used and numerics are bit-identical to historical
+            behavior. If ``ctx.selector`` is set and this kwarg is
+            ``None``, the context's selector is used. Opt-in only; no
+            production caller passes this kwarg.
         """
         self.params = params
         self.topo = topo
@@ -479,6 +486,11 @@ class second_appx(object):
         self.nhi, self.nhj = nhi, nhj
         self.ctx = ctx
         self.n_modes = params.n_modes
+        # Resolve selector: explicit kwarg wins, then ctx-level fallback,
+        # otherwise stays None to take the preserved inline branch below.
+        if selector is None and ctx is not None:
+            selector = getattr(ctx, "selector", None)
+        self.selector = selector
 
     def do(self, idx, ampls_fa, res_topo=None, use_center=True):
         """Do the Second Approximation step
@@ -553,22 +565,39 @@ class second_appx(object):
             self.nhi, self.nhj, self.params.U, self.params.V, ctx=self.ctx
         )
 
-        indices = []
-        modes_cnt = 0
-        while modes_cnt < self.n_modes:
-            max_idx = np.unravel_index(fq_cpy.argmax(), fq_cpy.shape)
-            # skip the k = 0 column
-            # if max_idx[1] == 0:
-            #     fq_cpy[max_idx] = 0.0
-            # # else we want to use them
-            # else:
-            indices.append(max_idx)
-            fq_cpy[max_idx] = 0.0
-            modes_cnt += 1
+        if self.selector is None:
+            # Preserved inline branch — what every existing call site
+            # currently hits and what the reproducibility fixtures pin
+            # down. Bit-identical to historical behavior.
+            indices = []
+            modes_cnt = 0
+            while modes_cnt < self.n_modes:
+                max_idx = np.unravel_index(fq_cpy.argmax(), fq_cpy.shape)
+                # skip the k = 0 column
+                # if max_idx[1] == 0:
+                #     fq_cpy[max_idx] = 0.0
+                # # else we want to use them
+                # else:
+                indices.append(max_idx)
+                fq_cpy[max_idx] = 0.0
+                modes_cnt += 1
 
-        if not self.params.cg_spsp:
-            k_idxs = [pair[1] for pair in indices]
-            l_idxs = [pair[0] for pair in indices]
+            if not self.params.cg_spsp:
+                k_idxs = [pair[1] for pair in indices]
+                l_idxs = [pair[0] for pair in indices]
+        else:
+            # Opt-in: delegate to a pluggable ModeSelector. OMP / Lasso
+            # variants additionally need the design matrix; we leave
+            # building that to the selector (it can call
+            # ``second_guess.fobj.do_full(cell)`` + ``get_coeffs(fobj)``
+            # internally — the design-matrix construction is not yet
+            # threaded through here in the skeleton).
+            k_idxs, l_idxs = self.selector(
+                fq_cpy,
+                n_modes=self.n_modes,
+                design_matrix=None,
+                data=cell.topo_m,
+            )
 
         if self.params.dfft_first_guess:
             second_guess.fobj.set_kls(

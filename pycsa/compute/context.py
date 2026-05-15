@@ -35,10 +35,23 @@ class ComputeContext:
         cache itself is not stored (it's owned by the Dask worker process);
         we hold a getter that resolves at call time. Pass ``None`` for
         environments that don't need tile_cache (idealised runs, tests).
+    prior
+        Optional :class:`pycsa.core.priors.Prior` carried through to
+        ``lin_reg.do``. Spike scripts thread a structured prior here
+        without modifying any call site. ``None`` (default) means the
+        preserved scalar-trace branch in ``lin_reg.do`` runs unchanged.
+    selector
+        Optional :class:`pycsa.core.mode_selection.ModeSelector`
+        carried through to ``interface.second_appx``. Spike scripts
+        thread an alternative selector here without modifying any
+        call site. ``None`` (default) means the preserved inline
+        ``argmax`` loop in ``second_appx`` runs unchanged.
     """
 
     buffer_pool: BufferPool = field(default_factory=BufferPool)
     tile_cache: Optional[Callable[[], Any]] = None
+    prior: Optional[Any] = None
+    selector: Optional[Any] = None
 
     @classmethod
     def default(cls) -> "ComputeContext":

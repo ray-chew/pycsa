@@ -51,13 +51,22 @@ from validate_hyperparam_defaults import (  # noqa: E402
     _build_aleutians_cell,
     _build_idealised_cell,
     _build_idealised_freqs_ref,
+    _holdout_sa_mse,
     _materialize_design_matrix,
+    _pick_sa_lambda_via_gcv,
+    _pick_sa_lambda_via_spatial_cv,
     _run_fa_sa,
 )
+from pycsa.core.priors import IsotropicPrior  # noqa: E402
 
 
 def _build_south_pole_cell():
-    """Load the bundled ETOPO single-cell fixture (the polar cell)."""
+    """Load the bundled ETOPO single-cell fixture (the polar cell).
+
+    Returns ``(cell, remask_for_sa)``. Cell is built with ``rect=True``
+    so FA runs on the rectangular cover; ``remask_for_sa`` switches
+    it to the triangle-masked state for SA.
+    """
     repo_root = Path(__file__).resolve().parents[1]
     fixture_dir = (
         repo_root / "tests" / "reproducibility" / "fixtures" / "etopo_single_cell"
@@ -83,11 +92,15 @@ def _build_south_pole_cell():
     topo.gen_mgrids()
     cell = var.topo_cell()
     utils.get_lat_lon_segments(clat_verts, clon_verts, cell, topo, rect=True)
-    return cell
+
+    def remask_for_sa(c):
+        utils.get_lat_lon_segments(clat_verts, clon_verts, c, topo, rect=False)
+
+    return cell, remask_for_sa
 
 
 def _fa_freqs(nhi, nhj, U, V, cell, lmbda_fa, prior=None):
-    """Run FA only and return ``freqs_fa`` (the dense Fourier amplitudes)."""
+    """Run FA on the rectangular-cover ``cell`` and return ``freqs_fa``."""
     work_cell = deepcopy(cell)
     first_guess = interface.get_pmf(nhi, nhj, U, V)
     if prior is not None:
@@ -96,18 +109,19 @@ def _fa_freqs(nhi, nhj, U, V, cell, lmbda_fa, prior=None):
     return np.asarray(freqs_fa)
 
 
-def _render(name, cell, ref_spec, dat_base, freqs_sa_base, dat_new,
-            freqs_sa_new, hp_joint, l2_base, l2_new, ref_label, out_dir):
-    fig, axs = plt.subplots(2, 3, figsize=(13, 7))
+def _render(name, cell, ref_spec, ref_label,
+            dat_base, freqs_sa_base, l2_base,
+            dat_gcv, freqs_sa_gcv, l2_gcv, hp_gcv,
+            dat_spcv, freqs_sa_spcv, l2_spcv, hp_spcv,
+            out_dir):
+    """2×4 grid: original | baseline | new (GCV) | new (SpatialCV)."""
+    fig, axs = plt.subplots(2, 4, figsize=(18, 8))
 
-    # Top row: physical-domain reconstructions
     topo_panels = [
         (cell.topo, "original topography"),
         (dat_base, "baseline SA reconstruction"),
-        (
-            dat_new,
-            f"new defaults SA  (α={hp_joint.alpha:.2f}, λ={hp_joint.lmbda:.2e})",
-        ),
+        (dat_gcv,  f"new (SA-GCV)  α={hp_gcv.alpha:.2f}, λ={hp_gcv.lmbda:.2e}"),
+        (dat_spcv, f"new (SA-SpatialCV)  α={hp_spcv.alpha:.2f}, λ={hp_spcv.lmbda:.2e}"),
     ]
     topo_arrays = [np.nan_to_num(np.asarray(a)) for a, _ in topo_panels]
     topo_vmax = float(np.nanmax([np.nanmax(np.abs(a)) for a in topo_arrays])) or 1.0
@@ -116,17 +130,16 @@ def _render(name, cell, ref_spec, dat_base, freqs_sa_base, dat_new,
             arr, origin="lower", aspect="auto", cmap="terrain",
             vmin=-topo_vmax, vmax=topo_vmax,
         )
-        axs[0, col].set_title(title)
+        axs[0, col].set_title(title, fontsize=10)
         axs[0, col].set_xlabel("lon index")
         axs[0, col].set_ylabel("lat index")
         plt.colorbar(im, ax=axs[0, col], fraction=0.046, pad=0.04)
 
-    # Bottom row: spectra — shared color scale across all three panels
-    # so visual differences mean amplitude differences, not rescales.
     spec_panels = [
-        (ref_spec, f"{ref_label}"),
-        (freqs_sa_base, f"baseline SA spectrum  (L₂={l2_base:.2f})"),
-        (freqs_sa_new, f"new defaults SA spectrum  (L₂={l2_new:.2f})"),
+        (ref_spec,      f"{ref_label}"),
+        (freqs_sa_base, f"baseline SA  L₂={l2_base:.2f}"),
+        (freqs_sa_gcv,  f"new (SA-GCV) SA  L₂={l2_gcv:.2f}"),
+        (freqs_sa_spcv, f"new (SA-SpatialCV) SA  L₂={l2_spcv:.2f}"),
     ]
     spec_arrays = [np.nan_to_num(np.asarray(a)) for a, _ in spec_panels]
     spec_vmax = float(np.nanmax([np.nanmax(np.abs(a)) for a in spec_arrays])) or 1.0
@@ -135,13 +148,13 @@ def _render(name, cell, ref_spec, dat_base, freqs_sa_base, dat_new,
             arr, origin="lower", aspect="auto", cmap="viridis",
             vmin=0.0, vmax=spec_vmax,
         )
-        axs[1, col].set_title(title)
+        axs[1, col].set_title(title, fontsize=10)
         axs[1, col].set_xlabel("k")
         axs[1, col].set_ylabel("l")
         plt.colorbar(im, ax=axs[1, col], fraction=0.046, pad=0.04)
 
     fig.suptitle(
-        f"{name}: baseline vs new defaults  (joint-GCV + Greedy)",
+        f"{name}: baseline vs new defaults  (SA-stage λ via GCV vs SpatialCV)",
         fontsize=12, y=1.0,
     )
     fig.tight_layout()
@@ -153,50 +166,87 @@ def _render(name, cell, ref_spec, dat_base, freqs_sa_base, dat_new,
 
 def _run(
     name, cell, nhi, nhj, U, V, lmbda_fa_base, lmbda_sa_base, n_modes,
-    truth_freqs=None,
+    truth_freqs=None, remask_for_sa=None,
 ):
     print(f"\n=== {name} ===")
-    M = _materialize_design_matrix(nhi, nhj, cell)
-    hp = build_spectral_prior(
-        topography=cell.topo, design_matrix=M, data=cell.topo_m,
-        joint_selector=JointGCVSelector(),
-    )
-    print(f"  joint-GCV pick: α={hp.alpha:.3f}, λ={hp.lmbda:.3e}")
 
-    _, freqs_sa_base, dat_base, _, _ = _run_fa_sa(
+    # Baseline pipeline (production defaults). Provides the mode set
+    # we re-use for both new-default pipelines below.
+    _, freqs_sa_base, dat_base, k_idxs, l_idxs = _run_fa_sa(
         nhi, nhj, U, V, cell,
         lmbda_fa=lmbda_fa_base, lmbda_sa=lmbda_sa_base, n_modes=n_modes,
-        prior=None,
+        prior=None, remask_for_sa=remask_for_sa,
     )
-    _, freqs_sa_new, dat_new, _, _ = _run_fa_sa(
+
+    # SA-stage λ via two different selectors.
+    hp_gcv = _pick_sa_lambda_via_gcv(
+        cell, nhi, nhj, k_idxs, l_idxs, remask_for_sa=remask_for_sa,
+    )
+    hp_spcv = _pick_sa_lambda_via_spatial_cv(
+        cell, nhi, nhj, k_idxs, l_idxs, remask_for_sa=remask_for_sa,
+    )
+    print(f"  SA-stage GCV pick:        α={hp_gcv.alpha:.3f}, λ={hp_gcv.lmbda:.3e}")
+    print(f"  SA-stage SpatialCV pick:  α={hp_spcv.alpha:.3f}, λ={hp_spcv.lmbda:.3e}")
+    print(f"  production hardcoded λ_sa = {lmbda_sa_base:.3e}")
+
+    # Run both new-defaults pipelines.
+    _, freqs_sa_gcv, dat_gcv, k_gcv, l_gcv = _run_fa_sa(
         nhi, nhj, U, V, cell,
-        lmbda_fa=hp.lmbda, lmbda_sa=hp.lmbda, n_modes=n_modes, prior=hp.prior,
+        lmbda_fa=lmbda_fa_base, lmbda_sa=hp_gcv.lmbda, n_modes=n_modes,
+        prior=hp_gcv.prior, remask_for_sa=remask_for_sa,
     )
+    _, freqs_sa_spcv, dat_spcv, k_spcv, l_spcv = _run_fa_sa(
+        nhi, nhj, U, V, cell,
+        lmbda_fa=lmbda_fa_base, lmbda_sa=hp_spcv.lmbda, n_modes=n_modes,
+        prior=hp_spcv.prior, remask_for_sa=remask_for_sa,
+    )
+
+    # 4-fold spatial holdout MSE for each pipeline.
+    mse_base, _ = _holdout_sa_mse(
+        cell, nhi, nhj, k_idxs, l_idxs,
+        prior=None, lmbda_sa=lmbda_sa_base, remask_for_sa=remask_for_sa,
+    )
+    mse_gcv, _ = _holdout_sa_mse(
+        cell, nhi, nhj, k_gcv, l_gcv,
+        prior=hp_gcv.prior, lmbda_sa=hp_gcv.lmbda, remask_for_sa=remask_for_sa,
+    )
+    mse_spcv, _ = _holdout_sa_mse(
+        cell, nhi, nhj, k_spcv, l_spcv,
+        prior=hp_spcv.prior, lmbda_sa=hp_spcv.lmbda, remask_for_sa=remask_for_sa,
+    )
+    print(f"  SA-stage holdout MSE:")
+    print(f"    baseline       = {mse_base:.3e}")
+    rel_gcv = (mse_base - mse_gcv) / mse_base * 100.0
+    rel_spcv = (mse_base - mse_spcv) / mse_base * 100.0
+    print(f"    new (GCV)      = {mse_gcv:.3e}   ({rel_gcv:+.2f}% vs baseline)")
+    print(f"    new (SpatialCV)= {mse_spcv:.3e}   ({rel_spcv:+.2f}% vs baseline)")
 
     if truth_freqs is not None:
         ref = np.asarray(truth_freqs)
         ref_label = "reference spectrum (planted truth, L₂=0)"
     else:
-        ref = _fa_freqs(nhi, nhj, U, V, cell, hp.lmbda, hp.prior)
-        ref_label = "FA spectrum (dense, new-defaults run) — reference"
+        # Dense reference: the unregularized FA spectrum (λ_fa=0, no
+        # prior — production's FA stage, unchanged across pipelines).
+        # The SA panels are sparse approximations of this.
+        ref = _fa_freqs(nhi, nhj, U, V, cell, lmbda_fa_base, None)
+        ref_label = "FA spectrum (dense, λ_fa=0) — reference"
 
     # FA / SA spectra come back with NaN sentinels at unused half-grid
     # entries (see fourier.f_trans.get_freq_grid); clean them before
     # taking the norm so a single NaN doesn't poison the whole metric.
-    base_clean = np.nan_to_num(freqs_sa_base)
-    new_clean = np.nan_to_num(freqs_sa_new)
     ref_clean = np.nan_to_num(ref)
-    l2_base = float(np.linalg.norm(base_clean - ref_clean))
-    l2_new = float(np.linalg.norm(new_clean - ref_clean))
-    verdict = (
-        "new wins" if l2_new < l2_base
-        else "baseline wins" if l2_new > l2_base else "tie"
-    )
-    print(f"  L₂(SA, ref): baseline={l2_base:.3f}, new={l2_new:.3f}  ({verdict})")
+    l2_base = float(np.linalg.norm(np.nan_to_num(freqs_sa_base) - ref_clean))
+    l2_gcv = float(np.linalg.norm(np.nan_to_num(freqs_sa_gcv) - ref_clean))
+    l2_spcv = float(np.linalg.norm(np.nan_to_num(freqs_sa_spcv) - ref_clean))
+    print(f"  L₂(SA, ref): "
+          f"baseline={l2_base:.3f}, GCV={l2_gcv:.3f}, SpatialCV={l2_spcv:.3f}")
 
     out_path = _render(
-        name, cell, ref, dat_base, freqs_sa_base, dat_new, freqs_sa_new,
-        hp, l2_base, l2_new, ref_label, OUTPUT_DIR,
+        name, cell, ref, ref_label,
+        dat_base, freqs_sa_base, l2_base,
+        dat_gcv, freqs_sa_gcv, l2_gcv, hp_gcv,
+        dat_spcv, freqs_sa_spcv, l2_spcv, hp_spcv,
+        OUTPUT_DIR,
     )
     print(f"  figure: {out_path.relative_to(out_path.parents[2])}")
 
@@ -205,33 +255,35 @@ def main():
     print("Baseline vs new-defaults reference figures")
     print("------------------------------------------")
 
-    cell_id, _ = _build_idealised_cell(nhi=12, nhj=12, seed=777)
+    cell_id, _triangle, remask_id = _build_idealised_cell(
+        nhi=12, nhj=12, seed=777
+    )
     truth = _build_idealised_freqs_ref(nhi=12, nhj=12, seed=777)
     _run(
         "idealised", cell_id,
         nhi=12, nhj=12, U=1.0, V=1.0,
         lmbda_fa_base=1.0e-1, lmbda_sa_base=1.0e-6, n_modes=14,
-        truth_freqs=truth,
+        truth_freqs=truth, remask_for_sa=remask_id,
     )
 
     try:
-        cell_al = _build_aleutians_cell()
+        cell_al, remask_al = _build_aleutians_cell()
         _run(
             "aleutians_merit", cell_al,
             nhi=24, nhj=48, U=10.0, V=0.0,
             lmbda_fa_base=0.0, lmbda_sa_base=1.0e-1, n_modes=50,
-            truth_freqs=None,
+            truth_freqs=None, remask_for_sa=remask_al,
         )
     except Exception as exc:
         print(f"\naleutians_merit SKIPPED: {exc}")
 
     try:
-        cell_sp = _build_south_pole_cell()
+        cell_sp, remask_sp = _build_south_pole_cell()
         _run(
             "south_pole", cell_sp,
             nhi=32, nhj=64, U=10.0, V=0.0,
             lmbda_fa_base=0.0, lmbda_sa_base=1.0e-1, n_modes=100,
-            truth_freqs=None,
+            truth_freqs=None, remask_for_sa=remask_sp,
         )
     except Exception as exc:
         print(f"\nsouth_pole SKIPPED: {exc}")

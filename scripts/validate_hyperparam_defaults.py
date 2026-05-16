@@ -126,9 +126,11 @@ def _dedupe_kl(k_idxs, l_idxs, target_n):
 def _build_idealised_cell(nhi: int = 12, nhj: int = 12, seed: int = 777):
     """Replicate runs.idealised_isosceles._build_cell + _generate_terrain.
 
-    Lifted inline so the script does not depend on importing internals
-    of ``runs/idealised_isosceles.py`` (which mutates global numpy seed
-    state). Equivalent topography, equivalent cell layout.
+    Returns ``(cell, triangle, remask_for_sa)``. The cell is left
+    **un-masked** (rectangular cover) so the FA fit runs on the full
+    grid; ``remask_for_sa`` closes over ``triangle`` and re-masks
+    the cell to the ICON triangle before the SA fit, matching the
+    canonical flow at ``runs/idealised_isosceles.py:141-167``.
     """
     np.random.seed(seed)
     sz = 25
@@ -164,10 +166,18 @@ def _build_idealised_cell(nhi: int = 12, nhj: int = 12, seed: int = 777):
                 nk_scaled * cell.lon_grid + nl_scaled * cell.lat_grid
             )
     triangle = utils.gen_triangle(lon_v, lat_v)
-    cell.get_masked(triangle=triangle)
+
+    # Start un-masked (rectangular cover) so FA sees the full grid.
+    cell.get_masked(mask=np.ones_like(cell.topo).astype("bool"))
     cell.wlat = float(np.diff(cell.lat).mean())
     cell.wlon = float(np.diff(cell.lon).mean())
-    return cell, triangle
+
+    def remask_for_sa(c):
+        c.get_masked(triangle=triangle)
+        c.wlat = float(np.diff(c.lat).mean())
+        c.wlon = float(np.diff(c.lon).mean())
+
+    return cell, triangle, remask_for_sa
 
 
 # ----------------------------------------------------------------------
@@ -179,9 +189,11 @@ def _build_aleutians_cell():
     """Reproduce ``tests/reproducibility/capture/capture_regional_merit._run_pipeline``
     up to the point where the rectangular-cover cell is ready.
 
-    Lifted rather than imported because the capture script's
-    ``_run_pipeline`` returns post-pipeline arrays; we want the cell
-    itself so we can build the design matrix for hyperparam selection.
+    Returns ``(cell, remask_for_sa)``. ``cell`` is the rectangular
+    cover (``rect=True``); ``remask_for_sa`` re-applies
+    ``utils.get_lat_lon_segments(..., rect=False)`` to constrain
+    subsequent fits to the ICON triangle. Matches the canonical
+    FA → mode-select → re-mask → SA flow in the capture script.
     """
     repo_root = Path(__file__).resolve().parents[1]
     fixture_dir = repo_root / "tests" / "reproducibility" / "fixtures" / "regional_merit"
@@ -213,7 +225,11 @@ def _build_aleutians_cell():
 
     cell = var.topo_cell()
     utils.get_lat_lon_segments(clat_verts, clon_verts, cell, topo, rect=True)
-    return cell
+
+    def remask_for_sa(c):
+        utils.get_lat_lon_segments(clat_verts, clon_verts, c, topo, rect=False)
+
+    return cell, remask_for_sa
 
 
 # ----------------------------------------------------------------------
@@ -236,19 +252,21 @@ def _materialize_design_matrix(nhi: int, nhj: int, cell):
 
 def _run_fa_sa(
     nhi, nhj, U, V, cell, *, lmbda_fa, lmbda_sa, n_modes, prior=None,
+    remask_for_sa=None,
 ):
-    """Run FA → greedy mode select → SA.
+    """Run FA (rectangular cover) → greedy mode select → re-mask to
+    ICON triangle → SA.
 
-    Returns ``(uw_sa, freqs_sa, dat_2D_sa, k_idxs, l_idxs)``. The
-    picked mode indices are returned so callers can rebuild the SA
-    design matrix later for SA-stage holdout evaluation. Threads
-    ``prior`` through both FA and SA via the inner ``get_pmf``'s
-    ComputeContext. Default ``prior=None`` reproduces the historical
-    behavior.
+    Returns ``(uw_sa, freqs_sa, dat_2D_sa, k_idxs, l_idxs)``.
+    ``remask_for_sa(cell)`` is the thunk returned by the cell-builder
+    that switches the cell from the rectangular cover to the
+    triangle-masked state. When ``None``, behaves as before (no
+    re-masking) — kept for backward compatibility but production
+    semantics require the thunk.
     """
     work_cell = deepcopy(cell)
 
-    # ---- FA ----
+    # ---- FA on the rectangular cover ----
     first_guess = interface.get_pmf(nhi, nhj, U, V)
     if prior is not None:
         first_guess.ctx.prior = prior
@@ -266,7 +284,11 @@ def _run_fa_sa(
     k_idxs = [p[1] for p in indices]
     l_idxs = [p[0] for p in indices]
 
-    # ---- SA ----
+    # ---- re-mask to ICON triangle before SA ----
+    if remask_for_sa is not None:
+        remask_for_sa(work_cell)
+
+    # ---- SA on the triangle-masked cell ----
     second_guess = interface.get_pmf(nhi, nhj, U, V)
     if prior is not None:
         second_guess.ctx.prior = prior
@@ -277,24 +299,96 @@ def _run_fa_sa(
     return uw_sa, freqs_sa, np.asarray(dat_2D), k_idxs, l_idxs
 
 
+def _pick_sa_lambda_via_gcv(
+    cell, nhi, nhj, k_idxs, l_idxs, *, remask_for_sa,
+):
+    """Run JointGCV on the *SA* design matrix and return Hyperparams.
+
+    The SA design matrix is built on the **triangle-masked** cell
+    using the modes that FA + greedy selected. GCV on this matrix is
+    methodologically tied to its leave-one-point-out approximation —
+    appropriate for IID-noise problems, but on spatially-correlated
+    topography tends to under-regularize because dropping one point
+    barely perturbs the fit. See
+    :func:`_pick_sa_lambda_via_spatial_cv` for a version that uses
+    the same notion of out-of-sample as the evaluation metric.
+    """
+    side_cell = deepcopy(cell)
+    if remask_for_sa is not None:
+        remask_for_sa(side_cell)
+    fobj_sa = fourier.f_trans(nhi, nhj)
+    fobj_sa.set_kls(k_idxs, l_idxs, recompute_nhij=False)
+    fobj_sa.do_full(side_cell)
+    M_sa = np.asarray(lin_reg.get_coeffs(fobj_sa, ctx=fobj_sa.ctx))
+    hp = build_spectral_prior(
+        topography=side_cell.topo,
+        design_matrix=M_sa,
+        data=np.asarray(side_cell.topo_m),
+        joint_selector=JointGCVSelector(),
+    )
+    return hp
+
+
+def _pick_sa_lambda_via_spatial_cv(
+    cell, nhi, nhj, k_idxs, l_idxs, *,
+    remask_for_sa, n_folds=4, buffer_fraction=0.05, rng_seed=0,
+):
+    """Pick λ via 4-fold spatial CV on the *SA* design matrix.
+
+    Matches the out-of-sample notion that the evaluation metric uses
+    (leave-one-spatial-patch-out), so the selector and the evaluator
+    agree on what "generalizes" means. Cost is ~4×–10× a single GCV
+    because each candidate λ requires k_folds full ridge fits, but
+    still tractable per cell (~seconds for a 100-mode SA basis).
+    """
+    from pycsa.core.hyperparams import (
+        FixedAlpha,
+        SpatialCVSelector,
+        build_spectral_prior,
+    )
+
+    side_cell = deepcopy(cell)
+    if remask_for_sa is not None:
+        remask_for_sa(side_cell)
+    fobj_sa = fourier.f_trans(nhi, nhj)
+    fobj_sa.set_kls(k_idxs, l_idxs, recompute_nhij=False)
+    fobj_sa.do_full(side_cell)
+    M_sa = np.asarray(lin_reg.get_coeffs(fobj_sa, ctx=fobj_sa.ctx))
+    coords = np.column_stack(
+        [np.asarray(side_cell.lon_m), np.asarray(side_cell.lat_m)]
+    )
+    selector = SpatialCVSelector(
+        coords=coords, n_folds=n_folds, buffer_fraction=buffer_fraction,
+        rng_seed=rng_seed,
+    )
+    hp = build_spectral_prior(
+        topography=side_cell.topo,
+        design_matrix=M_sa,
+        data=np.asarray(side_cell.topo_m),
+        alpha_selector=FixedAlpha(0.0),
+        lambda_selector=selector,
+    )
+    return hp
+
+
 def _holdout_sa_mse(
     cell, nhi, nhj, k_idxs, l_idxs, *, prior, lmbda_sa,
-    n_folds=4, buffer_fraction=0.05,
+    n_folds=4, buffer_fraction=0.05, remask_for_sa=None,
 ):
     """4-fold spatial holdout MSE for an SA fit on a specified mode set.
 
-    Builds the SA design matrix on the cell using the supplied
-    ``(k_idxs, l_idxs)``, then runs :func:`spatial_cv_score` against
-    held-out spatial patches. Uses the supplied ``prior`` + ``lmbda_sa``
+    Builds the SA design matrix on the triangle-masked cell (after
+    applying ``remask_for_sa``), then runs :func:`spatial_cv_score`
+    against held-out spatial patches. Uses ``prior`` + ``lmbda_sa``
     for the per-fold ridge fit.
 
     This is the correct out-of-sample metric for the pipeline: SA is
     where regularization is consumed, and the SA basis is what the
-    downstream physics actually uses. (FA-stage holdout is an
-    artifact because ``lmbda_fa=0`` is by design — FA is a feature
-    extractor for mode selection, not a generalization-target step.)
+    downstream physics actually uses on the constrained ICON cell.
     """
     side_cell = deepcopy(cell)
+    if remask_for_sa is not None:
+        remask_for_sa(side_cell)
     fobj_sa = fourier.f_trans(nhi, nhj)
     fobj_sa.set_kls(k_idxs, l_idxs, recompute_nhij=False)
     fobj_sa.do_full(side_cell)
@@ -348,13 +442,14 @@ def _build_idealised_freqs_ref(nhi: int = 12, nhj: int = 12, seed: int = 777):
 
 def _run_fa_then_selector(
     nhi, nhj, U, V, cell, *, lmbda_fa, lmbda_sa, n_modes, prior, selector,
+    remask_for_sa=None,
 ):
-    """Run FA, then use ``selector`` (instead of inline argmax) to pick
-    modes, then SA. Returns (uw_sa, freqs_sa, dat_2D_sa).
+    """Run FA (rectangular cover) → selector → re-mask → SA.
 
-    Mirrors ``_run_fa_sa`` but calls a pluggable selector. The selector
-    receives the FA spectrum AND the FA design matrix + data — OMP and
-    Lasso need them; GreedyArgmax ignores them.
+    Mirrors ``_run_fa_sa`` but calls a pluggable selector instead of
+    the inline argmax loop. The selector receives the FA spectrum
+    AND the FA design matrix + data — OMP and Lasso need them;
+    GreedyArgmax ignores them.
     """
     work_cell = deepcopy(cell)
 
@@ -394,6 +489,10 @@ def _run_fa_then_selector(
                 if len(k_idxs) == n_modes:
                     break
 
+    # Re-mask to ICON triangle before SA (matches production).
+    if remask_for_sa is not None:
+        remask_for_sa(work_cell)
+
     second_guess = interface.get_pmf(nhi, nhj, U, V)
     if prior is not None:
         second_guess.ctx.prior = prior
@@ -406,7 +505,7 @@ def _run_fa_then_selector(
 
 def _selector_compare(
     name, cell, nhi, nhj, U, V, lmbda_fa, lmbda_sa, n_modes,
-    *, prior_for_compare, truth_freqs,
+    *, prior_for_compare, truth_freqs, remask_for_sa=None,
 ):
     """Compare Greedy / OMP / Lasso on the same (prior, lmbda) setting.
 
@@ -433,6 +532,7 @@ def _selector_compare(
             nhi, nhj, U, V, cell,
             lmbda_fa=lmbda_fa, lmbda_sa=lmbda_sa, n_modes=n_modes,
             prior=prior_for_compare, selector=sel,
+            remask_for_sa=remask_for_sa,
         )
         outputs[tag] = {
             "uw": uw, "freqs_sa": freqs_sa, "dat": dat,
@@ -461,6 +561,7 @@ def _selector_compare(
             mse, n_sa = _holdout_sa_mse(
                 cell, nhi, nhj, out["k_idxs"], out["l_idxs"],
                 prior=prior_for_compare, lmbda_sa=lmbda_sa,
+                remask_for_sa=remask_for_sa,
             )
             print(f"    4-fold holdout SA-MSE  {tag:<10} = {mse:.4e}  "
                   f"(SA basis size = {n_sa})")
@@ -504,7 +605,7 @@ def _plot_panels(name, arrays, titles, out_dir):
 
 def _diagnose(
     name, cell, nhi, nhj, U, V, lmbda_fa, lmbda_sa, n_modes,
-    *, truth_freqs=None,
+    *, truth_freqs=None, remask_for_sa=None,
 ):
     """Run baseline vs hyperparam-selected pipeline and report metrics.
 
@@ -564,15 +665,17 @@ def _diagnose(
     uw_base, freqs_sa_base, dat_base, k_base, l_base = _run_fa_sa(
         nhi, nhj, U, V, cell,
         lmbda_fa=lmbda_fa, lmbda_sa=lmbda_sa, n_modes=n_modes, prior=None,
+        remask_for_sa=remask_for_sa,
     )
     uw_iso, freqs_sa_iso, dat_iso, k_iso, l_iso = _run_fa_sa(
         nhi, nhj, U, V, cell,
         lmbda_fa=hp.lmbda, lmbda_sa=hp.lmbda, n_modes=n_modes,
-        prior=IsotropicPrior(),
+        prior=IsotropicPrior(), remask_for_sa=remask_for_sa,
     )
     uw_sel, freqs_sa_sel, dat_sel, k_sel, l_sel = _run_fa_sa(
         nhi, nhj, U, V, cell,
         lmbda_fa=hp.lmbda, lmbda_sa=hp.lmbda, n_modes=n_modes, prior=hp.prior,
+        remask_for_sa=remask_for_sa,
     )
     # Joint-GCV pipeline: uses hp_joint.prior + hp_joint.lmbda. When
     # joint picks alpha=0 this reduces to isotropic@λ_joint; when it
@@ -581,7 +684,7 @@ def _diagnose(
     uw_jnt, freqs_sa_jnt, dat_jnt, k_jnt, l_jnt = _run_fa_sa(
         nhi, nhj, U, V, cell,
         lmbda_fa=hp_joint.lmbda, lmbda_sa=hp_joint.lmbda, n_modes=n_modes,
-        prior=hp_joint.prior,
+        prior=hp_joint.prior, remask_for_sa=remask_for_sa,
     )
 
     # ---- Difference summary vs baseline ----
@@ -638,19 +741,21 @@ def _diagnose(
         # so FA isn't tasked with generalizing to held-out points.
         mse_base, n_sa_base = _holdout_sa_mse(
             cell, nhi, nhj, k_base, l_base,
-            prior=None, lmbda_sa=lmbda_sa,
+            prior=None, lmbda_sa=lmbda_sa, remask_for_sa=remask_for_sa,
         )
         mse_iso, n_sa_iso = _holdout_sa_mse(
             cell, nhi, nhj, k_iso, l_iso,
             prior=IsotropicPrior(), lmbda_sa=hp.lmbda,
+            remask_for_sa=remask_for_sa,
         )
         mse_sel, n_sa_sel = _holdout_sa_mse(
             cell, nhi, nhj, k_sel, l_sel,
-            prior=hp.prior, lmbda_sa=hp.lmbda,
+            prior=hp.prior, lmbda_sa=hp.lmbda, remask_for_sa=remask_for_sa,
         )
         mse_jnt, n_sa_jnt = _holdout_sa_mse(
             cell, nhi, nhj, k_jnt, l_jnt,
             prior=hp_joint.prior, lmbda_sa=hp_joint.lmbda,
+            remask_for_sa=remask_for_sa,
         )
         print(f"    4-fold spatial holdout SA-MSE (correct metric — "
               f"SA basis built from each pipeline's own picked modes)")
@@ -713,33 +818,35 @@ def main(argv=None):
     )
 
     # ---- Idealised: numbers from runs/idealised_isosceles.py ----
-    cell_id, _ = _build_idealised_cell(nhi=12, nhj=12, seed=777)
+    cell_id, _triangle, remask_id = _build_idealised_cell(
+        nhi=12, nhj=12, seed=777
+    )
     truth_freqs = _build_idealised_freqs_ref(nhi=12, nhj=12, seed=777)
     result = _diagnose(
         "idealised",
         cell_id,
         nhi=12, nhj=12, U=1.0, V=1.0,
         lmbda_fa=1.0e-1, lmbda_sa=1.0e-6, n_modes=14,
-        truth_freqs=truth_freqs,
+        truth_freqs=truth_freqs, remask_for_sa=remask_id,
     )
-    # Selectors under the production regime, then under the
-    # isotropic-at-λ_GCV regime (which beat production on this fixture).
     _selector_compare(
         "idealised", cell_id,
         nhi=12, nhj=12, U=1.0, V=1.0,
         lmbda_fa=1.0e-1, lmbda_sa=1.0e-6, n_modes=14,
         prior_for_compare=None, truth_freqs=truth_freqs,
+        remask_for_sa=remask_id,
     )
     _selector_compare(
         "idealised_gcv", cell_id,
         nhi=12, nhj=12, U=1.0, V=1.0,
         lmbda_fa=result["lambda"], lmbda_sa=result["lambda"], n_modes=14,
         prior_for_compare=IsotropicPrior(), truth_freqs=truth_freqs,
+        remask_for_sa=remask_id,
     )
 
     # ---- Aleutians MERIT: numbers from capture_regional_merit.py ----
     try:
-        cell_al = _build_aleutians_cell()
+        cell_al, remask_al = _build_aleutians_cell()
     except Exception as exc:
         print(f"\n=== aleutians_merit (SKIPPED: {exc}) ===")
         return 0
@@ -748,19 +855,21 @@ def main(argv=None):
         cell_al,
         nhi=24, nhj=48, U=10.0, V=0.0,
         lmbda_fa=0.0, lmbda_sa=1.0e-1, n_modes=50,
-        truth_freqs=None,
+        truth_freqs=None, remask_for_sa=remask_al,
     )
     _selector_compare(
         "aleutians_merit", cell_al,
         nhi=24, nhj=48, U=10.0, V=0.0,
         lmbda_fa=0.0, lmbda_sa=1.0e-1, n_modes=50,
         prior_for_compare=None, truth_freqs=None,
+        remask_for_sa=remask_al,
     )
     _selector_compare(
         "aleutians_merit_gcv", cell_al,
         nhi=24, nhj=48, U=10.0, V=0.0,
         lmbda_fa=result["lambda"], lmbda_sa=result["lambda"], n_modes=50,
         prior_for_compare=IsotropicPrior(), truth_freqs=None,
+        remask_for_sa=remask_al,
     )
     return 0
 

@@ -118,6 +118,10 @@ def _build_cell_from_etopo(grid, cell_idx: int, etopo_dir: str, etopo_cg: int = 
 
     Mirrors the load path in
     ``tests/reproducibility/capture/capture_etopo_single_cell._run_pipeline``.
+
+    Returns ``(cell, clat_verts, clon_verts, remask_for_sa)``: cell is
+    the rectangular cover; ``remask_for_sa(c)`` switches to triangle
+    masking for SA, matching production semantics.
     """
     lat_verts_orig = np.degrees(grid.clat_vertices[cell_idx])
     lon_verts_orig = np.degrees(grid.clon_vertices[cell_idx])
@@ -140,7 +144,11 @@ def _build_cell_from_etopo(grid, cell_idx: int, etopo_dir: str, etopo_cg: int = 
 
     cell = var.topo_cell()
     utils.get_lat_lon_segments(clat_verts, clon_verts, cell, topo, rect=True)
-    return cell, clat_verts, clon_verts
+
+    def remask_for_sa(c):
+        utils.get_lat_lon_segments(clat_verts, clon_verts, c, topo, rect=False)
+
+    return cell, clat_verts, clon_verts, remask_for_sa
 
 
 # ----------------------------------------------------------------------
@@ -159,7 +167,9 @@ def _run_region(name, grid, etopo_dir: str, etopo_cg: int):
     print(f"  nearest cell idx   = {cell_idx}  centroid = "
           f"({clat_deg:.2f}°, {clon_deg:.2f}°)")
     try:
-        cell, *_ = _build_cell_from_etopo(grid, cell_idx, etopo_dir, etopo_cg)
+        cell, _clat, _clon, remask_for_sa = _build_cell_from_etopo(
+            grid, cell_idx, etopo_dir, etopo_cg
+        )
     except Exception as exc:
         print(f"  ETOPO load failed: {exc} — SKIPPING")
         return
@@ -173,6 +183,7 @@ def _run_region(name, grid, etopo_dir: str, etopo_cg: int):
         nhi=NHI, nhj=NHJ, U=U, V=V,
         lmbda_fa=LMBDA_FA, lmbda_sa=LMBDA_SA, n_modes=N_MODES,
         truth_freqs=None,  # no ground truth for real-data cells
+        remask_for_sa=remask_for_sa,
     )
     # Selectors under the production regime, then under the
     # isotropic-at-λ_GCV regime (the one that may be the empirical
@@ -183,12 +194,14 @@ def _run_region(name, grid, etopo_dir: str, etopo_cg: int):
         nhi=NHI, nhj=NHJ, U=U, V=V,
         lmbda_fa=LMBDA_FA, lmbda_sa=LMBDA_SA, n_modes=N_MODES,
         prior_for_compare=None, truth_freqs=None,
+        remask_for_sa=remask_for_sa,
     )
     _selector_compare(
         f"{name}_gcv", cell,
         nhi=NHI, nhj=NHJ, U=U, V=V,
         lmbda_fa=result["lambda"], lmbda_sa=result["lambda"], n_modes=N_MODES,
         prior_for_compare=IsotropicPrior(), truth_freqs=None,
+        remask_for_sa=remask_for_sa,
     )
 
 

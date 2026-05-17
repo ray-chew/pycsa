@@ -392,6 +392,7 @@ def do_cell(
             is_land,
             cell_sa.analysis,
             grid.cell_area[c_idx],
+            topo_mean=getattr(cell_sa, "topo_mean", None),
         )
 
         # Generate 3-panel plot

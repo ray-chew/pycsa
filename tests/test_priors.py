@@ -78,9 +78,7 @@ def test_lin_reg_do_with_isotropic_prior_equals_default(monkeypatch):
     cell.lat = np.linspace(0, 1, n)
     cell.wlon = 1.0 / (n - 1)
     cell.wlat = 1.0 / (n - 1)
-    cell.topo_m = np.cos(2 * np.pi * cell.lon_m) + 0.3 * np.sin(
-        4 * np.pi * cell.lat_m
-    )
+    cell.topo_m = np.cos(2 * np.pi * cell.lon_m) + 0.3 * np.sin(4 * np.pi * cell.lat_m)
 
     fobj = f_trans(4, 4)
     fobj.do_full(cell)
@@ -88,9 +86,7 @@ def test_lin_reg_do_with_isotropic_prior_equals_default(monkeypatch):
 
     fobj2 = f_trans(4, 4)
     fobj2.do_full(cell)
-    a_iso, recons_iso = lin_reg.do(
-        fobj2, cell, lmbda=0.1, prior=IsotropicPrior()
-    )
+    a_iso, recons_iso = lin_reg.do(fobj2, cell, lmbda=0.1, prior=IsotropicPrior())
 
     np.testing.assert_allclose(a_default, a_iso, rtol=1e-10, atol=1e-12)
     np.testing.assert_allclose(recons_default, recons_iso, rtol=1e-10, atol=1e-12)

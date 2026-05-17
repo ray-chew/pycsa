@@ -23,9 +23,7 @@ def _grid_coords(n_per_side):
 def test_build_spatial_folds_returns_disjoint_eval_sets():
     """No coord index appears in more than one fold's eval set."""
     coords = _grid_coords(20)
-    folds = _build_spatial_folds(
-        coords, n_folds=4, buffer_fraction=0.0, rng_seed=0
-    )
+    folds = _build_spatial_folds(coords, n_folds=4, buffer_fraction=0.0, rng_seed=0)
     seen = set()
     for _, eval_idx in folds:
         eval_set = set(eval_idx.tolist())
@@ -37,9 +35,7 @@ def test_build_spatial_folds_buffer_excludes_from_both():
     """A non-zero buffer means buffer points are absent from both
     train_idx and eval_idx of that fold."""
     coords = _grid_coords(30)
-    folds = _build_spatial_folds(
-        coords, n_folds=4, buffer_fraction=0.1, rng_seed=1
-    )
+    folds = _build_spatial_folds(coords, n_folds=4, buffer_fraction=0.1, rng_seed=1)
     for train_idx, eval_idx in folds:
         # train ∩ eval is empty
         assert not (set(train_idx.tolist()) & set(eval_idx.tolist()))
@@ -50,9 +46,7 @@ def test_build_spatial_folds_buffer_excludes_from_both():
 
 def test_build_spatial_folds_returns_n_folds():
     coords = _grid_coords(15)
-    folds = _build_spatial_folds(
-        coords, n_folds=5, buffer_fraction=0.05, rng_seed=2
-    )
+    folds = _build_spatial_folds(coords, n_folds=5, buffer_fraction=0.05, rng_seed=2)
     assert len(folds) == 5
     for train_idx, eval_idx in folds:
         assert train_idx.size > 1
@@ -116,14 +110,22 @@ def test_spatial_cv_score_isotropic_vs_strong_regularization():
     mse_light = spatial_cv_score(
         prior=IsotropicPrior(),
         lmbda=1e-4,
-        design_matrix=M, data=y, coords=coords,
-        n_folds=4, buffer_fraction=0.05, rng_seed=0,
+        design_matrix=M,
+        data=y,
+        coords=coords,
+        n_folds=4,
+        buffer_fraction=0.05,
+        rng_seed=0,
     )["mean_heldout_mse"]
     mse_heavy = spatial_cv_score(
         prior=IsotropicPrior(),
         lmbda=1e3,
-        design_matrix=M, data=y, coords=coords,
-        n_folds=4, buffer_fraction=0.05, rng_seed=0,
+        design_matrix=M,
+        data=y,
+        coords=coords,
+        n_folds=4,
+        buffer_fraction=0.05,
+        rng_seed=0,
     )["mean_heldout_mse"]
     # Heavy regularization → underfit → larger held-out MSE.
     assert mse_heavy > mse_light
@@ -139,7 +141,11 @@ def test_spatial_cv_score_works_with_spectral_prior():
     result = spatial_cv_score(
         prior=SpectralPrior(alpha=1.5),
         lmbda=0.01,
-        design_matrix=M, data=y, coords=coords,
-        n_folds=4, buffer_fraction=0.05, rng_seed=1,
+        design_matrix=M,
+        data=y,
+        coords=coords,
+        n_folds=4,
+        buffer_fraction=0.05,
+        rng_seed=1,
     )
     assert np.all(np.isfinite(result["per_fold_mse"]))

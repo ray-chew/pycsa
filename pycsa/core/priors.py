@@ -54,9 +54,7 @@ class Prior(Protocol):
         Non-negative diagonal to be added to ``diag(E_tilda_lm)``.
     """
 
-    def __call__(
-        self, fobj, E_tilda_lm: np.ndarray, *, lmbda: float
-    ) -> np.ndarray: ...
+    def __call__(self, fobj, E_tilda_lm: np.ndarray, *, lmbda: float) -> np.ndarray: ...
 
 
 @dataclass
@@ -73,9 +71,7 @@ class IsotropicPrior:
     use the inline branch and produces bit-identical fixture output.
     """
 
-    def __call__(
-        self, fobj, E_tilda_lm: np.ndarray, *, lmbda: float
-    ) -> np.ndarray:
+    def __call__(self, fobj, E_tilda_lm: np.ndarray, *, lmbda: float) -> np.ndarray:
         n = E_tilda_lm.shape[0]
         trace_scale = float(np.trace(E_tilda_lm)) / n * lmbda
         return np.full(n, trace_scale, dtype=E_tilda_lm.dtype)
@@ -117,9 +113,7 @@ class SpectralPrior:
     alpha: float
     eps: float = 1e-3
 
-    def __call__(
-        self, fobj, E_tilda_lm: np.ndarray, *, lmbda: float
-    ) -> np.ndarray:
+    def __call__(self, fobj, E_tilda_lm: np.ndarray, *, lmbda: float) -> np.ndarray:
         n = E_tilda_lm.shape[0]
         weights = _wavenumber_weights(fobj, n)
         norm = np.max(weights) if weights.size > 0 else 1.0
@@ -181,8 +175,10 @@ def _wavenumber_weights(fobj, n_modes: int) -> np.ndarray:
     # cos and sin halves both draw from the same wavenumber grid
     half = (n_modes + 1) // 2
     tiled = np.concatenate(
-        [np.tile(grid, (half + grid.size) // grid.size + 1)[:half],
-         np.tile(grid, (half + grid.size) // grid.size + 1)[: n_modes - half]]
+        [
+            np.tile(grid, (half + grid.size) // grid.size + 1)[:half],
+            np.tile(grid, (half + grid.size) // grid.size + 1)[: n_modes - half],
+        ]
     )
     return tiled[:n_modes]
 

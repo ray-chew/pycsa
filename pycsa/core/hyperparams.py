@@ -47,7 +47,6 @@ import numpy as np
 
 from pycsa.core.priors import SpectralPrior
 
-
 # -----------------------------------------------------------------------------
 # Records and protocols
 # -----------------------------------------------------------------------------
@@ -225,11 +224,12 @@ class EmpiricalSpectralSlope:
             )
         # Linear fit in log-log space.
         from scipy.stats import linregress
+
         result = linregress(bin_log_k[keep], bin_log_P[keep])
         # P ~ k^(-alpha) ⇒ slope = -alpha
         alpha = float(-result.slope)
         stderr = float(result.stderr)
-        r2 = float(result.rvalue ** 2)
+        r2 = float(result.rvalue**2)
         return SlopeFit(alpha=alpha, stderr=stderr, r_squared=r2)
 
 
@@ -301,16 +301,14 @@ class GCVSelector:
         E = M.T @ M
         # MᵀM is symmetric PSD; use eigh.
         eigvals, eigvecs = np.linalg.eigh(E)
-        Mt_y = M.T @ y                       # shape (N,)
-        proj = eigvecs.T @ Mt_y              # shape (N,)
+        Mt_y = M.T @ y  # shape (N,)
+        proj = eigvecs.T @ Mt_y  # shape (N,)
         y_norm2 = float(y @ y)
         prior = prior_factory(alpha)
         # Trial-prior diagonal: build a representative diag at lmbda=1
         # then scale it linearly per candidate (the spec defines
         # Λ_m ∝ lmbda).
-        unit_diag = np.asarray(
-            prior(fobj=None, E_tilda_lm=E, lmbda=1.0), dtype=float
-        )
+        unit_diag = np.asarray(prior(fobj=None, E_tilda_lm=E, lmbda=1.0), dtype=float)
         # GCV does not care about the eigenvector basis for Λ — we
         # approximate Λ as diagonal in the eigenbasis of MᵀM by taking
         # its mean. This is exact for IsotropicPrior and a good
@@ -329,7 +327,7 @@ class GCVSelector:
             # â projected onto eigenbasis: proj * eigvals / denom; then
             # residual² = ||y||² - 2 yᵀM â + âᵀ MᵀM â reduces to:
             ratio = eigvals / denom
-            residual2 = y_norm2 - float(np.sum((proj ** 2) * (2 * ratio - ratio ** 2)))
+            residual2 = y_norm2 - float(np.sum((proj**2) * (2 * ratio - ratio**2)))
             trH = float(np.sum(ratio))
             denom_gcv = (n - trH) ** 2
             if denom_gcv <= 0:
@@ -523,7 +521,9 @@ class JointGCVSelector:
     eps: float = 1e-3
 
     def __call__(
-        self, design_matrix: np.ndarray, data: np.ndarray,
+        self,
+        design_matrix: np.ndarray,
+        data: np.ndarray,
     ) -> tuple[float, float]:
         M = np.asarray(design_matrix, dtype=float)
         y = np.asarray(data, dtype=float).reshape(-1)
@@ -562,7 +562,7 @@ class JointGCVSelector:
                     continue
                 ratio = eigvals / denom
                 residual2 = max(
-                    y_norm2 - float(np.sum((proj ** 2) * (2 * ratio - ratio ** 2))),
+                    y_norm2 - float(np.sum((proj**2) * (2 * ratio - ratio**2))),
                     0.0,
                 )
                 trH = float(np.sum(ratio))
@@ -660,9 +660,7 @@ def build_spectral_prior(
     def factory(a: float) -> SpectralPrior:
         return SpectralPrior(alpha=a, eps=eps)
 
-    lmbda = lambda_selector(
-        design_matrix, data, alpha=alpha, prior_factory=factory
-    )
+    lmbda = lambda_selector(design_matrix, data, alpha=alpha, prior_factory=factory)
     return Hyperparams(
         alpha=alpha,
         lmbda=float(lmbda),

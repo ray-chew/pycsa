@@ -56,7 +56,6 @@ from pycsa.core.priors import IsotropicPrior
 from pycsa.core.validation import spatial_cv_score
 from pycsa.wrappers import interface
 
-
 OUTPUT_DIR = Path(__file__).resolve().parent / "validate_outputs"
 
 
@@ -196,7 +195,9 @@ def _build_aleutians_cell():
     FA → mode-select → re-mask → SA flow in the capture script.
     """
     repo_root = Path(__file__).resolve().parents[1]
-    fixture_dir = repo_root / "tests" / "reproducibility" / "fixtures" / "regional_merit"
+    fixture_dir = (
+        repo_root / "tests" / "reproducibility" / "fixtures" / "regional_merit"
+    )
     input_dir = fixture_dir / "input"
     bundled_grid = input_dir / "icon_grid.nc"
     bundled_merit_dir = str(input_dir / "merit") + "/"
@@ -251,7 +252,16 @@ def _materialize_design_matrix(nhi: int, nhj: int, cell):
 
 
 def _run_fa_sa(
-    nhi, nhj, U, V, cell, *, lmbda_fa, lmbda_sa, n_modes, prior=None,
+    nhi,
+    nhj,
+    U,
+    V,
+    cell,
+    *,
+    lmbda_fa,
+    lmbda_sa,
+    n_modes,
+    prior=None,
     remask_for_sa=None,
 ):
     """Run FA (rectangular cover) → greedy mode select → re-mask to
@@ -300,7 +310,13 @@ def _run_fa_sa(
 
 
 def _pick_sa_lambda_via_gcv(
-    cell, nhi, nhj, k_idxs, l_idxs, *, remask_for_sa,
+    cell,
+    nhi,
+    nhj,
+    k_idxs,
+    l_idxs,
+    *,
+    remask_for_sa,
 ):
     """Run JointGCV on the *SA* design matrix and return Hyperparams.
 
@@ -330,8 +346,16 @@ def _pick_sa_lambda_via_gcv(
 
 
 def _pick_sa_lambda_via_spatial_cv(
-    cell, nhi, nhj, k_idxs, l_idxs, *,
-    remask_for_sa, n_folds=4, buffer_fraction=0.05, rng_seed=0,
+    cell,
+    nhi,
+    nhj,
+    k_idxs,
+    l_idxs,
+    *,
+    remask_for_sa,
+    n_folds=4,
+    buffer_fraction=0.05,
+    rng_seed=0,
 ):
     """Pick λ via 4-fold spatial CV on the *SA* design matrix.
 
@@ -354,11 +378,11 @@ def _pick_sa_lambda_via_spatial_cv(
     fobj_sa.set_kls(k_idxs, l_idxs, recompute_nhij=False)
     fobj_sa.do_full(side_cell)
     M_sa = np.asarray(lin_reg.get_coeffs(fobj_sa, ctx=fobj_sa.ctx))
-    coords = np.column_stack(
-        [np.asarray(side_cell.lon_m), np.asarray(side_cell.lat_m)]
-    )
+    coords = np.column_stack([np.asarray(side_cell.lon_m), np.asarray(side_cell.lat_m)])
     selector = SpatialCVSelector(
-        coords=coords, n_folds=n_folds, buffer_fraction=buffer_fraction,
+        coords=coords,
+        n_folds=n_folds,
+        buffer_fraction=buffer_fraction,
         rng_seed=rng_seed,
     )
     hp = build_spectral_prior(
@@ -372,8 +396,17 @@ def _pick_sa_lambda_via_spatial_cv(
 
 
 def _holdout_sa_mse(
-    cell, nhi, nhj, k_idxs, l_idxs, *, prior, lmbda_sa,
-    n_folds=4, buffer_fraction=0.05, remask_for_sa=None,
+    cell,
+    nhi,
+    nhj,
+    k_idxs,
+    l_idxs,
+    *,
+    prior,
+    lmbda_sa,
+    n_folds=4,
+    buffer_fraction=0.05,
+    remask_for_sa=None,
 ):
     """4-fold spatial holdout MSE for an SA fit on a specified mode set.
 
@@ -393,14 +426,20 @@ def _holdout_sa_mse(
     fobj_sa.set_kls(k_idxs, l_idxs, recompute_nhij=False)
     fobj_sa.do_full(side_cell)
     M_sa = np.asarray(lin_reg.get_coeffs(fobj_sa, ctx=fobj_sa.ctx))
-    coords = np.column_stack([
-        np.asarray(side_cell.lon_m), np.asarray(side_cell.lat_m),
-    ])
+    coords = np.column_stack(
+        [
+            np.asarray(side_cell.lon_m),
+            np.asarray(side_cell.lat_m),
+        ]
+    )
     result = spatial_cv_score(
         prior=prior if prior is not None else IsotropicPrior(),
         lmbda=max(float(lmbda_sa), 1e-12),
-        design_matrix=M_sa, data=np.asarray(side_cell.topo_m),
-        coords=coords, n_folds=n_folds, buffer_fraction=buffer_fraction,
+        design_matrix=M_sa,
+        data=np.asarray(side_cell.topo_m),
+        coords=coords,
+        n_folds=n_folds,
+        buffer_fraction=buffer_fraction,
         rng_seed=0,
     )
     return result["mean_heldout_mse"], M_sa.shape[1]
@@ -441,7 +480,17 @@ def _build_idealised_freqs_ref(nhi: int = 12, nhj: int = 12, seed: int = 777):
 
 
 def _run_fa_then_selector(
-    nhi, nhj, U, V, cell, *, lmbda_fa, lmbda_sa, n_modes, prior, selector,
+    nhi,
+    nhj,
+    U,
+    V,
+    cell,
+    *,
+    lmbda_fa,
+    lmbda_sa,
+    n_modes,
+    prior,
+    selector,
     remask_for_sa=None,
 ):
     """Run FA (rectangular cover) → selector → re-mask → SA.
@@ -481,6 +530,7 @@ def _run_fa_then_selector(
         # Fall back to greedy padding if selector picked too few unique
         # modes (rare; defensive only).
         from pycsa.core.mode_selection import GreedyArgmax
+
         gk, gl = GreedyArgmax()(fq, n_modes=n_modes)
         for k, l in zip(gk, gl):
             if (k, l) not in set(zip(k_idxs, l_idxs)):
@@ -504,8 +554,19 @@ def _run_fa_then_selector(
 
 
 def _selector_compare(
-    name, cell, nhi, nhj, U, V, lmbda_fa, lmbda_sa, n_modes,
-    *, prior_for_compare, truth_freqs, remask_for_sa=None,
+    name,
+    cell,
+    nhi,
+    nhj,
+    U,
+    V,
+    lmbda_fa,
+    lmbda_sa,
+    n_modes,
+    *,
+    prior_for_compare,
+    truth_freqs,
+    remask_for_sa=None,
 ):
     """Compare Greedy / OMP / Lasso on the same (prior, lmbda) setting.
 
@@ -515,11 +576,12 @@ def _selector_compare(
     setting.
     """
     prior_label = (
-        type(prior_for_compare).__name__ if prior_for_compare is not None
-        else "None"
+        type(prior_for_compare).__name__ if prior_for_compare is not None else "None"
     )
-    print(f"\n--- {name} : selector comparison "
-          f"(prior={prior_label}, λ_fa={lmbda_fa:.2e}, λ_sa={lmbda_sa:.2e}) ---")
+    print(
+        f"\n--- {name} : selector comparison "
+        f"(prior={prior_label}, λ_fa={lmbda_fa:.2e}, λ_sa={lmbda_sa:.2e}) ---"
+    )
 
     selectors = {
         "Greedy": GreedyArgmax(),
@@ -529,14 +591,24 @@ def _selector_compare(
     outputs = {}
     for tag, sel in selectors.items():
         uw, freqs_sa, dat, (kis, lis) = _run_fa_then_selector(
-            nhi, nhj, U, V, cell,
-            lmbda_fa=lmbda_fa, lmbda_sa=lmbda_sa, n_modes=n_modes,
-            prior=prior_for_compare, selector=sel,
+            nhi,
+            nhj,
+            U,
+            V,
+            cell,
+            lmbda_fa=lmbda_fa,
+            lmbda_sa=lmbda_sa,
+            n_modes=n_modes,
+            prior=prior_for_compare,
+            selector=sel,
             remask_for_sa=remask_for_sa,
         )
         outputs[tag] = {
-            "uw": uw, "freqs_sa": freqs_sa, "dat": dat,
-            "k_idxs": kis, "l_idxs": lis,
+            "uw": uw,
+            "freqs_sa": freqs_sa,
+            "dat": dat,
+            "k_idxs": kis,
+            "l_idxs": lis,
         }
 
     # Pairwise Jaccard of the selected mode sets (greedy as reference).
@@ -544,8 +616,10 @@ def _selector_compare(
     for tag in ("OMP(b=5)", "Lasso"):
         s = set(zip(outputs[tag]["k_idxs"], outputs[tag]["l_idxs"]))
         jaccard = len(ref_set & s) / max(len(ref_set | s), 1)
-        print(f"  Jaccard({tag} vs Greedy) = {jaccard:.3f}  "
-              f"(mode-set distance, NOT quality)")
+        print(
+            f"  Jaccard({tag} vs Greedy) = {jaccard:.3f}  "
+            f"(mode-set distance, NOT quality)"
+        )
 
     # Quality metric. For idealised: truth distance on freqs_sa (which
     # IS selector-dependent). For real-data: SA-stage holdout MSE on the
@@ -559,19 +633,25 @@ def _selector_compare(
     else:
         for tag, out in outputs.items():
             mse, n_sa = _holdout_sa_mse(
-                cell, nhi, nhj, out["k_idxs"], out["l_idxs"],
-                prior=prior_for_compare, lmbda_sa=lmbda_sa,
+                cell,
+                nhi,
+                nhj,
+                out["k_idxs"],
+                out["l_idxs"],
+                prior=prior_for_compare,
+                lmbda_sa=lmbda_sa,
                 remask_for_sa=remask_for_sa,
             )
-            print(f"    4-fold holdout SA-MSE  {tag:<10} = {mse:.4e}  "
-                  f"(SA basis size = {n_sa})")
+            print(
+                f"    4-fold holdout SA-MSE  {tag:<10} = {mse:.4e}  "
+                f"(SA basis size = {n_sa})"
+            )
 
     # Side-by-side plot: input + 3 SA reconstructions.
     plot_path = _plot_panels(
         f"{name}_selectors",
-        arrays=[np.nan_to_num(cell.topo)] + [
-            np.nan_to_num(outputs[tag]["dat"]) for tag in selectors
-        ],
+        arrays=[np.nan_to_num(cell.topo)]
+        + [np.nan_to_num(outputs[tag]["dat"]) for tag in selectors],
         titles=["input"] + [f"SA: {tag}" for tag in selectors],
         out_dir=OUTPUT_DIR,
     )
@@ -604,8 +684,18 @@ def _plot_panels(name, arrays, titles, out_dir):
 
 
 def _diagnose(
-    name, cell, nhi, nhj, U, V, lmbda_fa, lmbda_sa, n_modes,
-    *, truth_freqs=None, remask_for_sa=None,
+    name,
+    cell,
+    nhi,
+    nhj,
+    U,
+    V,
+    lmbda_fa,
+    lmbda_sa,
+    n_modes,
+    *,
+    truth_freqs=None,
+    remask_for_sa=None,
 ):
     """Run baseline vs hyperparam-selected pipeline and report metrics.
 
@@ -648,11 +738,7 @@ def _diagnose(
         f"  joint GCV:  alpha = {hp_joint.alpha:.3f}  "
         f"lambda = {hp_joint.lmbda:.3e}  ← JointGCVSelector"
     )
-    print(
-        "  baseline lmbda_fa = {:.3e}  lmbda_sa = {:.3e}".format(
-            lmbda_fa, lmbda_sa
-        )
-    )
+    print("  baseline lmbda_fa = {:.3e}  lmbda_sa = {:.3e}".format(lmbda_fa, lmbda_sa))
 
     # Three pipelines, identical mode-selection + SA paths, only the
     # FA/SA prior+lmbda combination differs:
@@ -663,18 +749,39 @@ def _diagnose(
     # the per-mode structure from the contribution of just picking a
     # different scalar lambda.
     uw_base, freqs_sa_base, dat_base, k_base, l_base = _run_fa_sa(
-        nhi, nhj, U, V, cell,
-        lmbda_fa=lmbda_fa, lmbda_sa=lmbda_sa, n_modes=n_modes, prior=None,
+        nhi,
+        nhj,
+        U,
+        V,
+        cell,
+        lmbda_fa=lmbda_fa,
+        lmbda_sa=lmbda_sa,
+        n_modes=n_modes,
+        prior=None,
         remask_for_sa=remask_for_sa,
     )
     uw_iso, freqs_sa_iso, dat_iso, k_iso, l_iso = _run_fa_sa(
-        nhi, nhj, U, V, cell,
-        lmbda_fa=hp.lmbda, lmbda_sa=hp.lmbda, n_modes=n_modes,
-        prior=IsotropicPrior(), remask_for_sa=remask_for_sa,
+        nhi,
+        nhj,
+        U,
+        V,
+        cell,
+        lmbda_fa=hp.lmbda,
+        lmbda_sa=hp.lmbda,
+        n_modes=n_modes,
+        prior=IsotropicPrior(),
+        remask_for_sa=remask_for_sa,
     )
     uw_sel, freqs_sa_sel, dat_sel, k_sel, l_sel = _run_fa_sa(
-        nhi, nhj, U, V, cell,
-        lmbda_fa=hp.lmbda, lmbda_sa=hp.lmbda, n_modes=n_modes, prior=hp.prior,
+        nhi,
+        nhj,
+        U,
+        V,
+        cell,
+        lmbda_fa=hp.lmbda,
+        lmbda_sa=hp.lmbda,
+        n_modes=n_modes,
+        prior=hp.prior,
         remask_for_sa=remask_for_sa,
     )
     # Joint-GCV pipeline: uses hp_joint.prior + hp_joint.lmbda. When
@@ -682,9 +789,16 @@ def _diagnose(
     # picks alpha>0 this is a non-trivial structured prior at a
     # jointly-optimized scale.
     uw_jnt, freqs_sa_jnt, dat_jnt, k_jnt, l_jnt = _run_fa_sa(
-        nhi, nhj, U, V, cell,
-        lmbda_fa=hp_joint.lmbda, lmbda_sa=hp_joint.lmbda, n_modes=n_modes,
-        prior=hp_joint.prior, remask_for_sa=remask_for_sa,
+        nhi,
+        nhj,
+        U,
+        V,
+        cell,
+        lmbda_fa=hp_joint.lmbda,
+        lmbda_sa=hp_joint.lmbda,
+        n_modes=n_modes,
+        prior=hp_joint.prior,
+        remask_for_sa=remask_for_sa,
     )
 
     # ---- Difference summary vs baseline ----
@@ -717,10 +831,11 @@ def _diagnose(
         print(f"      baseline                  = {d_base:.4e}")
         print(f"      isotropic-at-selected-λ   = {d_iso:.4e}")
         print(f"      selected (SpectralPrior)  = {d_sel:.4e}")
-        print(f"      joint GCV (α={hp_joint.alpha:.2f}, λ={hp_joint.lmbda:.2e})"
-              f" = {d_jnt:.4e}")
-        for tag, d in (("isotropic", d_iso), ("selected", d_sel),
-                       ("joint_GCV", d_jnt)):
+        print(
+            f"      joint GCV (α={hp_joint.alpha:.2f}, λ={hp_joint.lmbda:.2e})"
+            f" = {d_jnt:.4e}"
+        )
+        for tag, d in (("isotropic", d_iso), ("selected", d_sel), ("joint_GCV", d_jnt)):
             if d_base > 0:
                 rel = (d_base - d) / d_base * 100.0
                 verdict = "better" if d < d_base else "worse" if d > d_base else "tie"
@@ -740,38 +855,75 @@ def _diagnose(
         # FA-stage holdout was an artifact — lmbda_fa=0 is by design,
         # so FA isn't tasked with generalizing to held-out points.
         mse_base, n_sa_base = _holdout_sa_mse(
-            cell, nhi, nhj, k_base, l_base,
-            prior=None, lmbda_sa=lmbda_sa, remask_for_sa=remask_for_sa,
+            cell,
+            nhi,
+            nhj,
+            k_base,
+            l_base,
+            prior=None,
+            lmbda_sa=lmbda_sa,
+            remask_for_sa=remask_for_sa,
         )
         mse_iso, n_sa_iso = _holdout_sa_mse(
-            cell, nhi, nhj, k_iso, l_iso,
-            prior=IsotropicPrior(), lmbda_sa=hp.lmbda,
+            cell,
+            nhi,
+            nhj,
+            k_iso,
+            l_iso,
+            prior=IsotropicPrior(),
+            lmbda_sa=hp.lmbda,
             remask_for_sa=remask_for_sa,
         )
         mse_sel, n_sa_sel = _holdout_sa_mse(
-            cell, nhi, nhj, k_sel, l_sel,
-            prior=hp.prior, lmbda_sa=hp.lmbda, remask_for_sa=remask_for_sa,
-        )
-        mse_jnt, n_sa_jnt = _holdout_sa_mse(
-            cell, nhi, nhj, k_jnt, l_jnt,
-            prior=hp_joint.prior, lmbda_sa=hp_joint.lmbda,
+            cell,
+            nhi,
+            nhj,
+            k_sel,
+            l_sel,
+            prior=hp.prior,
+            lmbda_sa=hp.lmbda,
             remask_for_sa=remask_for_sa,
         )
-        print(f"    4-fold spatial holdout SA-MSE (correct metric — "
-              f"SA basis built from each pipeline's own picked modes)")
-        print(f"      baseline (λ_fa={lmbda_fa:.2e}, λ_sa={lmbda_sa:.2e}, no prior) "
-              f"= {mse_base:.4e}  (SA basis size = {n_sa_base})")
-        print(f"      isotropic-at-selected-λ              = {mse_iso:.4e}  "
-              f"(SA basis size = {n_sa_iso})")
-        print(f"      selected (SpectralPrior at GCV λ)    = {mse_sel:.4e}  "
-              f"(SA basis size = {n_sa_sel})")
-        print(f"      joint GCV (α={hp_joint.alpha:.2f}, λ={hp_joint.lmbda:.2e})"
-              f" = {mse_jnt:.4e}  (SA basis size = {n_sa_jnt})")
-        for tag, m in (("isotropic", mse_iso), ("selected", mse_sel),
-                       ("joint_GCV", mse_jnt)):
+        mse_jnt, n_sa_jnt = _holdout_sa_mse(
+            cell,
+            nhi,
+            nhj,
+            k_jnt,
+            l_jnt,
+            prior=hp_joint.prior,
+            lmbda_sa=hp_joint.lmbda,
+            remask_for_sa=remask_for_sa,
+        )
+        print(
+            f"    4-fold spatial holdout SA-MSE (correct metric — "
+            f"SA basis built from each pipeline's own picked modes)"
+        )
+        print(
+            f"      baseline (λ_fa={lmbda_fa:.2e}, λ_sa={lmbda_sa:.2e}, no prior) "
+            f"= {mse_base:.4e}  (SA basis size = {n_sa_base})"
+        )
+        print(
+            f"      isotropic-at-selected-λ              = {mse_iso:.4e}  "
+            f"(SA basis size = {n_sa_iso})"
+        )
+        print(
+            f"      selected (SpectralPrior at GCV λ)    = {mse_sel:.4e}  "
+            f"(SA basis size = {n_sa_sel})"
+        )
+        print(
+            f"      joint GCV (α={hp_joint.alpha:.2f}, λ={hp_joint.lmbda:.2e})"
+            f" = {mse_jnt:.4e}  (SA basis size = {n_sa_jnt})"
+        )
+        for tag, m in (
+            ("isotropic", mse_iso),
+            ("selected", mse_sel),
+            ("joint_GCV", mse_jnt),
+        ):
             if mse_base > 0:
                 rel = (mse_base - m) / mse_base * 100.0
-                verdict = "better" if m < mse_base else "worse" if m > mse_base else "tie"
+                verdict = (
+                    "better" if m < mse_base else "worse" if m > mse_base else "tie"
+                )
                 print(f"      {tag:<10} vs baseline = {rel:+.2f}%  ({verdict})")
         # Structure-vs-scale isolation
         if mse_iso > 0:
@@ -792,8 +944,11 @@ def _diagnose(
             np.nan_to_num(dat_sel),
         ],
         titles=[
-            "input (idealised: planted topo)" if truth_freqs is not None
-            else "input topography",
+            (
+                "input (idealised: planted topo)"
+                if truth_freqs is not None
+                else "input topography"
+            ),
             f"baseline (λ_fa={lmbda_fa:.0e})",
             f"isotropic at GCV λ={hp.lmbda:.2e}",
             f"selected: SpectralPrior(α={hp.alpha:.2f})",
@@ -818,29 +973,47 @@ def main(argv=None):
     )
 
     # ---- Idealised: numbers from runs/idealised_isosceles.py ----
-    cell_id, _triangle, remask_id = _build_idealised_cell(
-        nhi=12, nhj=12, seed=777
-    )
+    cell_id, _triangle, remask_id = _build_idealised_cell(nhi=12, nhj=12, seed=777)
     truth_freqs = _build_idealised_freqs_ref(nhi=12, nhj=12, seed=777)
     result = _diagnose(
         "idealised",
         cell_id,
-        nhi=12, nhj=12, U=1.0, V=1.0,
-        lmbda_fa=1.0e-1, lmbda_sa=1.0e-6, n_modes=14,
-        truth_freqs=truth_freqs, remask_for_sa=remask_id,
-    )
-    _selector_compare(
-        "idealised", cell_id,
-        nhi=12, nhj=12, U=1.0, V=1.0,
-        lmbda_fa=1.0e-1, lmbda_sa=1.0e-6, n_modes=14,
-        prior_for_compare=None, truth_freqs=truth_freqs,
+        nhi=12,
+        nhj=12,
+        U=1.0,
+        V=1.0,
+        lmbda_fa=1.0e-1,
+        lmbda_sa=1.0e-6,
+        n_modes=14,
+        truth_freqs=truth_freqs,
         remask_for_sa=remask_id,
     )
     _selector_compare(
-        "idealised_gcv", cell_id,
-        nhi=12, nhj=12, U=1.0, V=1.0,
-        lmbda_fa=result["lambda"], lmbda_sa=result["lambda"], n_modes=14,
-        prior_for_compare=IsotropicPrior(), truth_freqs=truth_freqs,
+        "idealised",
+        cell_id,
+        nhi=12,
+        nhj=12,
+        U=1.0,
+        V=1.0,
+        lmbda_fa=1.0e-1,
+        lmbda_sa=1.0e-6,
+        n_modes=14,
+        prior_for_compare=None,
+        truth_freqs=truth_freqs,
+        remask_for_sa=remask_id,
+    )
+    _selector_compare(
+        "idealised_gcv",
+        cell_id,
+        nhi=12,
+        nhj=12,
+        U=1.0,
+        V=1.0,
+        lmbda_fa=result["lambda"],
+        lmbda_sa=result["lambda"],
+        n_modes=14,
+        prior_for_compare=IsotropicPrior(),
+        truth_freqs=truth_freqs,
         remask_for_sa=remask_id,
     )
 
@@ -853,22 +1026,42 @@ def main(argv=None):
     result = _diagnose(
         "aleutians_merit",
         cell_al,
-        nhi=24, nhj=48, U=10.0, V=0.0,
-        lmbda_fa=0.0, lmbda_sa=1.0e-1, n_modes=50,
-        truth_freqs=None, remask_for_sa=remask_al,
-    )
-    _selector_compare(
-        "aleutians_merit", cell_al,
-        nhi=24, nhj=48, U=10.0, V=0.0,
-        lmbda_fa=0.0, lmbda_sa=1.0e-1, n_modes=50,
-        prior_for_compare=None, truth_freqs=None,
+        nhi=24,
+        nhj=48,
+        U=10.0,
+        V=0.0,
+        lmbda_fa=0.0,
+        lmbda_sa=1.0e-1,
+        n_modes=50,
+        truth_freqs=None,
         remask_for_sa=remask_al,
     )
     _selector_compare(
-        "aleutians_merit_gcv", cell_al,
-        nhi=24, nhj=48, U=10.0, V=0.0,
-        lmbda_fa=result["lambda"], lmbda_sa=result["lambda"], n_modes=50,
-        prior_for_compare=IsotropicPrior(), truth_freqs=None,
+        "aleutians_merit",
+        cell_al,
+        nhi=24,
+        nhj=48,
+        U=10.0,
+        V=0.0,
+        lmbda_fa=0.0,
+        lmbda_sa=1.0e-1,
+        n_modes=50,
+        prior_for_compare=None,
+        truth_freqs=None,
+        remask_for_sa=remask_al,
+    )
+    _selector_compare(
+        "aleutians_merit_gcv",
+        cell_al,
+        nhi=24,
+        nhj=48,
+        U=10.0,
+        V=0.0,
+        lmbda_fa=result["lambda"],
+        lmbda_sa=result["lambda"],
+        n_modes=50,
+        prior_for_compare=IsotropicPrior(),
+        truth_freqs=None,
         remask_for_sa=remask_al,
     )
     return 0

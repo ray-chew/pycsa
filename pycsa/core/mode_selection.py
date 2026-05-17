@@ -234,9 +234,7 @@ class LassoSelector:
         column_to_kl=None,
     ) -> IndexPair:
         if design_matrix is None or data is None:
-            raise ValueError(
-                "LassoSelector requires design_matrix and data kwargs"
-            )
+            raise ValueError("LassoSelector requires design_matrix and data kwargs")
         try:
             from sklearn.linear_model import Lasso
         except ImportError as exc:
@@ -267,9 +265,7 @@ class LassoSelector:
         return _columns_to_kl(active, fa_spectrum.shape, column_to_kl)
 
 
-def _columns_to_kl(
-    columns, spectrum_shape, column_to_kl
-) -> IndexPair:
+def _columns_to_kl(columns, spectrum_shape, column_to_kl) -> IndexPair:
     """Convert a list of design-matrix column indices into ``(k_idxs, l_idxs)``.
 
     If ``column_to_kl`` is provided, applies it. Otherwise assumes

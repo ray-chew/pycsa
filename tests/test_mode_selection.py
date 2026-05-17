@@ -113,9 +113,7 @@ def test_omp_batch_mode_returns_n_modes():
     M = rng.normal(size=(80, 20))
     y = M[:, 3] + 0.5 * M[:, 7] + 1e-3 * rng.normal(size=80)
     fa = np.zeros((4, 5))
-    k_idxs, l_idxs = OMPSelector(batch_size=3)(
-        fa, n_modes=5, design_matrix=M, data=y
-    )
+    k_idxs, l_idxs = OMPSelector(batch_size=3)(fa, n_modes=5, design_matrix=M, data=y)
     assert len(k_idxs) == 5
     assert len(l_idxs) == 5
 
@@ -132,9 +130,7 @@ def test_lasso_selector_returns_n_modes():
     truth[[2, 9, 15]] = [1.5, -0.8, 1.0]
     y = M @ truth + 1e-3 * rng.normal(size=120)
     fa = np.zeros((5, 5))
-    k_idxs, l_idxs = LassoSelector()(
-        fa, n_modes=3, design_matrix=M, data=y
-    )
+    k_idxs, l_idxs = LassoSelector()(fa, n_modes=3, design_matrix=M, data=y)
     assert len(k_idxs) == 3
     assert len(l_idxs) == 3
 

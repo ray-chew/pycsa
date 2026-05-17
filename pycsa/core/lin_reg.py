@@ -185,6 +185,7 @@ def do(
                 # Inject the prior diagonal into the sparse matrix in-place
                 # by adding a sparse diag matrix.
                 from scipy.sparse import diags as _sp_diags
+
                 E_tilda_lm_sparse = E_tilda_lm_sparse + _sp_diags(
                     diag_add, 0, shape=E_tilda_lm_sparse.shape
                 )

@@ -132,6 +132,7 @@ def _render(
     out_dir,
 ):
     """2×4 grid: original | baseline | new (GCV) | new (SpatialCV)."""
+    out_dir.mkdir(parents=True, exist_ok=True)
     fig, axs = plt.subplots(2, 4, figsize=(18, 8))
 
     topo_panels = [

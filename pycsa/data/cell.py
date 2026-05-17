@@ -142,7 +142,8 @@ class topo_cell(topo):
         self.lat_m = self.lat_grid[self.mask]
         self.topo_m = self.topo[self.mask]
 
-        self.topo_m -= self.topo_m.mean()
+        self.topo_mean = float(self.topo_m.mean())
+        self.topo_m -= self.topo_mean
 
     def get_grad_topo(self, triangle) -> None:
         """Compute the topographic gradient.

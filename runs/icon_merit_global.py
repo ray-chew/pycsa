@@ -143,7 +143,12 @@ def do_cell(
 
     # writer.output(c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell.analysis)
     result = writer.grp_struct(
-        c_idx, clat_rad[c_idx], clon_rad[c_idx], is_land, cell.analysis
+        c_idx,
+        clat_rad[c_idx],
+        clon_rad[c_idx],
+        is_land,
+        cell.analysis,
+        topo_mean=getattr(cell, "topo_mean", None),
     )
 
     if params.plot:

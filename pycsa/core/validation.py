@@ -72,9 +72,7 @@ def _build_spatial_folds(
     xmin, xmax = float(np.min(x)), float(np.max(x))
     ymin, ymax = float(np.min(y)), float(np.max(y))
     if xmax == xmin or ymax == ymin:
-        raise ValueError(
-            "coords have zero extent in at least one axis — cannot tile"
-        )
+        raise ValueError("coords have zero extent in at least one axis — cannot tile")
     # Near-square grid of tiles. Pick r and c so r*c >= n_folds and the
     # aspect ratio of the tile matches the aspect ratio of the bounding box.
     aspect = (xmax - xmin) / (ymax - ymin)
@@ -186,7 +184,9 @@ def spatial_cv_score(
                 f"design_matrix rows ({n})"
             )
     folds = _build_spatial_folds(
-        coords_array, n_folds=n_folds, buffer_fraction=buffer_fraction,
+        coords_array,
+        n_folds=n_folds,
+        buffer_fraction=buffer_fraction,
         rng_seed=rng_seed,
     )
 
@@ -196,9 +196,7 @@ def spatial_cv_score(
         M_tr, y_tr = M[train_idx], y[train_idx]
         M_ev, y_ev = M[eval_idx], y[eval_idx]
         E = M_tr.T @ M_tr
-        diag_add = np.asarray(
-            prior(fobj=None, E_tilda_lm=E, lmbda=lmbda), dtype=float
-        )
+        diag_add = np.asarray(prior(fobj=None, E_tilda_lm=E, lmbda=lmbda), dtype=float)
         if diag_add.shape != (E.shape[0],):
             raise ValueError(
                 f"prior returned diag of shape {diag_add.shape}; "

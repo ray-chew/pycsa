@@ -22,7 +22,6 @@ from pycsa.core.hyperparams import (
 )
 from pycsa.core.priors import SpectralPrior
 
-
 # -----------------------------------------------------------------------------
 # Synthetic helpers
 # -----------------------------------------------------------------------------
@@ -131,9 +130,7 @@ def test_fixed_lambda_passthrough():
 def test_gcv_returns_positive_finite_lambda():
     M, rng = _simple_design(n_points=80, n_modes=15)
     y = M @ rng.normal(size=15) + 0.05 * rng.normal(size=80)
-    lam = GCVSelector()(
-        M, y, alpha=0.0, prior_factory=_trial_prior_factory
-    )
+    lam = GCVSelector()(M, y, alpha=0.0, prior_factory=_trial_prior_factory)
     assert np.isfinite(lam)
     assert lam > 0.0
 
@@ -174,9 +171,7 @@ def test_marginal_likelihood_agrees_with_gcv_in_gaussian_regime():
     M, rng = _simple_design(n_points=400, n_modes=30, seed=9)
     truth = rng.normal(size=30)
     y = M @ truth + 0.1 * rng.normal(size=400)
-    lam_gcv = GCVSelector()(
-        M, y, alpha=0.0, prior_factory=_trial_prior_factory
-    )
+    lam_gcv = GCVSelector()(M, y, alpha=0.0, prior_factory=_trial_prior_factory)
     lam_ml = MarginalLikelihoodSelector()(
         M, y, alpha=0.0, prior_factory=_trial_prior_factory
     )
@@ -226,9 +221,7 @@ def test_build_spectral_prior_with_fixed_alpha_skips_slope_fit():
     field = rng.normal(size=(48, 48))
     M, _ = _simple_design(n_points=field.size, n_modes=20, seed=2)
     y = field.ravel()
-    hp = build_spectral_prior(
-        field, M, y, alpha_selector=FixedAlpha(1.5)
-    )
+    hp = build_spectral_prior(field, M, y, alpha_selector=FixedAlpha(1.5))
     assert hp.alpha == 1.5
     assert hp.slope_fit is None
 
@@ -239,7 +232,9 @@ def test_build_spectral_prior_with_fixed_lambda_returns_that_lambda():
     M, _ = _simple_design(n_points=field.size, n_modes=15, seed=3)
     y = field.ravel()
     hp = build_spectral_prior(
-        field, M, y,
+        field,
+        M,
+        y,
         alpha_selector=FixedAlpha(0.0),
         lambda_selector=FixedLambda(0.123),
     )
@@ -272,10 +267,14 @@ def test_joint_gcv_with_alpha_zero_only_matches_gcv_selector():
     y = M @ rng.normal(size=18) + 0.05 * rng.normal(size=160)
     grid = np.logspace(-6, 1, 21)
     _, lam_joint = JointGCVSelector(
-        alpha_grid=np.array([0.0]), lambda_grid=grid,
+        alpha_grid=np.array([0.0]),
+        lambda_grid=grid,
     )(M, y)
     lam_solo = GCVSelector(lambda_grid=grid)(
-        M, y, alpha=0.0, prior_factory=lambda a: SpectralPrior(alpha=a),
+        M,
+        y,
+        alpha=0.0,
+        prior_factory=lambda a: SpectralPrior(alpha=a),
     )
     # Both run on the same eigendecomp + grid — should match exactly.
     np.testing.assert_allclose(lam_joint, lam_solo)
@@ -287,7 +286,9 @@ def test_build_spectral_prior_joint_mode_returns_hyperparams():
     M, _ = _simple_design(n_points=field.size, n_modes=20, seed=7)
     y = field.ravel() + 0.01 * rng.normal(size=field.size)
     hp = build_spectral_prior(
-        field, M, y,
+        field,
+        M,
+        y,
         joint_selector=JointGCVSelector(
             alpha_grid=np.array([0.0, 1.0, 2.0]),
         ),

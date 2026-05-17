@@ -55,7 +55,6 @@ from validate_hyperparam_defaults import (  # noqa: E402
     OUTPUT_DIR,
 )
 
-
 # ----------------------------------------------------------------------
 # Region catalog
 # ----------------------------------------------------------------------
@@ -65,14 +64,14 @@ from validate_hyperparam_defaults import (  # noqa: E402
 # override on the CLI with --regions.
 
 REGIONS = {
-    "aleutians":         ( 52.0, -175.0),
-    "himalayas":         ( 28.0,   87.0),
-    "andes":             (-22.0,  -68.0),
-    "alps":              ( 46.5,    8.5),
-    "greenland":         ( 72.0,  -40.0),
-    "east_african_rift": (  0.5,   36.0),
-    "pacific_nw":        ( 47.0, -123.0),
-    "south_pole":        (-89.0,    0.0),
+    "aleutians": (52.0, -175.0),
+    "himalayas": (28.0, 87.0),
+    "andes": (-22.0, -68.0),
+    "alps": (46.5, 8.5),
+    "greenland": (72.0, -40.0),
+    "east_african_rift": (0.5, 36.0),
+    "pacific_nw": (47.0, -123.0),
+    "south_pole": (-89.0, 0.0),
 }
 
 # Production-baseline parameters reused across cells (mirror the
@@ -95,12 +94,15 @@ PADDING = 10
 
 def _great_circle_distance(lat1, lon1, lat2, lon2):
     """Great-circle distance (radians) between two (lat, lon) points in degrees."""
-    a1 = np.deg2rad(lat1); o1 = np.deg2rad(lon1)
-    a2 = np.deg2rad(lat2); o2 = np.deg2rad(lon2)
+    a1 = np.deg2rad(lat1)
+    o1 = np.deg2rad(lon1)
+    a2 = np.deg2rad(lat2)
+    o2 = np.deg2rad(lon2)
     return np.arccos(
         np.clip(
             np.sin(a1) * np.sin(a2) + np.cos(a1) * np.cos(a2) * np.cos(o2 - o1),
-            -1.0, 1.0,
+            -1.0,
+            1.0,
         )
     )
 
@@ -164,8 +166,10 @@ def _run_region(name, grid, etopo_dir: str, etopo_cg: int):
     print(f"\n========================================")
     print(f"region: {name}")
     print(f"  target  (lat, lon) = ({lat_deg:.2f}°, {lon_deg:.2f}°)")
-    print(f"  nearest cell idx   = {cell_idx}  centroid = "
-          f"({clat_deg:.2f}°, {clon_deg:.2f}°)")
+    print(
+        f"  nearest cell idx   = {cell_idx}  centroid = "
+        f"({clat_deg:.2f}°, {clon_deg:.2f}°)"
+    )
     try:
         cell, _clat, _clon, remask_for_sa = _build_cell_from_etopo(
             grid, cell_idx, etopo_dir, etopo_cg
@@ -179,9 +183,15 @@ def _run_region(name, grid, etopo_dir: str, etopo_cg: int):
 
     # Prior comparison (3-way) at the production baseline.
     result = _diagnose(
-        name, cell,
-        nhi=NHI, nhj=NHJ, U=U, V=V,
-        lmbda_fa=LMBDA_FA, lmbda_sa=LMBDA_SA, n_modes=N_MODES,
+        name,
+        cell,
+        nhi=NHI,
+        nhj=NHJ,
+        U=U,
+        V=V,
+        lmbda_fa=LMBDA_FA,
+        lmbda_sa=LMBDA_SA,
+        n_modes=N_MODES,
         truth_freqs=None,  # no ground truth for real-data cells
         remask_for_sa=remask_for_sa,
     )
@@ -190,17 +200,31 @@ def _run_region(name, grid, etopo_dir: str, etopo_cg: int):
     # winner per cell). Side-by-side both lets the reader see whether
     # selector preference flips with the regularization regime.
     _selector_compare(
-        name, cell,
-        nhi=NHI, nhj=NHJ, U=U, V=V,
-        lmbda_fa=LMBDA_FA, lmbda_sa=LMBDA_SA, n_modes=N_MODES,
-        prior_for_compare=None, truth_freqs=None,
+        name,
+        cell,
+        nhi=NHI,
+        nhj=NHJ,
+        U=U,
+        V=V,
+        lmbda_fa=LMBDA_FA,
+        lmbda_sa=LMBDA_SA,
+        n_modes=N_MODES,
+        prior_for_compare=None,
+        truth_freqs=None,
         remask_for_sa=remask_for_sa,
     )
     _selector_compare(
-        f"{name}_gcv", cell,
-        nhi=NHI, nhj=NHJ, U=U, V=V,
-        lmbda_fa=result["lambda"], lmbda_sa=result["lambda"], n_modes=N_MODES,
-        prior_for_compare=IsotropicPrior(), truth_freqs=None,
+        f"{name}_gcv",
+        cell,
+        nhi=NHI,
+        nhj=NHJ,
+        U=U,
+        V=V,
+        lmbda_fa=result["lambda"],
+        lmbda_sa=result["lambda"],
+        n_modes=N_MODES,
+        prior_for_compare=IsotropicPrior(),
+        truth_freqs=None,
         remask_for_sa=remask_for_sa,
     )
 
@@ -217,22 +241,22 @@ def _parse_args(argv):
         type=str,
         default=None,
         help="Path to an ICON grid .nc file (e.g. R2B4). If omitted, falls back "
-             "to the bundled etopo_single_cell fixture grid (single polar cell only).",
+        "to the bundled etopo_single_cell fixture grid (single polar cell only).",
     )
     p.add_argument(
         "--etopo-dir",
         type=str,
         default=None,
         help="Directory of ETOPO 15s NetCDF tiles. If omitted, uses the bundled "
-             "single-cell fixture tiles.",
+        "single-cell fixture tiles.",
     )
     p.add_argument(
         "--etopo-cg",
         type=int,
         default=4,
         help="ETOPO coarse-graining factor (default 4 = production). The "
-             "bundled fixture is pre-downsampled by 20× so the demo path "
-             "auto-sets this to 1.",
+        "bundled fixture is pre-downsampled by 20× so the demo path "
+        "auto-sets this to 1.",
     )
     p.add_argument(
         "--regions",
@@ -249,9 +273,18 @@ def main(argv=None):
     repo_root = Path(__file__).resolve().parents[1]
 
     if args.icon_grid is None or args.etopo_dir is None:
-        print("No --icon-grid / --etopo-dir provided — falling back to bundled "
-              "etopo_single_cell fixture (single polar cell only).")
-        fixture_dir = repo_root / "tests" / "reproducibility" / "fixtures" / "etopo_single_cell" / "input"
+        print(
+            "No --icon-grid / --etopo-dir provided — falling back to bundled "
+            "etopo_single_cell fixture (single polar cell only)."
+        )
+        fixture_dir = (
+            repo_root
+            / "tests"
+            / "reproducibility"
+            / "fixtures"
+            / "etopo_single_cell"
+            / "input"
+        )
         icon_grid_path = str(fixture_dir / "icon_grid.nc")
         etopo_dir = str(fixture_dir / "etopo")
         etopo_cg = 1  # bundle is pre-downsampled
@@ -274,6 +307,7 @@ def main(argv=None):
         except Exception as exc:
             print(f"\nregion {name} failed: {exc}")
             import traceback
+
             traceback.print_exc()
     return 0
 

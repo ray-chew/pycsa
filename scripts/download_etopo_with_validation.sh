@@ -36,12 +36,20 @@ echo "Data type: $DATA_TYPE"
 echo "Directory: $OUTPUT_DIR"
 echo "========================================"
 
-# Function to get remote file size
-get_remote_size() {
+# Function to check if remote file exists (returns 0 if yes, 1 if no)
+check_remote_exists() {
     local url="$1"
-    # Use wget --spider to get headers only
-    local size=$(wget --spider --server-response "$url" 2>&1 | grep -i Content-Length | tail -1 | awk '{print $2}')
-    echo "$size"
+    wget --spider --quiet "$url" 2>/dev/null
+}
+
+# Function to validate a NetCDF file (non-zero size + valid header)
+validate_netcdf() {
+    local file="$1"
+    if [ ! -f "$file" ] || [ ! -s "$file" ]; then
+        return 1
+    fi
+    # Check NetCDF header is readable
+    ncdump -h "$file" >/dev/null 2>&1
 }
 
 # Function to get local file size
@@ -60,34 +68,20 @@ verify_tile() {
     local lon="$2"
     local filename="ETOPO_2022_v1_15s_${lat}${lon}_${FILE_SUFFIX}.nc"
     local filepath="${OUTPUT_DIR}/${filename}"
-    local url="${BASE_URL}/${filename}"
 
     echo -n "Verifying ${lat}${lon}... "
 
-    # Check if file exists locally
-    local local_size=$(get_local_size "$filepath")
-
-    if [ "$local_size" = "0" ]; then
+    if [ ! -f "$filepath" ]; then
         echo "✗ Missing"
         return 1
     fi
 
-    # Get remote size
-    local remote_size=$(get_remote_size "$url")
-
-    if [ -z "$remote_size" ] || [ "$remote_size" = "0" ]; then
-        echo "⚠️  Cannot verify (server unavailable)"
-        return 2
-    fi
-
-    # Compare sizes
-    if [ "$local_size" = "$remote_size" ]; then
-        echo "✓ Valid ($(($remote_size / 1048576)) MB)"
+    if validate_netcdf "$filepath"; then
+        local local_size=$(get_local_size "$filepath")
+        echo "✓ Valid ($(($local_size / 1048576)) MB)"
         return 0
     else
-        local local_mb=$(($local_size / 1048576))
-        local remote_mb=$(($remote_size / 1048576))
-        echo "✗ Size mismatch! Local: ${local_mb} MB, Expected: ${remote_mb} MB"
+        echo "✗ Invalid NetCDF"
         return 1
     fi
 }
@@ -100,36 +94,31 @@ download_tile() {
     local filepath="${OUTPUT_DIR}/${filename}"
     local url="${BASE_URL}/${filename}"
 
-    # Check if file exists and get sizes
-    local local_size=$(get_local_size "$filepath")
-
     echo -n "Checking ${lat}${lon}... "
 
-    # Get remote size
-    local remote_size=$(get_remote_size "$url")
+    # Skip if already downloaded and valid
+    if validate_netcdf "$filepath" 2>/dev/null; then
+        local local_size=$(get_local_size "$filepath")
+        echo "✓ Already downloaded ($(($local_size / 1048576)) MB)"
+        return 0
+    fi
 
-    if [ -z "$remote_size" ] || [ "$remote_size" = "0" ]; then
+    # Check if remote file exists
+    if ! check_remote_exists "$url"; then
         echo "⚠️  File not available on server"
         return 1
     fi
 
-    # Check if local file matches remote size
-    if [ "$local_size" = "$remote_size" ]; then
-        echo "✓ Already downloaded ($(($remote_size / 1048576)) MB)"
-        return 0
-    fi
-
     # Download the file
-    echo "Downloading ($(($remote_size / 1048576)) MB)..."
-    if wget -c -O "$filepath" "$url" 2>&1 | grep -v "^--" | grep -v "^Saving" | grep -v "^Length"; then
-        # Verify download
-        local final_size=$(get_local_size "$filepath")
-        if [ "$final_size" = "$remote_size" ]; then
-            echo "  ✓ Download verified"
+    echo "Downloading..."
+    if wget -q -O "$filepath" "$url"; then
+        # Verify download is valid NetCDF
+        if validate_netcdf "$filepath"; then
+            local final_size=$(get_local_size "$filepath")
+            echo "  ✓ Download verified ($(($final_size / 1048576)) MB)"
             return 0
         else
-            echo "  ✗ Size mismatch! Expected: $remote_size, Got: $final_size"
-            echo "  Deleting incomplete file..."
+            echo "  ✗ Downloaded file is not valid NetCDF"
             rm -f "$filepath"
             return 1
         fi

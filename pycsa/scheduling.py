@@ -140,8 +140,8 @@ def group_cells_by_memory(
     # Finalize last batch
     if current_batch_indices:
         avg_mem = np.mean(current_batch_memory)
-        # Use 30% safety margin for diskless NetCDF loading
-        safety_factor = 1.0
+        # Use 50% safety margin for diskless NetCDF loading
+        safety_factor = 1.5
         n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem * safety_factor)))
         mem_per_worker = avg_mem * safety_factor
 

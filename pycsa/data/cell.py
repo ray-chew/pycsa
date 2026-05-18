@@ -43,7 +43,7 @@ class grid:
     # Field names that ``apply_f`` skips. Was a runtime-set instance list
     # in the old class; now a ClassVar exclusion set, so the data fields
     # and the apply_f exclusion list are in one place.
-    NON_CONVERTIBLES: ClassVar[tuple[str, ...]] = ("links", "cell_area")
+    NON_CONVERTIBLES = ("links", "cell_area")
 
     def apply_f(self, f):
         """Apply ``f`` to each (lat, lon)-style attribute.

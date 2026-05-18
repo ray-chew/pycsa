@@ -16,17 +16,21 @@ Author: Test Suite
 Date: 2025-10-22
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
+import os
 import time
 from pathlib import Path
 import sys
 
+import numpy as np
+import pytest
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 from pycsa.core import io, var
-from pycsa.plotting import cart_plot
 
 
-def test_region(name, lat_extent, lon_extent, merit_cg=50, description=""):
+def run_region(name, lat_extent, lon_extent, merit_cg=50, description=""):
     """
     Test loading a specific region.
 
@@ -65,8 +69,8 @@ def test_region(name, lat_extent, lon_extent, merit_cg=50, description=""):
     # Create parameters
     class Params:
         def __init__(self):
-            self.path_merit = "/home/ray/Documents/orog_data/MERIT/"
-            self.path_rema = "/home/ray/Documents/orog_data/REMA/"
+            self.path_merit = os.getenv("SPEC_APPX_MERIT_DIR", "/path/to/MERIT/")
+            self.path_rema = os.getenv("SPEC_APPX_REMA_DIR", "/path/to/REMA/")
             self.lat_extent = lat_extent
             self.lon_extent = lon_extent
             self.merit_cg = merit_cg
@@ -149,6 +153,7 @@ def test_region(name, lat_extent, lon_extent, merit_cg=50, description=""):
         else:
             figsize = (12, 8)
 
+        from pycsa.plotting import cart_plot
         cart_plot.lat_lon(cell, fs=figsize, int=1)
         print(f"✓ Plot displayed")
         print()
@@ -211,7 +216,7 @@ def run_all_edge_case_tests():
 
     # Test 1: MERIT-REMA Interface at EXACTLY -60° (South Orkney Islands!)
     # This is THE island you remember - sits right on the boundary!
-    results.append(test_region(
+    results.append(run_region(
         name="MERIT-REMA Boundary (South Orkney Islands)",
         lat_extent=[-61.5, -59.5],  # Tight 2° centered on South Orkney at -60.5°
         lon_extent=[-47.0, -44.0],  # Narrow 3° window over South Orkney Islands at -45.5°
@@ -222,7 +227,7 @@ def run_all_edge_case_tests():
     ))
 
     # Test 1b: MERIT-REMA Interface (Antarctic Peninsula - broader view)
-    results.append(test_region(
+    results.append(run_region(
         name="MERIT-REMA Interface (Antarctic Peninsula)",
         lat_extent=[-70.0, -55.0],  # Crosses -60° boundary, broader range
         lon_extent=[-65.0, -55.0],  # Narrow 10° window over Antarctic Peninsula
@@ -233,7 +238,7 @@ def run_all_edge_case_tests():
     ))
 
     # Test 2: Dateline Crossing - Kamchatka Peninsula (Russia, has land)
-    results.append(test_region(
+    results.append(run_region(
         name="Dateline Crossing (Kamchatka Peninsula)",
         lat_extent=[50.0, 62.0],  # Kamchatka Peninsula latitude
         lon_extent=[175.0, -175.0],  # Narrow 10° window crossing dateline
@@ -244,7 +249,7 @@ def run_all_edge_case_tests():
     ))
 
     # Test 3: North Pole Region - Greenland focus (has major topography)
-    results.append(test_region(
+    results.append(run_region(
         name="North Pole Region (Greenland)",
         lat_extent=[75.0, 85.0],  # High Arctic, northern Greenland
         lon_extent=[-50.0, -20.0],  # Narrow window over Greenland ice sheet
@@ -255,7 +260,7 @@ def run_all_edge_case_tests():
     ))
 
     # Test 4: Prime Meridian Crossing - UK/France coast (small, fast, over land)
-    results.append(test_region(
+    results.append(run_region(
         name="Prime Meridian Crossing (UK-France)",
         lat_extent=[49.0, 52.0],  # English Channel area, tight lat range
         lon_extent=[-3.0, 3.0],  # Narrow 6° window crossing 0° longitude
@@ -266,7 +271,7 @@ def run_all_edge_case_tests():
     ))
 
     # Test 5: Equator Crossing - Mount Kenya area (has elevation features)
-    results.append(test_region(
+    results.append(run_region(
         name="Equator Crossing (Mount Kenya)",
         lat_extent=[-2.0, 2.0],  # Narrow 4° crossing equator
         lon_extent=[36.0, 38.0],  # Tight 2° window on Mt. Kenya
@@ -277,7 +282,7 @@ def run_all_edge_case_tests():
     ))
 
     # Test 6: Tierra del Fuego - near MERIT-REMA boundary
-    results.append(test_region(
+    results.append(run_region(
         name="Tierra del Fuego (Near Antarctic Boundary)",
         lat_extent=[-56.0, -53.0],  # Southernmost South America
         lon_extent=[-70.0, -65.0],  # Cape Horn area
@@ -288,7 +293,7 @@ def run_all_edge_case_tests():
     ))
 
     # Test 7: Bering Strait - dateline + high latitude (Alaska-Russia)
-    results.append(test_region(
+    results.append(run_region(
         name="Bering Strait (Dateline + High Latitude)",
         lat_extent=[64.0, 68.0],  # Bering Strait, tight range
         lon_extent=[177.0, -177.0],  # Narrow 6° crossing dateline
@@ -299,7 +304,7 @@ def run_all_edge_case_tests():
     ))
 
     # Test 8: South Pole Region (Pure REMA) - smaller window
-    results.append(test_region(
+    results.append(run_region(
         name="South Pole Region (Marie Byrd Land)",
         lat_extent=[-85.0, -75.0],  # Deep Antarctica
         lon_extent=[-150.0, -100.0],  # Narrower 50° window over Marie Byrd Land
@@ -454,7 +459,7 @@ if __name__ == "__main__":
         }
 
         config = test_configs[args.test]
-        result = test_region(**config)
+        result = run_region(**config)
         success = result.get("success", False)
         sys.exit(0 if success else 1)
 
@@ -465,7 +470,7 @@ if __name__ == "__main__":
         results = []
 
         # 1. MERIT-REMA interface at EXACT boundary (most critical!)
-        results.append(test_region(
+        results.append(run_region(
             name="MERIT-REMA Boundary (South Orkney Islands)",
             lat_extent=[-61.5, -59.5],
             lon_extent=[-47.0, -44.0],
@@ -474,7 +479,7 @@ if __name__ == "__main__":
         ))
 
         # 2. Dateline crossing
-        results.append(test_region(
+        results.append(run_region(
             name="Dateline Crossing (Kamchatka)",
             lat_extent=[50.0, 62.0],
             lon_extent=[175.0, -175.0],
@@ -483,7 +488,7 @@ if __name__ == "__main__":
         ))
 
         # 3. North Pole
-        results.append(test_region(
+        results.append(run_region(
             name="North Pole (Greenland)",
             lat_extent=[75.0, 85.0],
             lon_extent=[-50.0, -20.0],

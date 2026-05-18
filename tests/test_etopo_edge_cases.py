@@ -6,20 +6,33 @@ Tests critical latitude/longitude boundaries where tile loading might fail.
 Includes visualization of edge cases like dateline and prime meridian.
 """
 
+import os
 import sys
-import numpy as np
 
-# Force reload
-for mod in list(sys.modules.keys()):
-    if 'pycsa' in mod:
-        del sys.modules[mod]
+import numpy as np
+import pytest
 
 from pycsa.core import io, var
-from pycsa.plotting import cart_plot
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def test_and_plot_region(lat_extent, lon_extent, description, plot=True):
+def _get_etopo_path():
+    """Get ETOPO data path from env or local_paths, skip if not found."""
+    path = os.getenv("ETOPO_DATA_PATH")
+    if not path:
+        try:
+            from pycsa import local_paths
+            path = getattr(local_paths.paths, 'etopo', None)
+        except (ImportError, AttributeError):
+            pass
+    if not path or not os.path.isdir(path):
+        pytest.skip(f"ETOPO data not found (set ETOPO_DATA_PATH)")
+    return path if path.endswith("/") else path + "/"
+
+
+def run_and_plot_region(lat_extent, lon_extent, description, plot=True):
     """Test and optionally plot a specific region."""
     print(f"\nTest: {description}")
     print(f"  Latitude: {lat_extent}")
@@ -27,7 +40,7 @@ def test_and_plot_region(lat_extent, lon_extent, description, plot=True):
 
     class Params:
         def __init__(self):
-            self.path_etopo = "/home/ray/git-projects/spec_appx/data/etopo_15s/"
+            self.path_etopo = _get_etopo_path()
             self.lat_extent = lat_extent
             self.lon_extent = lon_extent
             self.etopo_cg = 8
@@ -96,7 +109,7 @@ def run_edge_case_tests():
     print("\n" + "=" * 80)
     print("TEST 1: PRIME MERIDIAN CROSSING")
     print("=" * 80)
-    success, cell = test_and_plot_region(
+    success, cell = run_and_plot_region(
         lat_extent=[-30.0, 60.0],
         lon_extent=[-30.0, 30.0],
         description="Prime Meridian (-30 to 30°E)",
@@ -108,7 +121,7 @@ def run_edge_case_tests():
     print("\n" + "=" * 80)
     print("TEST 2: DATELINE CROSSING")
     print("=" * 80)
-    success, cell = test_and_plot_region(
+    success, cell = run_and_plot_region(
         lat_extent=[-30.0, 60.0],
         lon_extent=[150.0, -150.0],  # Crosses dateline
         description="Dateline Crossing (150°E to 150°W)",
@@ -120,7 +133,7 @@ def run_edge_case_tests():
     print("\n" + "=" * 80)
     print("TEST 3: FULL GLOBAL")
     print("=" * 80)
-    success, cell = test_and_plot_region(
+    success, cell = run_and_plot_region(
         lat_extent=[-90.0, 90.0],
         lon_extent=[-180.0, 180.0],
         description="Full Global",
@@ -132,7 +145,7 @@ def run_edge_case_tests():
     print("\n" + "=" * 80)
     print("TEST 4: HIMALAYAS REGION (Multi-tile)")
     print("=" * 80)
-    success, cell = test_and_plot_region(
+    success, cell = run_and_plot_region(
         lat_extent=[15.0, 45.0],
         lon_extent=[75.0, 105.0],
         description="Himalayas (15-45°N, 75-105°E)",
@@ -148,7 +161,7 @@ def run_edge_case_tests():
     print("\n" + "=" * 80)
     print("TEST 5: ANDES REGION (Multi-tile)")
     print("=" * 80)
-    success, cell = test_and_plot_region(
+    success, cell = run_and_plot_region(
         lat_extent=[-45.0, -15.0],
         lon_extent=[-75.0, -60.0],
         description="Andes (45-15°S, 75-60°W)",
@@ -162,7 +175,7 @@ def run_edge_case_tests():
     print("\n" + "=" * 80)
     print("TEST 6: PACIFIC DATELINE (Multiple tiles)")
     print("=" * 80)
-    success, cell = test_and_plot_region(
+    success, cell = run_and_plot_region(
         lat_extent=[0.0, 45.0],
         lon_extent=[165.0, -165.0],
         description="Pacific Dateline (165°E to 165°W)",

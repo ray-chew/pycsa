@@ -4,12 +4,30 @@ Integration test for idealised isosceles triangle case.
 This test runs the full CSA pipeline on synthetic terrain with an isosceles
 triangular domain and compares results against baseline values from the
 published JAMES paper.
+Generates diagnostic plots in plots/tests/idealised_isosceles/.
 """
 
 import numpy as np
 import pytest
+from pathlib import Path
 from pycsa import var, utils, interface
 from copy import deepcopy
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+
+PLOT_DIR = Path(__file__).parent.parent.parent / "plots" / "tests" / "idealised_isosceles"
+
+
+def _save_fig(name):
+    """Save figure to plot directory."""
+    PLOT_DIR.mkdir(parents=True, exist_ok=True)
+    path = PLOT_DIR / name
+    plt.savefig(path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"    Plot saved: {path}")
 
 
 class TestIdealisedIsosceles:
@@ -38,7 +56,6 @@ class TestIdealisedIsosceles:
         """Generate the synthetic terrain with known spectral content."""
         np.random.seed(777)
 
-        # Generate random spectral modes
         sz = 25
         nk = np.random.randint(0, 12, size=sz)
         nl = np.random.randint(-5, 7, size=sz)
@@ -75,7 +92,6 @@ class TestIdealisedIsosceles:
         nhi = 12
         nhj = 12
 
-        # Initialize triangle
         grid = var.grid()
         cell = var.topo_cell()
         vid = utils.isosceles(grid, cell)
@@ -85,7 +101,6 @@ class TestIdealisedIsosceles:
 
         cell.gen_mgrids()
 
-        # Fill with synthetic topography
         cell.topo = np.zeros_like(cell.lat_grid)
 
         def sinusoidal_basis(Ak, nk, Al, nl, sc):
@@ -107,7 +122,6 @@ class TestIdealisedIsosceles:
                 terrain['sck'][ii]
             )
 
-        # Define triangle mask
         triangle = utils.gen_triangle(lon_v, lat_v)
         cell.get_masked(triangle=triangle)
 
@@ -128,42 +142,39 @@ class TestIdealisedIsosceles:
         lmbda_fg = 1e-1
         lmbda_sg = 1e-6
 
-        # Artificial winds (not used in idealised test)
         U, V = 1.0, 1.0
 
-        # Build reference spectrum from known terrain components
+        # Build reference spectrum
         freqs_ref = np.zeros((nhi, nhj))
         cnt = 0
         for pt in terrain['pts']:
             kk, ll = pt
-            ll += 5  # Offset as in original script
+            ll += 5
             freqs_ref[ll, kk] = terrain['Ak'][cnt]
             cnt += 1
 
-        # Run pure LSFF
+        # Pure LSFF
         pure_lsff = interface.get_pmf(nhi, nhj, U, V)
-        freqs_plsff, _, _ = pure_lsff.sappx(
+        freqs_plsff, _, recon_plsff = pure_lsff.sappx(
             cell, lmbda=0.0, iter_solve=False, save_am=True
         )
 
-        # Run regularized LSFF
+        # Regularized LSFF
         reg_lsff = interface.get_pmf(nhi, nhj, U, V)
-        freqs_rlsff, _, _ = reg_lsff.sappx(
+        freqs_rlsff, _, recon_rlsff = reg_lsff.sappx(
             cell, lmbda=lmbda_reg, iter_solve=False
         )
 
-        # Run CSA (first approximation + mode selection + second approximation)
+        # CSA: first approximation on full domain
         first_guess = interface.get_pmf(nhi, nhj, U, V)
-
-        # First approximation on quadrilateral domain
         cell_fa = deepcopy(cell)
         cell_fa.get_masked(mask=np.ones_like(cell.topo).astype('bool'))
         cell_fa.wlat = np.diff(cell_fa.lat).mean()
         cell_fa.wlon = np.diff(cell_fa.lon).mean()
 
-        freqs_fg, _, _ = first_guess.sappx(cell_fa, lmbda=lmbda_fg, iter_solve=False)
+        freqs_fg, _, recon_fg = first_guess.sappx(cell_fa, lmbda=lmbda_fg, iter_solve=False)
 
-        # Select top N modes
+        # Mode selection
         fq_cpy = np.copy(freqs_fg)
         fq_cpy[np.isnan(fq_cpy)] = 0.0
 
@@ -176,7 +187,7 @@ class TestIdealisedIsosceles:
         k_idxs = [pair[1] for pair in indices]
         l_idxs = [pair[0] for pair in indices]
 
-        # Second approximation on triangular domain
+        # Second approximation on triangle
         second_guess = interface.get_pmf(nhi, nhj, U, V)
         second_guess.fobj.set_kls(k_idxs, l_idxs, recompute_nhij=False)
 
@@ -185,49 +196,103 @@ class TestIdealisedIsosceles:
         cell_sa.wlat = np.diff(cell_sa.lat).mean()
         cell_sa.wlon = np.diff(cell_sa.lon).mean()
 
-        freqs_csa, _, _ = second_guess.sappx(
+        freqs_csa, _, recon_csa = second_guess.sappx(
             cell_sa, lmbda=lmbda_sg, updt_analysis=True, scale=1.0, iter_solve=False
         )
 
-        # Clean up NaN values
+        # Clean NaN
         freqs_plsff = np.nan_to_num(freqs_plsff)
         freqs_rlsff = np.nan_to_num(freqs_rlsff)
         freqs_csa = np.nan_to_num(freqs_csa)
         freqs_ref = np.nan_to_num(freqs_ref)
 
-        # Compute L2 errors against reference
+        # L2 errors
         err_plsff = np.linalg.norm(freqs_plsff - freqs_ref)
         err_rlsff = np.linalg.norm(freqs_rlsff - freqs_ref)
         err_csa = np.linalg.norm(freqs_csa - freqs_ref)
 
-        # Compare against baseline with reasonable tolerance
-        # The baseline L2 errors are: [0, 164291.57, 115.71, 85.68, 111.37, 164291.57]
-        # Where indices are: [ref, pLSFF, rLSFF, optCSA, subCSA, quad]
-        # We're running subCSA (n_modes=14), so compare against baseline[4] = 111.37
-
-        # For now, just check that computations run and produce reasonable values
         assert err_plsff > 1000, "Pure LSFF should have large error (overfits)"
         assert err_rlsff > 0, "Regularized LSFF should have some error"
         assert err_csa > 0, "CSA should have some error"
         assert err_csa < err_plsff, "CSA should perform better than pure LSFF"
-
-        # Check that we're in the right ballpark (within factor of 2)
         assert 50 < err_csa < 250, f"CSA L2 error {err_csa:.2f} should be ~111 (baseline)"
 
-        # Amplitude sums should be positive
         sum_plsff = freqs_plsff.sum()
         sum_rlsff = freqs_rlsff.sum()
         sum_csa = freqs_csa.sum()
 
-        assert sum_plsff > 0, "Pure LSFF amplitude sum should be positive"
-        assert sum_rlsff > 0, "Regularized LSFF amplitude sum should be positive"
-        assert sum_csa > 0, "CSA amplitude sum should be positive"
+        assert sum_plsff > 0
+        assert sum_rlsff > 0
+        assert sum_csa > 0
+
+        # --- Plot: JAMES paper Figure 4 reproduction ---
+        masked_topo = np.where(cell.mask, cell.topo, np.nan)
+
+        fig, axes = plt.subplots(2, 3, figsize=(18, 11))
+
+        # Row 1: reconstructions
+        im00 = axes[0, 0].imshow(masked_topo, cmap='terrain', origin='lower')
+        plt.colorbar(im00, ax=axes[0, 0], label='m')
+        axes[0, 0].set_title(f'Original ({sz} modes)')
+
+        im01 = axes[0, 1].imshow(recon_plsff, cmap='terrain', origin='lower')
+        plt.colorbar(im01, ax=axes[0, 1], label='m')
+        rmse_plsff = np.sqrt(np.nanmean((masked_topo - recon_plsff)**2))
+        axes[0, 1].set_title(f'Pure LSFF (RMSE={rmse_plsff:.0f} m)')
+
+        im02 = axes[0, 2].imshow(recon_csa, cmap='terrain', origin='lower')
+        plt.colorbar(im02, ax=axes[0, 2], label='m')
+        rmse_csa = np.sqrt(np.nanmean((masked_topo - recon_csa)**2))
+        axes[0, 2].set_title(f'CSA {n_modes} modes (RMSE={rmse_csa:.0f} m)')
+
+        # Row 2: spectra
+        vmax = max(np.abs(freqs_ref).max(), np.abs(freqs_plsff).max(),
+                   np.abs(freqs_csa).max())
+
+        im10 = axes[1, 0].imshow(np.abs(freqs_ref), cmap='hot_r', aspect='auto',
+                                 origin='lower', vmin=0, vmax=vmax)
+        plt.colorbar(im10, ax=axes[1, 0], label='|A| (m)')
+        axes[1, 0].set_title('Reference Spectrum')
+
+        im11 = axes[1, 1].imshow(np.abs(freqs_plsff), cmap='hot_r', aspect='auto',
+                                 origin='lower', vmin=0, vmax=vmax)
+        plt.colorbar(im11, ax=axes[1, 1], label='|A| (m)')
+        axes[1, 1].set_title(f'Pure LSFF (L2={err_plsff:.0f})')
+
+        im12 = axes[1, 2].imshow(np.abs(freqs_csa), cmap='hot_r', aspect='auto',
+                                 origin='lower', vmin=0, vmax=vmax)
+        plt.colorbar(im12, ax=axes[1, 2], label='|A| (m)')
+        axes[1, 2].set_title(f'CSA (L2={err_csa:.1f})')
+
+        for ax in axes.flat:
+            ax.set_xlabel('k')
+            ax.set_ylabel('l')
+
+        fig.suptitle('Isosceles Triangle — CSA vs LSFF (cf. JAMES Fig. 4)', fontsize=14)
+        plt.tight_layout()
+        _save_fig('james_fig4_reproduction.png')
+
+        # --- Plot: L2 error bar chart ---
+        fig, ax = plt.subplots(figsize=(8, 5))
+        methods = ['Pure LSFF', 'Reg. LSFF', f'CSA ({n_modes} modes)',
+                   'Baseline (JAMES)']
+        errors = [err_plsff, err_rlsff, err_csa, baseline_results['l2_errors'][4]]
+        colors = ['#d62728', '#ff7f0e', '#2ca02c', '#1f77b4']
+        bars = ax.bar(methods, errors, color=colors, edgecolor='k')
+
+        for bar, err in zip(bars, errors):
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 500,
+                    f'{err:.1f}', ha='center', fontsize=10)
+
+        ax.set_ylabel('L2 Error')
+        ax.set_title('Spectral Error: Methods Comparison')
+        ax.set_yscale('log')
+        _save_fig('l2_error_comparison.png')
 
     def test_mode_count(self, synthetic_terrain, baseline_results):
         """Test that the correct number of unique modes are generated."""
         sz = synthetic_terrain['sz']
 
-        # Should match baseline number of unique modes
         assert sz == baseline_results['num_modes'], \
             f"Expected {baseline_results['num_modes']} unique modes, got {sz}"
 
@@ -235,7 +300,6 @@ class TestIdealisedIsosceles:
         """Test that terrain generation is deterministic with fixed seed."""
         np.random.seed(777)
 
-        # Generate terrain twice with same seed
         sz1 = 25
         nk1 = np.random.randint(0, 12, size=sz1)
         nl1 = np.random.randint(-5, 7, size=sz1)

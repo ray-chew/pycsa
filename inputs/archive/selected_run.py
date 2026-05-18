@@ -1,13 +1,14 @@
+import os
 import numpy as np
 from src import var
 
 params = var.params()
 
-params.fn_grid = "/home/ray/git-projects/spec_appx/data/icon_compact.nc"
-params.fn_topo = "/home/ray/git-projects/spec_appx/data/topo_compact.nc"
+params.fn_grid = os.getenv("SPEC_APPX_DATA_DIR", "data/") + "icon_compact.nc"
+params.fn_topo = os.getenv("SPEC_APPX_DATA_DIR", "data/") + "topo_compact.nc"
 
 params.merit_cg = 10
-params.merit_path = "/home/ray/Documents/orog_data/MERIT/"
+params.merit_path = os.getenv("SPEC_APPX_MERIT_DIR", "data/MERIT/")
 
 params.output_fn = "test_selected"
 

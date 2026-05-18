@@ -13,7 +13,10 @@ Date: 2025-10-22
 Updated: Fixed to support full global extent
 """
 
+import os
+
 import numpy as np
+import pytest
 import matplotlib.pyplot as plt
 import time
 from pathlib import Path
@@ -21,6 +24,20 @@ from pathlib import Path
 # Import CSA modules
 from pycsa.core import io, var
 from pycsa.plotting import cart_plot
+
+
+def _get_etopo_path():
+    """Get ETOPO data path from env or local_paths, skip if not found."""
+    path = os.getenv("ETOPO_DATA_PATH")
+    if not path:
+        try:
+            from pycsa import local_paths
+            path = getattr(local_paths.paths, 'etopo', None)
+        except (ImportError, AttributeError):
+            pass
+    if not path or not os.path.isdir(path):
+        pytest.skip("ETOPO data not found (set ETOPO_DATA_PATH)")
+    return path if path.endswith("/") else path + "/"
 
 
 def create_global_params(etopo_cg=8):
@@ -45,7 +62,7 @@ def create_global_params(etopo_cg=8):
     class Params:
         def __init__(self):
             # Path to ETOPO data directory
-            self.path_etopo = "/home/ray/git-projects/spec_appx/data/etopo_15s/"
+            self.path_etopo = _get_etopo_path()
 
             # Full global extent: entire world
             self.lat_extent = [-90.0, 90.0]
@@ -85,9 +102,7 @@ def test_global_etopo_load_and_plot():
     # Verify data directory exists
     data_path = Path(params.path_etopo)
     if not data_path.exists():
-        print(f"ERROR: ETOPO data directory not found: {data_path}")
-        print("Please ensure ETOPO data is downloaded and path is correct.")
-        return False
+        pytest.skip(f"ETOPO data directory not found: {data_path}")
     print(f"  - Data directory: {data_path}")
     print(f"  - Directory exists: {data_path.exists()}")
     print()
@@ -116,10 +131,7 @@ def test_global_etopo_load_and_plot():
         print()
 
     except Exception as e:
-        print(f"ERROR during loading: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        pytest.fail(f"ETOPO loading failed: {e}")
 
     # Step 4: Validate loaded data
     print("Step 4: Validating loaded data...")
@@ -171,8 +183,7 @@ def test_global_etopo_load_and_plot():
     print()
 
     if not checks_passed:
-        print("  Some validation checks failed!")
-        return False
+        pytest.fail("Some validation checks failed!")
 
 
     # Step 5: Optionally clip ocean cells before plotting
@@ -182,9 +193,7 @@ def test_global_etopo_load_and_plot():
     # Allow override via environment variable or function argument in future
 
     if cell.topo is None:
-        print("ERROR: cell.topo is None. ETOPO data did not load correctly.")
-        print("Skipping plotting and summary.")
-        return False
+        pytest.fail("cell.topo is None — ETOPO data did not load correctly.")
 
     land_mask = cell.topo > 0
     ocean_mask = cell.topo <= 0
@@ -224,10 +233,7 @@ def test_global_etopo_load_and_plot():
         print()
 
     except Exception as e:
-        print(f"ERROR during plotting: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        pytest.fail(f"Plotting failed: {e}")
 
     # Step 8: Summary statistics
     print("Step 8: Summary statistics...")
@@ -255,8 +261,6 @@ def test_global_etopo_load_and_plot():
     print(f"  - Data quality: PASSED all validation checks")
     print(f"  - Visualization: SUCCESS")
     print()
-
-    return True
 
 
 def test_different_coarse_graining_factors():

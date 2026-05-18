@@ -1,4 +1,5 @@
 # %%
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -31,7 +32,7 @@ topo = var.topo_cell()
 params = var.params()
 
 params.merit_cg = 10
-params.merit_path = "/home/ray/Documents/orog_data/MERIT/"
+params.merit_path = os.getenv("SPEC_APPX_MERIT_DIR", "data/MERIT/")
 
 params.lat_extent = [48.0, 64.0, 64.0]
 params.lon_extent = [-148.0, -148.0, -112.0]

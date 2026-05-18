@@ -1,13 +1,14 @@
 """User-defined parameters used in the debugger
 """
 
+import os
 import numpy as np
 from src import var
 
 params = var.obj()
 
-params.fn_grid = "/home/ray/git-projects/spec_appx/data/icon_compact.nc"
-params.fn_topo = "/home/ray/git-projects/spec_appx/data/topo_compact.nc"
+params.fn_grid = os.getenv("SPEC_APPX_DATA_DIR", "data/") + "icon_compact.nc"
+params.fn_topo = os.getenv("SPEC_APPX_DATA_DIR", "data/") + "topo_compact.nc"
 params.output_fn = "debug_run"
 
 params.lat_extent = [52.0, 64.0, 64.0]
@@ -91,7 +92,7 @@ params.rect_set = [
 ###############################
 
 params.merit_cg = 10
-params.merit_path = "/home/ray/Documents/orog_data/MERIT/"
+params.merit_path = os.getenv("SPEC_APPX_MERIT_DIR", "data/MERIT/")
 
 # +39% overestimation
 params.rect_set = [20]

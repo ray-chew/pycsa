@@ -38,9 +38,9 @@ class TestNetCDFReader:
         assert grid.clon is not None
         assert len(grid.clat) > 0
 
-    def test_read_topography_data(self, data_dir):
+    def test_read_topography_data(self):
         """Test reading topography data from NetCDF file."""
-        topo_path = data_dir / "topo_compact_alaska.nc"
+        topo_path = Path(__file__).parent.parent.parent / "data" / "test" / "synthetic_topo.nc"
         if not topo_path.exists():
             pytest.skip(f"Test data not found: {topo_path}")
 
@@ -51,7 +51,51 @@ class TestNetCDFReader:
         assert topo.lat is not None
         assert topo.lon is not None
         assert topo.topo is not None
-        assert topo.topo.size > 0
+        assert topo.topo.shape == (60, 80)
+        assert topo.topo.min() < 0, "Should have below-sea-level areas"
+        assert topo.topo.max() > 2000, "Should have mountain peak"
+
+        # Human-readable summary
+        print(f"\n  Synthetic topography: {topo_path.name}")
+        print(f"    Shape:     {topo.topo.shape} (lat × lon)")
+        print(f"    Lat range: [{topo.lat.min():.2f}, {topo.lat.max():.2f}]°")
+        print(f"    Lon range: [{topo.lon.min():.2f}, {topo.lon.max():.2f}]°")
+        print(f"    Elevation: [{topo.topo.min():.0f}, {topo.topo.max():.0f}] m")
+        print(f"    Mean:      {topo.topo.mean():.0f} m, Std: {topo.topo.std():.0f} m")
+        land_frac = (topo.topo >= 0).sum() / topo.topo.size * 100
+        print(f"    Land:      {land_frac:.0f}%")
+
+        # Diagnostic plot
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+
+        plot_dir = Path(__file__).parent.parent.parent / "plots" / "tests" / "io"
+        plot_dir.mkdir(parents=True, exist_ok=True)
+
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+        topo.gen_mgrids()
+        im = axes[0].contourf(topo.lon_grid, topo.lat_grid, topo.topo,
+                              levels=20, cmap='terrain')
+        plt.colorbar(im, ax=axes[0], label='Elevation (m)')
+        axes[0].set_title(f'Synthetic Topography\n'
+                          f'[{topo.topo.min():.0f}, {topo.topo.max():.0f}] m')
+        axes[0].set_xlabel('Longitude (°)')
+        axes[0].set_ylabel('Latitude (°)')
+
+        axes[1].hist(topo.topo.ravel(), bins=50, color='steelblue', edgecolor='k', alpha=0.7)
+        axes[1].axvline(0, color='red', linestyle='--', label='Sea level')
+        axes[1].set_xlabel('Elevation (m)')
+        axes[1].set_ylabel('Count')
+        axes[1].set_title('Elevation Distribution')
+        axes[1].legend()
+
+        plt.tight_layout()
+        plot_path = plot_dir / 'synthetic_topo_overview.png'
+        plt.savefig(plot_path, dpi=150, bbox_inches='tight')
+        plt.close()
+        print(f"    Plot saved: {plot_path}")
 
 
 class TestETOPOLoader:
@@ -60,9 +104,14 @@ class TestETOPOLoader:
     @pytest.fixture
     def etopo_dir(self, project_root):
         """Return path to ETOPO data directory."""
-        etopo_path = project_root / "data" / "etopo_15s"
-        if not etopo_path.exists():
-            pytest.skip(f"ETOPO data not found: {etopo_path}")
+        import os
+        env_path = os.getenv("ETOPO_DATA_PATH")
+        if env_path:
+            etopo_path = Path(env_path)
+        else:
+            etopo_path = project_root / "data" / "etopo_15s"
+        if not etopo_path.exists() or not list(etopo_path.glob("*.nc")):
+            pytest.skip(f"ETOPO tiles not found in: {etopo_path}")
         return etopo_path
 
     @pytest.fixture

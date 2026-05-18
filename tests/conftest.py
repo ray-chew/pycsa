@@ -2,6 +2,7 @@
 Shared pytest fixtures and utilities for pyCSA tests.
 """
 
+import os
 import numpy as np
 import pytest
 from pathlib import Path
@@ -20,9 +21,62 @@ def baseline_dir(project_root):
 
 
 @pytest.fixture
+def test_data_dir(project_root):
+    """Return the test data directory."""
+    return project_root / "data" / "test"
+
+
+@pytest.fixture
 def test_output_dir(project_root, tmp_path):
     """Return a temporary directory for test outputs."""
     return tmp_path
+
+
+@pytest.fixture
+def simple_rect_cell():
+    """Create a 64x64 rectangular topo_cell with all-True mask on [0, 2pi] domain."""
+    from pycsa.core.var import topo_cell
+
+    res = 64
+    cell = topo_cell()
+    cell.lon = np.linspace(0, 2 * np.pi, res, endpoint=False)
+    cell.lat = np.linspace(0, 2 * np.pi, res, endpoint=False)
+    cell.topo = np.zeros((res, res))
+    cell.wlon = np.diff(cell.lon).mean()
+    cell.wlat = np.diff(cell.lat).mean()
+    cell.gen_mgrids()
+    cell.mask = np.ones((res, res), dtype=bool)
+    cell.lon_m = cell.lon_grid[cell.mask]
+    cell.lat_m = cell.lat_grid[cell.mask]
+    cell.topo_m = cell.topo[cell.mask] - cell.topo[cell.mask].mean()
+    return cell
+
+
+@pytest.fixture
+def make_sinusoidal_cell():
+    """Factory fixture: create a cell with cos(2pi*k*x/L + 2pi*l*y/L) topography."""
+    from pycsa.core.var import topo_cell
+
+    def _make(k, l, amplitude=100.0, res=64):
+        cell = topo_cell()
+        cell.lon = np.linspace(0, 2 * np.pi, res, endpoint=False)
+        cell.lat = np.linspace(0, 2 * np.pi, res, endpoint=False)
+        cell.wlon = np.diff(cell.lon).mean()
+        cell.wlat = np.diff(cell.lat).mean()
+
+        lon_grid, lat_grid = np.meshgrid(cell.lon, cell.lat)
+        L = 2 * np.pi
+        cell.topo = amplitude * np.cos(
+            2 * np.pi * k * lon_grid / L + 2 * np.pi * l * lat_grid / L
+        )
+        cell.gen_mgrids()
+        cell.mask = np.ones((res, res), dtype=bool)
+        cell.lon_m = cell.lon_grid[cell.mask]
+        cell.lat_m = cell.lat_grid[cell.mask]
+        cell.topo_m = cell.topo[cell.mask] - cell.topo[cell.mask].mean()
+        return cell
+
+    return _make
 
 
 def assert_arrays_close(actual, expected, rtol=1e-5, atol=1e-8, name="array"):

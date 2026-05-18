@@ -3,16 +3,35 @@ Integration test for idealised Delaunay case with Perlin noise terrain.
 
 Tests CSA on synthetic terrain generated using Perlin noise,
 which provides more realistic multi-scale topography than pure sinusoids.
+Generates diagnostic plots in plots/tests/idealised_delaunay/.
 """
 
 import pytest
 import numpy as np
+from pathlib import Path
 from pycsa import var, utils, interface
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 try:
     import noise
     NOISE_AVAILABLE = True
 except ImportError:
     NOISE_AVAILABLE = False
+
+
+PLOT_DIR = Path(__file__).parent.parent.parent / "plots" / "tests" / "idealised_delaunay"
+
+
+def _save_fig(name):
+    """Save figure to plot directory."""
+    PLOT_DIR.mkdir(parents=True, exist_ok=True)
+    path = PLOT_DIR / name
+    plt.savefig(path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"    Plot saved: {path}")
 
 
 @pytest.mark.integration
@@ -82,20 +101,29 @@ class TestIdealisedDelaunay:
         # Check mean is close to zero (normalized)
         assert np.abs(world.mean()) < 1.0, "Terrain mean not centered at zero"
 
+        # --- Plot: Perlin terrain ---
+        fig, ax = plt.subplots(figsize=(8, 7))
+        im = ax.imshow(world, cmap='terrain', origin='lower',
+                       extent=[0, res_x, 0, res_y])
+        plt.colorbar(im, ax=ax, label='Elevation (m)')
+        ax.set_title(f'Perlin Noise Terrain\n'
+                     f'shape={world.shape}, range=[{world.min():.0f}, {world.max():.0f}] m, '
+                     f'std={world.std():.0f} m')
+        ax.set_xlabel('x index')
+        ax.set_ylabel('y index')
+        _save_fig('perlin_terrain.png')
+
     def test_csa_on_perlin_terrain(self, perlin_terrain):
         """Test CSA pipeline on Perlin noise terrain."""
         world, res_x, res_y, scale_fac = perlin_terrain
 
-        # CSA parameters
         U, V = 10.0, 0.0
         nhi, nhj = 24, 48
 
-        # Initialize
         grid = var.grid()
         cell = var.topo_cell()
         cell.topo = world
 
-        # Create isosceles triangle
         vid = utils.isosceles(
             grid, cell,
             ymax=2.0 * np.pi * scale_fac,
@@ -108,46 +136,73 @@ class TestIdealisedDelaunay:
 
         cell.gen_mgrids()
 
-        # Create triangle mask
         triangle = utils.gen_triangle(lon_v, lat_v)
         cell.get_masked(triangle=triangle)
 
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
 
-        # Run CSA
         run = interface.get_pmf(nhi, nhj, U, V)
         ampls, uw, recon = run.sappx(cell, lmbda=1e-3, iter_solve=False)
 
-        # Verify results
         assert ampls is not None, "Amplitudes not computed"
         assert ampls.shape == (nhj, nhi), f"Unexpected amplitude shape: {ampls.shape}"
         assert not np.all(np.isnan(ampls)), "All amplitudes are NaN"
-
         assert uw is not None, "PMF not computed"
-        # PMF can be scalar or array depending on configuration
         if isinstance(uw, np.ndarray):
             assert uw.size > 0, "PMF array is empty"
         else:
             assert isinstance(uw, (int, float, np.number)), "PMF should be numeric"
-
         assert recon is not None, "Reconstruction not computed"
         assert recon.shape == cell.topo.shape, "Reconstruction shape mismatch"
+
+        # --- Plot: 3-panel (original, recon, diff) ---
+        masked_topo = np.where(cell.mask, cell.topo, np.nan)
+        diff = masked_topo - recon
+        rmse = np.sqrt(np.nanmean(diff**2))
+
+        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+        im0 = axes[0].imshow(masked_topo, cmap='terrain', origin='lower')
+        plt.colorbar(im0, ax=axes[0], label='m')
+        axes[0].set_title('Original (masked)')
+
+        im1 = axes[1].imshow(recon, cmap='terrain', origin='lower')
+        plt.colorbar(im1, ax=axes[1], label='m')
+        axes[1].set_title(f'CSA Reconstruction ({nhi}x{nhj})')
+
+        vmax = np.nanpercentile(np.abs(diff), 98)
+        im2 = axes[2].imshow(diff, cmap='RdBu_r', origin='lower',
+                             vmin=-vmax, vmax=vmax)
+        plt.colorbar(im2, ax=axes[2], label='m')
+        axes[2].set_title(f'Difference (RMSE={rmse:.0f} m)')
+
+        fig.suptitle(f'CSA on Perlin Terrain — UW={np.sum(uw):.2e}', y=1.02)
+        plt.tight_layout()
+        _save_fig('perlin_csa_reconstruction.png')
+
+        # --- Plot: amplitude spectrum ---
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ampls_clean = np.nan_to_num(ampls, nan=0.0)
+        im = ax.imshow(np.abs(ampls_clean), cmap='hot_r', aspect='auto',
+                       origin='lower')
+        plt.colorbar(im, ax=ax, label='|Amplitude| (m)')
+        ax.set_xlabel('k index')
+        ax.set_ylabel('l index')
+        ax.set_title(f'Perlin CSA Spectrum ({nhi}x{nhj})')
+        _save_fig('perlin_csa_spectrum.png')
 
     def test_csa_on_cosine_terrain(self, cosine_terrain):
         """Test CSA on simple cosine terrain (should recover mode perfectly)."""
         bg, res_x, res_y, scale_fac = cosine_terrain
 
-        # CSA parameters
         U, V = 10.0, 0.0
         nhi, nhj = 12, 24
 
-        # Initialize
         grid = var.grid()
         cell = var.topo_cell()
         cell.topo = bg
 
-        # Create isosceles triangle
         vid = utils.isosceles(
             grid, cell,
             ymax=2.0 * np.pi * scale_fac,
@@ -160,46 +215,59 @@ class TestIdealisedDelaunay:
 
         cell.gen_mgrids()
 
-        # Create triangle mask
         triangle = utils.gen_triangle(lon_v, lat_v)
         cell.get_masked(triangle=triangle)
 
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
 
-        # Run CSA with regularization
         run = interface.get_pmf(nhi, nhj, U, V)
         ampls, uw, recon = run.sappx(cell, lmbda=1e-4, iter_solve=False)
 
-        # For a single cosine mode, we should have:
-        # - Most energy concentrated in one or a few modes
-        # - Good reconstruction quality
-
         ampls_clean = np.nan_to_num(ampls)
-
-        # Check that we have non-zero amplitudes
         assert np.any(ampls_clean != 0), "No modes recovered"
 
-        # Check that energy is concentrated (not uniform)
         max_ampl = np.abs(ampls_clean).max()
         mean_ampl = np.abs(ampls_clean).mean()
         assert max_ampl > 3 * mean_ampl, "Energy should be concentrated in few modes"
+
+        # --- Plot: cosine terrain + reconstruction ---
+        masked_topo = np.where(cell.mask, cell.topo, np.nan)
+        diff = masked_topo - recon
+        rmse = np.sqrt(np.nanmean(diff**2))
+
+        fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+        im0 = axes[0].imshow(masked_topo, cmap='terrain', origin='lower')
+        plt.colorbar(im0, ax=axes[0], label='m')
+        axes[0].set_title('Cosine Terrain (masked)')
+
+        im1 = axes[1].imshow(recon, cmap='terrain', origin='lower')
+        plt.colorbar(im1, ax=axes[1], label='m')
+        axes[1].set_title(f'CSA Reconstruction ({nhi}x{nhj})')
+
+        vmax = np.nanpercentile(np.abs(diff), 98)
+        im2 = axes[2].imshow(diff, cmap='RdBu_r', origin='lower',
+                             vmin=-vmax, vmax=vmax)
+        plt.colorbar(im2, ax=axes[2], label='m')
+        axes[2].set_title(f'Difference (RMSE={rmse:.0f} m)')
+
+        fig.suptitle('CSA on Single Cosine Mode', y=1.02)
+        plt.tight_layout()
+        _save_fig('cosine_csa_reconstruction.png')
 
     def test_mode_selection_on_perlin_terrain(self, perlin_terrain):
         """Test mode selection (top-N modes) on Perlin terrain."""
         world, res_x, res_y, scale_fac = perlin_terrain
 
-        # CSA parameters
         U, V = 10.0, 0.0
         nhi, nhj = 24, 48
         n_modes = 20
 
-        # Initialize
         grid = var.grid()
         cell = var.topo_cell()
         cell.topo = world
 
-        # Create isosceles triangle
         vid = utils.isosceles(
             grid, cell,
             ymax=2.0 * np.pi * scale_fac,
@@ -218,7 +286,7 @@ class TestIdealisedDelaunay:
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
 
-        # First approximation (get full spectrum)
+        # First approximation
         first_appx = interface.get_pmf(nhi, nhj, U, V)
         ampls_fa, uw_fa, recon_fa = first_appx.sappx(cell, lmbda=1e-2, iter_solve=False)
 
@@ -230,19 +298,15 @@ class TestIdealisedDelaunay:
         for ii in range(n_modes):
             max_idx = np.unravel_index(fq_cpy.argmax(), fq_cpy.shape)
             indices.append(max_idx)
-            max_val = fq_cpy[max_idx]
             fq_cpy[max_idx] = 0.0
 
         k_idxs = [pair[1] for pair in indices]
         l_idxs = [pair[0] for pair in indices]
 
-        # Verify mode selection
-        assert len(k_idxs) == n_modes, "Incorrect number of k indices"
-        assert len(l_idxs) == n_modes, "Incorrect number of l indices"
-
-        # All indices should be within bounds
-        assert all(0 <= k < nhi for k in k_idxs), "k index out of bounds"
-        assert all(0 <= l < nhj for l in l_idxs), "l index out of bounds"
+        assert len(k_idxs) == n_modes
+        assert len(l_idxs) == n_modes
+        assert all(0 <= k < nhi for k in k_idxs)
+        assert all(0 <= l < nhj for l in l_idxs)
 
         # Second approximation with selected modes
         second_appx = interface.get_pmf(nhi, nhj, U, V)
@@ -252,21 +316,67 @@ class TestIdealisedDelaunay:
             cell, lmbda=1e-5, updt_analysis=True, scale=1.0, iter_solve=False
         )
 
-        # Verify second approximation
         assert ampls_sa is not None, "Second approx failed"
         assert not np.all(np.isnan(ampls_sa)), "Second approx all NaN"
 
-        # Second approximation should use fewer modes
         ampls_sa_clean = np.nan_to_num(ampls_sa)
         n_nonzero = np.sum(ampls_sa_clean != 0)
         assert n_nonzero <= n_modes + 5, f"Too many modes in second approx: {n_nonzero}"
 
+        # --- Plot: FA vs SA comparison ---
+        masked_topo = np.where(cell.mask, cell.topo, np.nan)
+
+        fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+
+        # Row 1: reconstructions
+        im00 = axes[0, 0].imshow(masked_topo, cmap='terrain', origin='lower')
+        plt.colorbar(im00, ax=axes[0, 0], label='m')
+        axes[0, 0].set_title('Original (masked)')
+
+        im01 = axes[0, 1].imshow(recon_fa, cmap='terrain', origin='lower')
+        plt.colorbar(im01, ax=axes[0, 1], label='m')
+        rmse_fa = np.sqrt(np.nanmean((masked_topo - recon_fa)**2))
+        axes[0, 1].set_title(f'FA Recon (RMSE={rmse_fa:.0f} m)')
+
+        im02 = axes[0, 2].imshow(recon_sa, cmap='terrain', origin='lower')
+        plt.colorbar(im02, ax=axes[0, 2], label='m')
+        rmse_sa = np.sqrt(np.nanmean((masked_topo - recon_sa)**2))
+        axes[0, 2].set_title(f'SA Recon ({n_modes} modes, RMSE={rmse_sa:.0f} m)')
+
+        # Row 2: spectra + mode selection
+        ampls_fa_clean = np.nan_to_num(ampls_fa, nan=0.0)
+        vmax = np.abs(ampls_fa_clean).max()
+
+        im10 = axes[1, 0].imshow(np.abs(ampls_fa_clean), cmap='hot_r',
+                                 aspect='auto', origin='lower', vmin=0, vmax=vmax)
+        plt.colorbar(im10, ax=axes[1, 0], label='|A| (m)')
+        axes[1, 0].set_title('FA Spectrum (full)')
+
+        im11 = axes[1, 1].imshow(np.abs(ampls_sa_clean), cmap='hot_r',
+                                 aspect='auto', origin='lower', vmin=0, vmax=vmax)
+        plt.colorbar(im11, ax=axes[1, 1], label='|A| (m)')
+        axes[1, 1].set_title(f'SA Spectrum ({n_modes} modes)')
+
+        # Mode selection scatter
+        axes[1, 2].scatter(k_idxs, l_idxs, c='red', s=60, zorder=5, edgecolor='k')
+        for i, (k, l) in enumerate(zip(k_idxs, l_idxs)):
+            axes[1, 2].annotate(f'{i+1}', (k, l), fontsize=7,
+                               ha='center', va='bottom', color='blue')
+        axes[1, 2].set_xlim(-0.5, nhi - 0.5)
+        axes[1, 2].set_ylim(-0.5, nhj - 0.5)
+        axes[1, 2].set_xlabel('k index')
+        axes[1, 2].set_ylabel('l index')
+        axes[1, 2].set_title(f'Top {n_modes} Selected Modes')
+        axes[1, 2].grid(True, alpha=0.3)
+
+        fig.suptitle('Perlin Terrain: FA vs SA Mode Selection', fontsize=14)
+        plt.tight_layout()
+        _save_fig('perlin_mode_selection.png')
+
     def test_deterministic_perlin_generation(self):
         """Test that Perlin noise generation is deterministic with fixed seed."""
-        # Generate twice with same parameters
         def generate_perlin():
             res = 50
-            scale_fac = 1000.0
             world = np.zeros((res, res))
             for i in range(res):
                 for j in range(res):
@@ -277,14 +387,13 @@ class TestIdealisedDelaunay:
                         lacunarity=2.0,
                         repeatx=1024,
                         repeaty=1024,
-                        base=42  # Fixed seed
+                        base=42
                     )
             return world
 
         world1 = generate_perlin()
         world2 = generate_perlin()
 
-        # Should be identical
         np.testing.assert_array_equal(
             world1, world2,
             err_msg="Perlin noise generation is not deterministic"
@@ -294,16 +403,13 @@ class TestIdealisedDelaunay:
         """Test that reconstruction quality is reasonable for known terrain."""
         bg, res_x, res_y, scale_fac = cosine_terrain
 
-        # CSA parameters
         U, V = 10.0, 0.0
         nhi, nhj = 24, 48
 
-        # Initialize
         grid = var.grid()
         cell = var.topo_cell()
         cell.topo = bg
 
-        # Create isosceles triangle
         vid = utils.isosceles(
             grid, cell,
             ymax=2.0 * np.pi * scale_fac,
@@ -322,18 +428,37 @@ class TestIdealisedDelaunay:
         cell.wlat = np.diff(cell.lat).mean()
         cell.wlon = np.diff(cell.lon).mean()
 
-        # Run CSA
         run = interface.get_pmf(nhi, nhj, U, V)
         ampls, uw, recon = run.sappx(cell, lmbda=1e-4, iter_solve=False)
 
-        # Compute reconstruction error
-        # Only compare where mask is True
         original_masked = cell.topo * cell.mask
         recon_masked = recon * cell.mask
 
-        # Relative L2 error
         l2_error = np.linalg.norm(original_masked - recon_masked) / np.linalg.norm(original_masked)
 
-        # For a simple cosine, reconstruction should be good
-        # (not perfect due to triangular domain and regularization)
         assert l2_error < 0.5, f"Reconstruction error too high: {l2_error:.3f}"
+
+        # --- Plot: reconstruction quality ---
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+        diff = original_masked - recon_masked
+        vmax = np.abs(diff).max()
+
+        im0 = axes[0].imshow(diff, cmap='RdBu_r', origin='lower',
+                             vmin=-vmax, vmax=vmax)
+        plt.colorbar(im0, ax=axes[0], label='m')
+        rmse = np.sqrt(np.mean(diff[cell.mask]**2))
+        axes[0].set_title(f'Residual (RMSE={rmse:.1f} m)')
+
+        # 1D profile through center
+        mid_row = cell.topo.shape[0] // 2
+        axes[1].plot(original_masked[mid_row, :], 'k-', label='Original', linewidth=1.5)
+        axes[1].plot(recon_masked[mid_row, :], 'r--', label='Reconstruction', linewidth=1.5)
+        axes[1].set_xlabel('x index')
+        axes[1].set_ylabel('Elevation (m)')
+        axes[1].set_title(f'Profile at row {mid_row}')
+        axes[1].legend()
+
+        fig.suptitle(f'Cosine Reconstruction Quality (L2 rel. error = {l2_error:.3f})')
+        plt.tight_layout()
+        _save_fig('cosine_reconstruction_quality.png')

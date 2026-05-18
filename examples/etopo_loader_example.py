@@ -7,6 +7,7 @@ This script shows how to:
 3. Apply coarse-graining for different resolutions
 """
 
+import os
 import numpy as np
 from pycsa.core import io, var
 
@@ -15,7 +16,7 @@ class params:
     """Simple parameter class for ETOPO loading"""
     def __init__(self):
         # Path to ETOPO data directory (must end with /)
-        self.path_etopo = "/home/ray/git-projects/spec_appx/data/etopo_15s/"
+        self.path_etopo = os.getenv("ETOPO_DATA_PATH", "data/etopo_15s/")
 
         # Define region of interest [lat_min, lat_max]
         self.lat_extent = [30.0, 45.0]

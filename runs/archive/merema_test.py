@@ -1,4 +1,5 @@
 # %%
+import os
 import sys
 
 # setting path
@@ -17,7 +18,7 @@ import numpy as np
 lat_verts = np.array([52.0, 64.0, 64.0])
 lon_verts = np.array([-141.0, -158.0, -127.0])
 
-dir = "/home/ray/Documents/orog_data/MERIT/"
+dir = os.getenv("SPEC_APPX_MERIT_DIR", "data/MERIT/")
 
 
 # %%

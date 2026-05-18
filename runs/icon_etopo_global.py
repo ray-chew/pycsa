@@ -415,7 +415,7 @@ def do_cell(
             dat_2D_fa,
             dat_2D_sa,
         )
-        del fa, sa, tri, cell, etopo_reader
+        del fa, sa, tri, cell
         gc.collect()  # Force garbage collection
 
         return result

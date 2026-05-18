@@ -454,7 +454,7 @@ if __name__ == "__main__":
     # CONFIGURATION SELECTOR
     # ========================================================================
     # Choose one: 'generic_laptop', 'dkrz_hpc', 'laptop_performance'
-    SYSTEM_CONFIG = "laptop_performance"  # ← Edit this line to switch configs
+    SYSTEM_CONFIG = "dkrz_hpc"  # ← Edit this line to switch configs
     # ========================================================================
 
     # ========================================================================
@@ -487,8 +487,8 @@ if __name__ == "__main__":
             "description": "Generic laptop (16 threads, 16GB RAM)",
         },
         "dkrz_hpc": {
-            "total_cores": 250,
-            "total_memory_gb": 240.0,
+            "total_cores": 52,
+            "total_memory_gb": 510.0,
             "netcdf_chunk_size": 100,
             "threads_per_worker": None,  # Auto-compute based on worker memory
             "memory_per_cpu_mb": None,  # SLURM quota on interactive partition

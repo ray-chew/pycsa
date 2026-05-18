@@ -6,6 +6,8 @@ computations where array sizes may vary between cells (e.g., different amounts o
 topography data per cell).
 """
 
+import copy
+
 import numpy as np
 
 
@@ -122,7 +124,7 @@ class BufferPool:
         >>> print(f"Coefficient buffer hit rate: {stats['coeff']['hits'] /
         ...       (stats['coeff']['hits'] + stats['coeff']['misses']):.1%}")
         """
-        return self.stats.copy()
+        return copy.deepcopy(self.stats)
 
     def get_memory_usage(self):
         """Get current memory usage of all buffers.

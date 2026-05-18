@@ -124,4 +124,5 @@ markers = [
     "integration: integration tests (run full pipelines)",
     "unit: unit tests (fast, isolated tests)",
     "slow: slow tests (mark tests that take >10s)",
+    "regression: regression tests (require test data files)",
 ]

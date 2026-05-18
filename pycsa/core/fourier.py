@@ -367,3 +367,4 @@ class f_trans(object):
                 fourier_coeff = fourier_coeff.T
 
         self.ampls = fourier_coeff
+        return fourier_coeff

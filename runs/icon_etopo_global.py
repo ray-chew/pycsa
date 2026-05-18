@@ -488,11 +488,11 @@ if __name__ == "__main__":
         },
         "dkrz_hpc": {
             "total_cores": 52,
-            "total_memory_gb": 510.0,
+            "total_memory_gb": 256.0,
             "netcdf_chunk_size": 100,
             "threads_per_worker": None,  # Auto-compute based on worker memory
             "memory_per_cpu_mb": None,  # SLURM quota on interactive partition
-            "description": "DKRZ HPC interactive partition (standard memory node)",
+            "description": "DKRZ HPC interactive partition (standard 256 GB node)",
         },
         "laptop_performance": {
             "total_cores": 20,  # Use 20 of 24 threads (leave 4 for background)

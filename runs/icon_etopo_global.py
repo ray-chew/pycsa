@@ -32,6 +32,7 @@ from pathlib import Path
 import gc
 import logging
 from datetime import datetime
+from types import SimpleNamespace
 
 from pycsa.core import io, var, utils, tile_cache
 from pycsa.wrappers import interface, diagnostics
@@ -293,7 +294,7 @@ def do_cell(
         # Initialize cell objects for CSA algorithm
         tri_idx = 0
         cell = var.topo_cell()
-        tri = var.obj()
+        tri = SimpleNamespace()
 
         nhi = params.nhi
         nhj = params.nhj

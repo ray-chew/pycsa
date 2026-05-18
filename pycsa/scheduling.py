@@ -33,16 +33,22 @@ def estimate_cell_memory_gb(lat_deg: float) -> float:
     -----
     - Equatorial cells (~0°): ~10 GB sufficient
     - Mid-latitude cells (~45°): ~10 GB
-    - High-latitude cells (~70°): ~25 GB
-    - Polar cells (~80-89°): ~30 GB required
+    - High-latitude cells (~70°): ~17 GB
+    - High-latitude cells (~80°): ~24 GB
+    - Polar cells (~85-89°): ~45 GB required
 
-    Memory scales approximately with 1/cos(lat) due to meridian convergence,
-    but caps at ~30 GB for cells very close to the poles. The polar cap
-    was lowered from 60 → 30 GB in 2026-05 after the original estimate
-    was observed to produce batches that fit nominally but accumulated
-    enough cumulative tile-cache state to OOM polar workers. Profile a
-    real polar cell and tune further if needed; a fully empirical
-    redesign of this estimator is a separate work item.
+    Memory scales approximately with sqrt(1/cos(lat)) due to meridian
+    convergence, capped at 45 GB at the poles.
+
+    **Tuning history.** Original cap was 60 GB (scale 6.0) with
+    safety_factor=1.0 in the interior path; observed to over-allocate
+    workers (8 × 60 GB = 480 GB on a 510 GB node) and eventually OOM
+    polar workers. Lowered to 30 GB (scale 3.0) in 2026-05; observed
+    KilledWorker on a 5 × 45 GB polar batch (real per-cell usage
+    consistently exceeded the 45 GB per-worker `memory_limit`).
+    Settled on 45 GB (scale 4.5) which gives ~67 GB per worker at
+    safety_factor=1.5 — comfortably above observed RSS on polar
+    cells. Profile + tune further if you have data.
     """
     abs_lat = np.abs(lat_deg)
 
@@ -54,22 +60,17 @@ def estimate_cell_memory_gb(lat_deg: float) -> float:
         # Below 60°, memory is fairly constant
         scale_factor = 1.0
     elif abs_lat < 85.0:
-        # Between 60° and 85°, use power law scaling, capped at 3.0 so the
-        # transition to the polar cap is continuous. The exponent of 0.5
-        # was retuned from 0.7 to give a milder mid-/high-lat ramp once
-        # the polar cap dropped to 3.0:
+        # Between 60° and 85°, use sqrt(1/cos(lat)) scaling, capped at
+        # the polar value so the transition is continuous:
         #   at 70°: (1/0.342)^0.5 ≈ 1.71 → 17 GB
         #   at 80°: (1/0.174)^0.5 ≈ 2.40 → 24 GB
         lat_rad = np.deg2rad(abs_lat)
         cos_lat = np.cos(lat_rad)
-        scale_factor = min((1.0 / cos_lat) ** 0.5, 3.0)
+        scale_factor = min((1.0 / cos_lat) ** 0.5, 4.5)
     else:
-        # Above 85°, cap at 3x base (30 GB). The original 6x cap (60 GB)
-        # was observed to be both wasteful for nominal usage and
-        # insufficient for cumulative tile-cache state — neither
-        # constraint was the right one. 30 GB is a defensible middle
-        # ground; profile and tune if you have data.
-        scale_factor = 3.0
+        # Above 85°, cap at 4.5x base (45 GB). See "tuning history"
+        # in the docstring.
+        scale_factor = 4.5
 
     return base_memory_gb * scale_factor
 
@@ -128,10 +129,17 @@ def group_cells_by_memory(
                     1, int(max_memory_per_batch_gb / (avg_mem_current * safety_factor))
                 )
                 mem_per_worker = avg_mem_current * safety_factor
+                # When only one worker fits, give it the entire budget
+                # (matches the runner's "Single-worker mode" path that
+                # allocates the full machine memory to the single
+                # worker). Without this, mem_per_worker can exceed
+                # max_memory_per_batch_gb on memory-tight presets.
+                if n_workers == 1:
+                    mem_per_worker = min(mem_per_worker, max_memory_per_batch_gb)
                 # Defensive: never let n_workers × mem_per_worker exceed
-                # the node budget. int(...) above already enforces this,
-                # but assert explicitly so a future refactor can't
-                # regress silently.
+                # the node budget. The int(...) above + the n_workers==1
+                # clamp together enforce this; the assert is just so a
+                # future refactor can't regress silently.
                 assert n_workers * mem_per_worker <= max_memory_per_batch_gb, (
                     f"planner overcommit: {n_workers} × {mem_per_worker:.1f} GB "
                     f"> {max_memory_per_batch_gb} GB"
@@ -165,6 +173,8 @@ def group_cells_by_memory(
         safety_factor = 1.5
         n_workers = max(1, int(max_memory_per_batch_gb / (avg_mem * safety_factor)))
         mem_per_worker = avg_mem * safety_factor
+        if n_workers == 1:
+            mem_per_worker = min(mem_per_worker, max_memory_per_batch_gb)
         assert n_workers * mem_per_worker <= max_memory_per_batch_gb, (
             f"planner overcommit (last batch): {n_workers} × {mem_per_worker:.1f} GB "
             f"> {max_memory_per_batch_gb} GB"

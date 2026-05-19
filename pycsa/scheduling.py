@@ -33,22 +33,22 @@ def estimate_cell_memory_gb(lat_deg: float) -> float:
     -----
     - Equatorial cells (~0°): ~10 GB sufficient
     - Mid-latitude cells (~45°): ~10 GB
-    - High-latitude cells (~70°): ~17 GB
-    - High-latitude cells (~80°): ~24 GB
-    - Polar cells (~85-89°): ~45 GB required
+    - High-latitude cells (~70°): ~25 GB
+    - High-latitude cells (~80°): ~43 GB
+    - Polar cells (~85-89°): ~60 GB required
 
-    Memory scales approximately with sqrt(1/cos(lat)) due to meridian
-    convergence, capped at 45 GB at the poles.
+    Memory scales approximately with (1/cos(lat))^0.7 due to meridian
+    convergence, capped at 60 GB at the poles.
 
-    **Tuning history.** Original cap was 60 GB (scale 6.0) with
-    safety_factor=1.0 in the interior path; observed to over-allocate
-    workers (8 × 60 GB = 480 GB on a 510 GB node) and eventually OOM
-    polar workers. Lowered to 30 GB (scale 3.0) in 2026-05; observed
-    KilledWorker on a 5 × 45 GB polar batch (real per-cell usage
-    consistently exceeded the 45 GB per-worker `memory_limit`).
-    Settled on 45 GB (scale 4.5) which gives ~67 GB per worker at
-    safety_factor=1.5 — comfortably above observed RSS on polar
-    cells. Profile + tune further if you have data.
+    **Tuning history.** Original cap was 60 GB (scale 6.0) but worked
+    only nominally because the planner's interior path used
+    safety_factor=1.0 (bug; the final-batch path used 1.5). The bug
+    caused 8 workers × 60 GB = 480 GB on the 510 GB node and OOMs.
+    Briefly retuned 60 → 30 → 45 GB chasing the OOM symptom; the
+    real fix was the safety_factor=1.5 update in 2026-05. With
+    safety_factor=1.5 honored consistently, the original 60 GB cap
+    gives 3 workers × 90 GB on a 256 GB budget — well within the
+    per-worker memory_limit that Dask actually enforces.
     """
     abs_lat = np.abs(lat_deg)
 
@@ -60,17 +60,16 @@ def estimate_cell_memory_gb(lat_deg: float) -> float:
         # Below 60°, memory is fairly constant
         scale_factor = 1.0
     elif abs_lat < 85.0:
-        # Between 60° and 85°, use sqrt(1/cos(lat)) scaling, capped at
-        # the polar value so the transition is continuous:
-        #   at 70°: (1/0.342)^0.5 ≈ 1.71 → 17 GB
-        #   at 80°: (1/0.174)^0.5 ≈ 2.40 → 24 GB
+        # Between 60° and 85°, use (1/cos(lat))^0.7 scaling:
+        #   at 70°: (1/0.342)^0.7 ≈ 2.5  → 25 GB
+        #   at 80°: (1/0.174)^0.7 ≈ 4.3  → 43 GB
         lat_rad = np.deg2rad(abs_lat)
         cos_lat = np.cos(lat_rad)
-        scale_factor = min((1.0 / cos_lat) ** 0.5, 4.5)
+        scale_factor = (1.0 / cos_lat) ** 0.7
     else:
-        # Above 85°, cap at 4.5x base (45 GB). See "tuning history"
+        # Above 85°, cap at 6.0x base (60 GB). See "tuning history"
         # in the docstring.
-        scale_factor = 4.5
+        scale_factor = 6.0
 
     return base_memory_gb * scale_factor
 

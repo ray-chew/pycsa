@@ -32,16 +32,17 @@ def test_memory_estimation():
         scale = mem_gb / base_mem
         print(f"{lat:>3}°        {mem_gb:>6.1f} GB        {scale:>5.2f}x")
 
-    # Verify expectations. Polar cap was retuned twice in 2026-05:
-    # 60 → 30 → 45 GB. See pycsa.scheduling.estimate_cell_memory_gb
-    # "tuning history" in its docstring.
+    # Verify expectations. Polar cap was retuned through 60 → 30 → 45 → 60 GB
+    # in 2026-05; settled back at 60 GB after the real fix turned out to
+    # be the safety_factor=1.5 consistency, not the cap value itself.
+    # See pycsa.scheduling.estimate_cell_memory_gb "tuning history".
     assert estimate_cell_memory_gb(0) == 10.0, "Equatorial cells should need 10 GB"
     assert (
-        estimate_cell_memory_gb(85) >= 40.0
-    ), "Polar cells (~85°) should need >= 40 GB (cap = 45 GB after retune)"
+        estimate_cell_memory_gb(85) >= 55.0
+    ), "Polar cells (~85°) should need >= 55 GB (cap = 60 GB)"
     assert (
-        estimate_cell_memory_gb(85) <= 50.0
-    ), "Polar cells (~85°) should not exceed 50 GB (cap = 45 GB)"
+        estimate_cell_memory_gb(85) <= 65.0
+    ), "Polar cells (~85°) should not exceed 65 GB (cap = 60 GB)"
     print("\n✓ Memory estimation function passes basic tests")
 
 

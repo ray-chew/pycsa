@@ -709,8 +709,16 @@ if __name__ == "__main__":
         logger.info(f"  Workers: {batch_config['n_workers']}")
         logger.info(f"{'='*80}\n")
 
-        # Get all cells in this memory batch
-        batch_cell_indices = set(batch_config["cell_indices"])
+        # Get all cells in this memory batch, filtered to the requested
+        # [cell_start, cell_end) range. Skip the batch entirely if no
+        # cells survive the filter — avoids wasted Dask client startup
+        # for range-limited runs where most planner batches are empty.
+        batch_cell_indices = {
+            c for c in batch_config["cell_indices"]
+            if cell_start <= c < cell_end
+        }
+        if not batch_cell_indices:
+            continue
 
         # Create Dask client for this memory batch
         n_workers = batch_config["n_workers"]
@@ -755,12 +763,12 @@ if __name__ == "__main__":
         # Only process NetCDF chunks that contain cells from this memory batch
         for netcdf_chunk_idx, netcdf_chunk_start in enumerate(
             tqdm(
-                range(cell_start, n_cells, netcdf_chunk_size),
+                range(cell_start, cell_end, netcdf_chunk_size),
                 desc=f"NetCDF chunks (batch {batch_idx})",
                 total=total_netcdf_chunks,
             )
         ):
-            netcdf_chunk_end = min(netcdf_chunk_start + netcdf_chunk_size, n_cells)
+            netcdf_chunk_end = min(netcdf_chunk_start + netcdf_chunk_size, cell_end)
 
             # Filter: only process cells in this NetCDF chunk that belong to current memory batch
             cell_indices_in_chunk = []

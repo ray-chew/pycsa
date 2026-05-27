@@ -1486,7 +1486,19 @@ class nc_writer(object):
         datasets_dir = os.path.join(self.path, "datasets")
         os.makedirs(datasets_dir, exist_ok=True)
 
-        rootgrp = nc.Dataset(self.path + self.fn, "w", format="NETCDF4")
+        self.n_modes = params.n_modes
+
+        # Only initialise the file if it doesn't already exist. The run script
+        # re-instantiates nc_writer once per (memory_batch × netcdf_chunk); if we
+        # opened with mode='w' every time, each new memory batch would truncate
+        # the chunk file and wipe cells written by earlier batches that targeted
+        # the same range (ICON cell IDs aren't latitude-sorted, so the same
+        # numerical chunk is typically touched by multiple memory tiers).
+        full_path = self.path + self.fn
+        if os.path.exists(full_path):
+            return
+
+        rootgrp = nc.Dataset(full_path, "w", format="NETCDF4")
 
         for key, value in vars(params).items():
 
@@ -1501,7 +1513,6 @@ class nc_writer(object):
 
         _ = rootgrp.createDimension("nspec", params.n_modes)
 
-        self.n_modes = params.n_modes
         rootgrp.close()
 
     def output(self, id, clat, clon, is_land, analysis=None, topo_mean=None):

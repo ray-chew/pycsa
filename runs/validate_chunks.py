@@ -9,6 +9,8 @@ from pathlib import Path
 import re
 import argparse
 
+import netCDF4
+
 
 def main():
     parser = argparse.ArgumentParser(description="Validate ICON ETOPO NetCDF chunks")
@@ -89,20 +91,56 @@ def main():
             f"First chunk doesn't start at 0 (starts at {chunks[0]['start']})"
         )
 
-    # Check expected coverage
+    # Per-chunk cell-count check — catches the nc_writer truncation symptom
+    # (filename range says 100 cells, but the file only contains a fraction).
+    # Opens every chunk; metadata-only read, takes a few seconds for 200+ chunks.
+    print("\nPer-chunk cell counts:")
+    incomplete_chunks = []
+    claimed_cells = 0
+    actual_cells = 0
+    for chunk in chunks:
+        expected_in_chunk = chunk["end"] - chunk["start"] + 1
+        claimed_cells += expected_in_chunk
+        with netCDF4.Dataset(chunk["filepath"]) as nc:
+            actual = len(nc.groups)
+        actual_cells += actual
+        if actual != expected_in_chunk:
+            incomplete_chunks.append((chunk, actual, expected_in_chunk))
+            print(
+                f"  {chunk['filepath'].name}: {actual}/{expected_in_chunk}  [INCOMPLETE]"
+            )
+    if incomplete_chunks:
+        issues.append(
+            f"{len(incomplete_chunks)}/{len(chunks)} chunk files have fewer cells "
+            f"than their filename range claims"
+        )
+    else:
+        print(f"  All {len(chunks)} chunks have the expected cell count.")
+
+    # Coverage: what the filenames claim vs. what's actually inside, both
+    # relative to the full grid.
     expected_cells = 20480
-    total_cells = chunks[-1]["end"] + 1 - chunks[0]["start"]
-
     print(
-        f"\nCoverage: {total_cells}/{expected_cells} cells ({total_cells/expected_cells*100:.1f}%)"
+        f"\nCoverage (filename-claimed): {claimed_cells}/{expected_cells} cells "
+        f"({claimed_cells / expected_cells * 100:.1f}%)"
     )
-
-    if total_cells < expected_cells:
-        issues.append(f"Incomplete: only {total_cells}/{expected_cells} cells")
+    print(
+        f"Coverage (actually present): {actual_cells}/{expected_cells} cells "
+        f"({actual_cells / expected_cells * 100:.1f}%)"
+    )
+    if claimed_cells < expected_cells:
+        issues.append(
+            f"Incomplete: filenames cover only {claimed_cells}/{expected_cells} cells"
+        )
+    if actual_cells < claimed_cells:
+        issues.append(
+            f"Underfilled: only {actual_cells} cells written across "
+            f"{claimed_cells} claimed"
+        )
 
     # Calculate total size
     total_size_mb = sum(c["size_kb"] for c in chunks) / 1024
-    print(f"Total size: {total_size_mb:.1f} MB")
+    print(f"\nTotal size: {total_size_mb:.1f} MB")
 
     # Report
     print("\n" + "=" * 60)

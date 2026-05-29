@@ -714,8 +714,7 @@ if __name__ == "__main__":
         # cells survive the filter — avoids wasted Dask client startup
         # for range-limited runs where most planner batches are empty.
         batch_cell_indices = {
-            c for c in batch_config["cell_indices"]
-            if cell_start <= c < cell_end
+            c for c in batch_config["cell_indices"] if cell_start <= c < cell_end
         }
         if not batch_cell_indices:
             continue

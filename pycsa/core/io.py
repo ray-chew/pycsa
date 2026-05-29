@@ -1468,6 +1468,34 @@ class writer(object):
         file.close()
 
 
+def _cell_group_is_complete(grp):
+    """Return True if ``grp`` holds a complete CSA result for one cell.
+
+    Used by ``nc_writer.duplicate`` / ``nc_writer.output`` to make resuming
+    a partially-completed run safe: cells with a complete on-disk result
+    are skipped; cells whose group exists but failed the check
+    (e.g. a hard kill mid-write left ``is_land`` but not ``H_spec``)
+    cause the writer to raise so the user sees the corruption.
+
+    ``cell_area`` and ``cell_mean_elevation`` are deliberately excluded
+    from the required set: they are only written when the upstream struct
+    carries them, so requiring them would false-flag legitimate chunks.
+    """
+    if "is_land" not in grp.variables:
+        return False
+    is_land = int(grp.variables["is_land"][:])
+    if is_land == 1:
+        required = ("clat", "clon", "dk", "dl", "H_spec", "kks", "lls")
+        if not all(name in grp.variables for name in required):
+            return False
+        # H_spec is zero-padded after the picked modes by __pad_zeros, but at
+        # least the first mode is a real picked amplitude for any genuine CSA
+        # result. An all-zero H_spec on land means the variable was created
+        # but never assigned (SIGKILL mid-write).
+        return bool((grp.variables["H_spec"][:] != 0).any())
+    return all(name in grp.variables for name in ("clat", "clon"))
+
+
 class nc_writer(object):
 
     def __init__(self, params, sfx=""):
@@ -1521,6 +1549,18 @@ class nc_writer(object):
 
         grp = rootgrp.createGroup(str(id))
 
+        if "is_land" in grp.variables:
+            if _cell_group_is_complete(grp):
+                rootgrp.close()
+                return
+            rootgrp.close()
+            raise RuntimeError(
+                f"nc_writer: cell {id} in {self.fn} already exists but failed "
+                f"the completeness check (likely a partial write from a "
+                f"previous run). Move that chunk file aside (or delete the "
+                f"cell group) and re-run."
+            )
+
         is_land_var = grp.createVariable("is_land", "i4")
         is_land_var[:] = is_land
 
@@ -1561,6 +1601,18 @@ class nc_writer(object):
         rootgrp = nc.Dataset(self.path + self.fn, "a", format="NETCDF4")
 
         grp = rootgrp.createGroup(str(id))
+
+        if "is_land" in grp.variables:
+            if _cell_group_is_complete(grp):
+                rootgrp.close()
+                return
+            rootgrp.close()
+            raise RuntimeError(
+                f"nc_writer: cell {id} in {self.fn} already exists but failed "
+                f"the completeness check (likely a partial write from a "
+                f"previous run). Move that chunk file aside (or delete the "
+                f"cell group) and re-run."
+            )
 
         is_land_var = grp.createVariable("is_land", "i4")
         is_land_var[:] = struct.is_land

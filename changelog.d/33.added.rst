@@ -1,5 +1,0 @@
-New ``pycsa.scheduling`` module hosting ``estimate_cell_memory_gb`` and
-``group_cells_by_memory`` — previously stuck inside
-``runs/icon_etopo_global.py`` and consumed by ``tests/test_dynamic_memory.py``
-via a ``sys.path.insert`` hack. Tests now import from ``pycsa.scheduling``
-directly, without pulling Dask in at collection time.

@@ -1,6 +1,6 @@
 [project]
 name = "pyCSA"
-version = "0.95.1"
+version = "1.0.0rc1"
 description = "Python package for spectral approximation methods applied to topographic analysis"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -80,6 +80,7 @@ package = "pycsa"
 directory = "changelog.d"
 filename = "CHANGELOG.rst"
 underlines = ["-", "^"]
+title_format = "{version} ({project_date})"
 
 [[tool.towncrier.type]]
 directory = "security"

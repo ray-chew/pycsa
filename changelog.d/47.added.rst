@@ -1,7 +1,0 @@
-``CITATION.cff`` (CFF 1.2.0) at the repo root. GitHub auto-renders a
-*"Cite this repository"* button on the project page from this file.
-
-Minimal software citation: author (Ray Chew), version (tracks
-``pyproject.toml``), GPL-3.0-or-later SPDX identifier, repo + docs
-URLs, and the project keywords. No ``preferred-citation`` block yet —
-that can be added in a follow-up alongside any paper DOIs.

@@ -12,42 +12,13 @@ loaders are smoke-tested by the reproducibility suite.
 
 from __future__ import annotations
 
-import sys
-import types
 from pathlib import Path
 
 import pytest
 
+from tests.reproducibility.local_paths_stub import ensure_local_paths_stub
+
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
-_PATHS_ATTRS = (
-    "compact_grid",
-    "compact_topo",
-    "icon_grid",
-    "output",
-    "merit",
-    "rema",
-    "etopo",
-)
-
-
-def _ensure_local_paths_stub() -> None:
-    """If ``pycsa.local_paths`` can't be imported, install a stub in sys.modules."""
-    if "pycsa.local_paths" in sys.modules:
-        return
-    try:
-        import pycsa.local_paths  # noqa: F401
-
-        return
-    except Exception:
-        # Real file missing or broken — install a stub.
-        pass
-
-    import pycsa  # noqa: F401  (parent package; must import without error)
-
-    stub = types.ModuleType("pycsa.local_paths")
-    stub.paths = types.SimpleNamespace(**{a: "" for a in _PATHS_ATTRS})
-    sys.modules["pycsa.local_paths"] = stub
-    setattr(sys.modules["pycsa"], "local_paths", stub)
 
 
 @pytest.fixture
@@ -65,7 +36,7 @@ def patch_local_paths_for(monkeypatch, tmp_path):
             patch_local_paths_for(FIXTURES_DIR / 'etopo_single_cell')
             ...  # pipeline now reads from the bundled inputs
     """
-    _ensure_local_paths_stub()
+    ensure_local_paths_stub()
     from pycsa import local_paths
 
     def _patch(case_dir: Path | str) -> None:

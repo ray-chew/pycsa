@@ -59,6 +59,18 @@ jobs:
           name: coverage-xml
           path: coverage.xml
           if-no-files-found: warn
+      - name: Regenerate reproducibility figures
+        if: matrix.python == '3.12'
+        env:
+          MPLBACKEND: Agg
+        run: python -m tests.reproducibility.render_figures
+      - name: Upload reproducibility figures
+        if: matrix.python == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: reproducibility-figures
+          path: tests/reproducibility/fixtures/*/figure.png
+          if-no-files-found: error
 
   diagnostic-plots:
     name: Baseline vs new-defaults plots
@@ -102,10 +114,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install -e .
           pip install sphinx furo sphinx-changelog
       - name: Sphinx build
         run: |
-          sphinx-build docs/source _build
+          sphinx-build -b html -W --keep-going docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}

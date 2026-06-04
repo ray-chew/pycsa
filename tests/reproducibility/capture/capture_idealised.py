@@ -88,66 +88,50 @@ def capture(out_dir: Path) -> None:
 
 
 def _render_figure(result, path: Path, labels) -> None:
-    """2-row figure for PR-review eyeballing.
+    """2-row figure using the common pyCSA plotting routines.
 
-    Row 1 (physical domain): original masked topography, regLSFF
-    reconstruction, final subCSA reconstruction.
-    Row 2 (spectral domain): reference spectrum, regLSFF spectrum, subCSA
-    spectrum.
-    pLSFF/pLSFF_quad columns are intentionally omitted from the figure —
-    their amplitudes are off by ~1000× and would crush the colorbar; they
-    are still pinned in the manifest at rtol=1e-2.
+    Row 1 (physical domain, ``plotter.fig_obj.phys_panel``): original masked
+    topography, regLSFF reconstruction, final subCSA reconstruction.
+    Row 2 (spectral domain, ``plotter.fig_obj.freq_panel``): the corresponding
+    spectra. These are the same routines used for the JAMES-paper figures.
+    Cells outside the isosceles triangle are exactly 0 and are masked to NaN so
+    the triangle exterior renders white. pLSFF/pLSFF_quad columns are omitted
+    (amplitudes ~1000x off); they remain pinned in the manifest at rtol=1e-2.
     """
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    from pycsa.plotting import plotter
+
     # Indices into EXPERIMENT_LABELS for the 3 panels we plot.
-    panel_idxs = [0, 2, 4]  # reference, regLSFF, subCSA
-    panel_titles = [labels[i] for i in panel_idxs]
+    panel_idxs = [0, 2, 4]  # reference, regLSFF (= the FA), subCSA (= CSA)
+    # Display names in the paper's vocabulary. regLSFF is a single-stage
+    # regularized least-squares fit, i.e. the first approximation (FA); subCSA
+    # is the full constrained spectral approximation (CSA). We avoid the
+    # internal "LSFF" acronym, which the paper never introduces.
+    display = {"regLSFF": "FA", "subCSA": "CSA"}
+    panel_titles = [display.get(labels[i], labels[i]) for i in panel_idxs]
 
-    fig, axs = plt.subplots(2, 3, figsize=(12, 6.5))
+    nhj, nhi = result.freqs_arr.shape[1], result.freqs_arr.shape[2]
+    fig, axs = plt.subplots(2, 3, figsize=(13, 7))
+    fobj = plotter.fig_obj(fig, nhi, nhj, cbar=True, set_label=True)
 
-    # Physical-domain row: shared color range from the reference field.
-    dat_ref = result.dat_arr[0]
-    phys_vmin, phys_vmax = float(dat_ref.min()), float(dat_ref.max())
+    # Physical-domain row (cividis); exterior (exactly 0) -> NaN -> white.
     for col, idx in enumerate(panel_idxs):
-        dat = result.dat_arr[idx]
-        im = axs[0, col].imshow(
-            dat,
-            origin="lower",
-            aspect="auto",
-            cmap="terrain",
-            vmin=phys_vmin,
-            vmax=phys_vmax,
-        )
+        dat = np.where(result.dat_arr[idx] == 0.0, np.nan, result.dat_arr[idx])
         prefix = "original" if idx == 0 else "reconstruction"
-        axs[0, col].set_title(f"{prefix}: {panel_titles[col]}", fontsize=10)
-        axs[0, col].set_xlabel("lon index")
-        axs[0, col].set_ylabel("lat index")
-        plt.colorbar(im, ax=axs[0, col], fraction=0.046, pad=0.04)
+        fobj.phys_panel(axs[0, col], dat, title=f"{prefix}: {panel_titles[col]}")
 
-    # Spectral-domain row: shared color range from reference spectrum.
-    spec_ref = result.freqs_arr[0]
-    spec_vmin, spec_vmax = float(spec_ref.min()), float(spec_ref.max())
+    # Spectral-domain row (grayscale, n/m axes).
     for col, idx in enumerate(panel_idxs):
-        spec = result.freqs_arr[idx]
-        im = axs[1, col].imshow(
-            spec,
-            origin="lower",
-            aspect="auto",
-            cmap="viridis",
-            vmin=spec_vmin,
-            vmax=spec_vmax,
-        )
         l2 = result.errs[idx]
-        axs[1, col].set_title(
-            f"spectrum: {panel_titles[col]} (L2={l2:.2f})", fontsize=10
+        fobj.freq_panel(
+            axs[1, col],
+            result.freqs_arr[idx],
+            title=f"spectrum: {panel_titles[col]} (L2={l2:.2f})",
         )
-        axs[1, col].set_xlabel("k")
-        axs[1, col].set_ylabel("l")
-        plt.colorbar(im, ax=axs[1, col], fraction=0.046, pad=0.04)
 
     fig.suptitle(
         f"Idealised isosceles — {result.num_modes} unique modes "
@@ -157,6 +141,18 @@ def _render_figure(result, path: Path, labels) -> None:
     fig.tight_layout()
     fig.savefig(path, dpi=120, bbox_inches="tight")
     plt.close(fig)
+
+
+def render_only(case_dir: Path = DEFAULT_DIR) -> None:
+    """Regenerate ``figure.png`` only (no external data; idealised is synthetic).
+
+    Used by ``tests.reproducibility.render_figures`` to refresh figures in CI
+    without touching the pinned ``output.nc`` / ``manifest.yml``.
+    """
+    from runs.idealised_isosceles import run, EXPERIMENT_LABELS
+
+    case_dir.mkdir(parents=True, exist_ok=True)
+    _render_figure(run(), case_dir / "figure.png", EXPERIMENT_LABELS)
 
 
 def main(argv=None) -> int:

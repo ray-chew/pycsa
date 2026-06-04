@@ -185,8 +185,14 @@ def _bundle_inputs(fixture_dir: Path, real_icon_grid: Path, real_merit_dir: Path
 # ---------------------------------------------------------------------------
 
 
-def _run_pipeline(fixture_dir: Path) -> dict[str, np.ndarray]:
-    """Re-runs the regional MERIT pipeline using the bundled inputs."""
+def _run_pipeline(fixture_dir: Path, return_cell: bool = False):
+    """Re-runs the regional MERIT pipeline using the bundled inputs.
+
+    By default returns the ``dict[str, np.ndarray]`` of pinned + figure
+    variables (the contract the reproducibility test relies on). With
+    ``return_cell=True`` it also returns the ``cell`` (ocean-masked for the
+    figure) and ``params``, for the shared ``plot_cell_diagnostics``.
+    """
     from pycsa.core import io as pcio, var, utils, physics
     from pycsa.wrappers import interface
 
@@ -255,7 +261,7 @@ def _run_pipeline(fixture_dir: Path) -> dict[str, np.ndarray]:
     # (different LAPACK builds → different ULP-level floats → different
     # argmax tie-breaks). The mode SELECTION is already pinned via
     # `max_ampls` (sorted by amplitude) and `freqs_sa` (final spectrum).
-    return {
+    variables = {
         "topo_input": np.nan_to_num(topo_orig),
         "dat_fa": np.nan_to_num(np.asarray(dat_fg)),
         "dat_sa": np.nan_to_num(np.asarray(dat_sa)),
@@ -265,76 +271,23 @@ def _run_pipeline(fixture_dir: Path) -> dict[str, np.ndarray]:
         "max_ampls": np.asarray(max_ampls, dtype=np.float64),
         "uw_comp": np.asarray(uw_comp, dtype=np.float64),
     }
+    if not return_cell:
+        return variables
+
+    # Figure path only (does not affect the pinned variables above): exclude
+    # ocean from the mask so the shared per-cell diagnostic renders it white and
+    # the RMSE is computed over land. MERIT marks ocean as a non-finite fill;
+    # also drop anything below -200 m (deep bathymetry) for parity with ETOPO.
+    params.nhi, params.nhj = NHI, NHJ
+    ocean_mask = ~np.isfinite(cell.topo) | (cell.topo < -200.0)
+    cell.mask = cell.mask & ~ocean_mask
+    cell.get_masked(mask=cell.mask)
+    return variables, cell, params
 
 
 # ---------------------------------------------------------------------------
 # 3. Figure + main
 # ---------------------------------------------------------------------------
-
-
-def _render_figure(variables: dict[str, np.ndarray], path: Path) -> None:
-    """2-row figure: physical-domain reconstructions on top, spectra below."""
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    topo = variables["topo_input"]
-    dat_fa = variables["dat_fa"]
-    dat_sa = variables["dat_sa"]
-    fa = variables["freqs_fa"]
-    sa = variables["freqs_sa"]
-    ampls = variables["max_ampls"]
-
-    fig, axs = plt.subplots(2, 3, figsize=(13, 7))
-
-    # Row 1: physical domain — shared color range from the original topo.
-    phys_vmin, phys_vmax = float(topo.min()), float(topo.max())
-    for col, (arr, title) in enumerate(
-        [
-            (topo, "original topography"),
-            (dat_fa, "first-approx reconstruction"),
-            (dat_sa, "final (SA) reconstruction"),
-        ]
-    ):
-        im = axs[0, col].imshow(
-            arr,
-            origin="lower",
-            aspect="auto",
-            cmap="terrain",
-            vmin=phys_vmin,
-            vmax=phys_vmax,
-        )
-        axs[0, col].set_title(title, fontsize=10)
-        axs[0, col].set_xlabel("lon index")
-        axs[0, col].set_ylabel("lat index")
-        plt.colorbar(im, ax=axs[0, col], fraction=0.046, pad=0.04)
-
-    # Row 2: spectra + top-mode amplitudes.
-    im_fa = axs[1, 0].imshow(fa, origin="lower", aspect="auto", cmap="viridis")
-    axs[1, 0].set_title("first-approx spectrum", fontsize=10)
-    axs[1, 0].set_xlabel("k")
-    axs[1, 0].set_ylabel("l")
-    plt.colorbar(im_fa, ax=axs[1, 0], fraction=0.046, pad=0.04)
-
-    im_sa = axs[1, 1].imshow(sa, origin="lower", aspect="auto", cmap="viridis")
-    axs[1, 1].set_title("second-approx spectrum (final)", fontsize=10)
-    axs[1, 1].set_xlabel("k")
-    axs[1, 1].set_ylabel("l")
-    plt.colorbar(im_sa, ax=axs[1, 1], fraction=0.046, pad=0.04)
-
-    axs[1, 2].bar(range(len(ampls)), ampls)
-    axs[1, 2].set_title(f"top {N_MODES} mode amplitudes (sorted)", fontsize=10)
-    axs[1, 2].set_xlabel("mode rank")
-
-    fig.suptitle(
-        f"regional MERIT — ICON cell {C_IDX_ORIGINAL} (Aleutians ~52°N), "
-        f"merit_cg={MERIT_CG}",
-        fontsize=11,
-    )
-    fig.tight_layout()
-    fig.savefig(path, dpi=120, bbox_inches="tight")
-    plt.close(fig)
 
 
 def capture(out_dir: Path, real_icon_grid: Path, real_merit_dir: Path) -> None:
@@ -351,7 +304,7 @@ def capture(out_dir: Path, real_icon_grid: Path, real_merit_dir: Path) -> None:
         )
 
     print("running pipeline against the bundle ...")
-    variables = _run_pipeline(out_dir)
+    variables, cell, params = _run_pipeline(out_dir, return_cell=True)
 
     # Physical-domain fields (topo_input, dat_fa, dat_sa) are used for the
     # figure but not pinned in the fixture: their numerics are derivable
@@ -380,12 +333,40 @@ def capture(out_dir: Path, real_icon_grid: Path, real_merit_dir: Path) -> None:
     )
     manifest.save(out_dir / "manifest.yml")
 
-    _render_figure(variables, out_dir / "figure.png")
+    _render(out_dir, variables, cell, params)
 
     print(f"captured regional_merit fixture → {out_dir}")
     print(f"  variables: {list(variables)}")
     print(f"  freqs_sa shape: {variables['freqs_sa'].shape}")
     print(f"  top mode amplitudes (first 5): {variables['max_ampls'][:5]}")
+
+
+def _render(case_dir: Path, variables, cell, params) -> None:
+    """Write ``figure.png`` from already-computed pipeline outputs."""
+    from pycsa.plotting.diagnostics import plot_cell_diagnostics
+
+    plot_cell_diagnostics(
+        C_IDX_ORIGINAL,
+        cell,
+        variables["freqs_sa"],
+        variables["dat_sa"],
+        case_dir,
+        params,
+        out_path=case_dir / "figure.png",
+        cell_label="Aleutians (ICON cell %d)" % C_IDX_ORIGINAL,
+    )
+
+
+def render_only(case_dir: Path = DEFAULT_DIR) -> None:
+    """Regenerate ``figure.png`` from the bundled fixture input only.
+
+    Unlike :func:`capture`, this needs no real source data — it re-runs the
+    pipeline against the committed ``<case_dir>/input`` slices and re-renders
+    the figure, leaving ``output.nc`` / ``manifest.yml`` untouched. Used by
+    ``tests.reproducibility.render_figures`` to refresh figures in CI.
+    """
+    variables, cell, params = _run_pipeline(case_dir, return_cell=True)
+    _render(case_dir, variables, cell, params)
 
 
 def main(argv=None) -> int:

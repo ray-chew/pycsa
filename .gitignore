@@ -43,3 +43,5 @@ setup_paths_local.sh
 !docs/source/_static/**/*.png
 !docs/source/_static/**/*.pdf
 !docs/source/_static/**/*.svg
+
+_build/*

@@ -26,8 +26,6 @@ import matplotlib
 
 matplotlib.use("Agg")  # Use non-GUI backend for parallel processing
 import matplotlib.pyplot as plt
-from matplotlib.colors import TwoSlopeNorm
-import matplotlib.colors as mcolors
 from pathlib import Path
 import gc
 import logging
@@ -37,6 +35,7 @@ from types import SimpleNamespace
 from pycsa.core import io, var, utils, tile_cache
 from pycsa.wrappers import interface, diagnostics
 from pycsa.plotting import plotter
+from pycsa.plotting.diagnostics import plot_cell_diagnostics
 from pycsa.scheduling import estimate_cell_memory_gb, group_cells_by_memory
 
 # Initialize logger (will be configured in main)
@@ -52,137 +51,6 @@ def setup_logger(log_dir="logs"):
     from pycsa.logging_config import configure_logging
 
     return configure_logging(log_dir=log_dir, name_prefix="icon_etopo_global")
-
-
-def get_topo_colormap():
-    """
-    Create a topography colormap with blue for ocean (< 0m) and terrain colors for land (> 0m).
-    Transition occurs exactly at sea level (0m) with smooth blending.
-
-    For TwoSlopeNorm to work correctly, we need equal colors on each side:
-    128 colors for ocean (< 0m) + 128 colors for land (> 0m) = 256 total
-    """
-    # Ocean colors (blue shades from deep to shallow)
-    ocean_colors = plt.cm.Blues_r(np.linspace(0.4, 0.95, 120))
-
-    # Smooth transition zone around sea level (8 colors on each side)
-    # Get the last ocean color and first land color
-    last_ocean = plt.cm.Blues_r(0.95)
-    first_land = plt.cm.terrain(0.25)
-
-    # Create smooth blend from ocean to land
-    transition_colors = np.zeros((16, 4))
-    for i in range(4):  # RGBA channels
-        transition_colors[:, i] = np.linspace(last_ocean[i], first_land[i], 16)
-
-    # Land colors (terrain-like: green to brown to white)
-    land_colors = plt.cm.terrain(np.linspace(0.28, 1.0, 120))
-
-    # Combine: 120 ocean + 16 transition + 120 land = 256 total
-    # Transition centered at index 128 (sea level)
-    colors = np.vstack((ocean_colors, transition_colors, land_colors))
-    return mcolors.LinearSegmentedColormap.from_list("topo", colors)
-
-
-def plot_cell_diagnostics(c_idx, cell_sa, ampls_sa, dat_2D_sa, output_dir, params):
-    """
-    Create 3-panel diagnostic plot for a single cell.
-
-    Panel 1: Loaded topography (original ETOPO data within cell)
-    Panel 2: Reconstructed topography after second approximation
-    Panel 3: Computed spectrum
-
-    Parameters
-    ----------
-    c_idx : int
-        Cell index
-    cell_sa : topo_cell
-        Cell object after second approximation (contains original topo in cell.topo)
-    ampls_sa : ndarray
-        Amplitude spectrum from second approximation
-    dat_2D_sa : ndarray
-        Reconstructed topography from second approximation
-    output_dir : Path
-        Output directory for saving plots
-    params : params object
-        Parameters object
-    """
-    # Create figure with 3 panels
-    fig, axs = plt.subplots(1, 3, figsize=(18, 6))
-
-    # Get elevation extent for consistent color scaling
-    vmin = -200.0  # Always fix ocean floor at -500m (blue portion)
-    vmax = np.nanmax(cell_sa.topo)
-
-    # Ensure vmax is positive (land)
-    if vmax <= 0:
-        vmax = 100.0  # Force some land color even if all ocean
-
-    # Create custom colormap with blue for ocean, terrain colors for land
-    topo_cmap = get_topo_colormap()
-
-    # Create normalization centered at sea level (0m)
-    # This makes the colormap transition exactly at 0m
-    norm = TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
-
-    # Panel 1: Original topography within cell
-    topo_original = cell_sa.topo.copy()
-    topo_original[~cell_sa.mask] = np.nan
-
-    im1 = axs[0].imshow(
-        topo_original, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
-    )
-    axs[0].set_title(
-        f"Cell {c_idx}: Loaded Topography\nRange: [{vmin:.0f}, {vmax:.0f}] m",
-        fontsize=11,
-        fontweight="bold",
-    )
-    axs[0].set_xlabel("Longitude index")
-    axs[0].set_ylabel("Latitude index")
-    cbar1 = plt.colorbar(im1, ax=axs[0], fraction=0.046, pad=0.04)
-    cbar1.set_label("Elevation [m]", rotation=270, labelpad=15)
-
-    # Panel 2: Reconstructed topography (masked)
-    dat_2D_masked = dat_2D_sa.copy()
-    dat_2D_masked[~cell_sa.mask] = np.nan
-
-    # Compute reconstruction error
-    diff = cell_sa.topo - dat_2D_sa
-    rmse = np.sqrt(np.mean(diff[cell_sa.mask] ** 2))
-    rel_rmse = rmse / (vmax - vmin) * 100
-
-    im2 = axs[1].imshow(
-        dat_2D_masked, origin="lower", cmap=topo_cmap, norm=norm, aspect="auto"
-    )
-    axs[1].set_title(
-        f"Reconstructed (2nd Approx)\nRMSE: {rmse:.1f} m ({rel_rmse:.1f}%)",
-        fontsize=11,
-        fontweight="bold",
-    )
-    axs[1].set_xlabel("Longitude index")
-    axs[1].set_ylabel("Latitude index")
-    cbar2 = plt.colorbar(im2, ax=axs[1], fraction=0.046, pad=0.04)
-    cbar2.set_label("Elevation [m]", rotation=270, labelpad=15)
-
-    # Panel 3: Amplitude spectrum in (k,l) wavenumber space
-    fig_obj = plotter.fig_obj(fig, params.nhi, params.nhj, cbar=True, set_label=True)
-    axs[2] = fig_obj.freq_panel(
-        axs[2], ampls_sa, title="Amplitude Spectrum", v_extent=None
-    )
-
-    plt.tight_layout()
-
-    # Save figure
-    output_path = output_dir / f"cell_{c_idx:05d}.png"
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    plt.close(fig)
-
-    # Explicit memory cleanup - delete ALL objects to prevent memory leaks
-    del fig, axs, fig_obj, im1, im2, topo_original, dat_2D_masked
-    del cbar1, cbar2, norm, topo_cmap, diff
-    gc.collect()  # Force garbage collection after plotting
-
-    logger.info(f"  Plot saved: {output_path}")
 
 
 def do_cell(

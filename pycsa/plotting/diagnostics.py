@@ -160,8 +160,10 @@ def plot_cell_diagnostics(
     plt.tight_layout()
 
     # Save figure
-    output_path = Path(out_path) if out_path is not None else (
-        output_dir / f"cell_{c_idx:05d}.png"
+    output_path = (
+        Path(out_path)
+        if out_path is not None
+        else (output_dir / f"cell_{c_idx:05d}.png")
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=150, bbox_inches="tight")

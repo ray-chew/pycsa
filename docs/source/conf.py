@@ -107,6 +107,7 @@ def _skip_reexports(app, what, name, obj, skip, options):
 def setup(app):
     app.connect("autodoc-skip-member", _skip_reexports)
 
+
 # -- napoleon (NumPy-style docstrings) ---------------------------------------
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True

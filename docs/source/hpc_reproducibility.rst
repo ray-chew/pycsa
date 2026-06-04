@@ -5,15 +5,6 @@ End-to-end recipe for running the global ICON+ETOPO CSA pipeline:
 download the input data, pick a hardware preset, submit (locally or
 via SLURM), monitor, recover from a crash, and validate the output.
 
-This page consolidates what used to live in five untracked Markdown
-files (``runs/HPC_ETOPO_README.md``, ``runs/QUICK_START_128_CORES.md``,
-``runs/NETCDF_CHUNKING_GUIDE.md``, ``runs/README_CHUNKING.md``,
-``scripts/ETOPO_DOWNLOAD_GUIDE.md``) — those have been removed.
-
-.. contents::
-   :local:
-   :depth: 2
-
 
 Overview
 --------
@@ -199,7 +190,7 @@ batches with more, smaller-memory workers.
 **Tile cache** — :mod:`pycsa.core.tile_cache` holds a per-Dask-worker
 singleton (``_WORKER_CACHE``) initialised at the start of each memory
 batch via ``client.run(init_worker_cache, ...)``. ``do_cell`` retrieves
-it via ``ctx.tile_cache()`` (see :class:`pycsa.compute.ComputeContext`)
+it via ``ctx.tile_cache()`` (see :class:`pycsa.compute.context.ComputeContext`)
 so the ETOPO tile handles stay open across cells in the same worker
 instead of being re-opened per cell.
 

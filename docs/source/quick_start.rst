@@ -9,204 +9,82 @@ To run the code, make sure the following packages are installed, preferably in a
 .. literalinclude:: ../../requirements.txt
 
 .. note::
-    The Sphinx dependencies can be found in ``docs/conf.py``.
+    The Sphinx dependencies can be found in ``docs/source/conf.py``.
 
 Overview
 ^^^^^^^^
-The CSA codebase is structured modularly, see :numref:`structure` for a graphical overview.
+The pyCSA codebase is structured modularly, see :numref:`structure` for a graphical overview.
 
-The package :mod:`wrappers` provides interfaces to the core code components in :mod:`src` and :mod:`vis`. For example, it defines the First and Second Approximation steps in the CSA algorithm and applies the tapering of the physical data. Refer to the :doc:`APIs <api>` for more details.
+The subpackage :mod:`pycsa.wrappers` provides interfaces to the core code components in :mod:`pycsa.core` and the plotting helpers in :mod:`pycsa.plotting`. For example, it defines the First and Second Approximation steps in the CSA algorithm and applies the tapering of the physical data. Refer to the :doc:`APIs <api>` for more details.
 
-Helper functions and data structures are provided for the processing of user-defined topographies (:mod:`src.var.topo`), grids (:mod:`src.var.grid`), and input parameters (:mod:`src.var.params`).
+Helper functions and data structures are provided for the processing of user-defined topographies (:class:`pycsa.data.cell.topo`), grids (:class:`pycsa.data.cell.grid`), and input parameters (:class:`pycsa.config.params.params`).
 
-These *building blocks* are the assembled for different kinds of experiments in the user-defined run scripts. Some examples can be found in the subpackage :mod:`runs`.
+These *building blocks* are then assembled for different kinds of experiments in user-defined run scripts. Some examples live in the top-level ``runs/`` and ``examples/`` directories.
 
 .. graphviz::
     :align: center
     :name: structure
-    :alt: CSA program structure
-    :caption: CSA program structure
+    :alt: pyCSA program structure
+    :caption: pyCSA program structure
 
-    digraph {    
-        graph [
-            fontname="Verdana", 
-            fontsize="12",
-            ];
+    digraph {
+        graph [fontname="Verdana", fontsize="12"];
+        node  [fontname="Verdana", fontsize="11", shape=box, style=rounded];
+        edge  [fontname="Sans", fontsize="9"];
 
-        node [
-            fontname="Verdana", 
-            fontsize="12", 
-            color=transparent, 
-            shape=record
-            ];
+        data     [label="pycsa.data\n(grid / topo cells)",
+                  URL="_autosummary/pycsa.data.cell.html", target="_top"];
+        config   [label="pycsa.config\n(run parameters)",
+                  URL="_autosummary/pycsa.config.params.html", target="_top"];
+        core     [label="pycsa.core\n(delaunay, fourier,\nlin_reg, reconstruction)",
+                  URL="_autosummary/pycsa.core.html", target="_top"];
+        compute  [label="pycsa.compute\n(ComputeContext)",
+                  URL="_autosummary/pycsa.compute.html", target="_top"];
+        wrappers [label="pycsa.wrappers\n(interface.get_pmf,\ndiagnostics)",
+                  URL="_autosummary/pycsa.wrappers.html", target="_top"];
+        plotting [label="pycsa.plotting\n(plotter, cart_plot)",
+                  URL="_autosummary/pycsa.plotting.html", target="_top"];
+        runs     [label="runs / examples\n(experiment scripts,\npycsa-idealised CLI)"];
 
-        edge [
-            fontname="Sans", 
-            fontsize="9"
-            ];
-
-        //-----------------------------------
-        topo [
-            label="external\ntopography data"
-            ];
-
-        ncdata [
-            label="src.io.ncdata", 
-            fontcolor=red, 
-            URL="modules/src.io.html#src.io.ncdata", 
-            target="_top"
-            ];
-
-        vartopo [
-            label="src.var.topo", 
-            fontcolor=red, 
-            URL="modules/src.var.html#src.var.topo", 
-            target="_top"
-            ];
-    
-        subgraph cluster_topo {
-            margin=0
-            label = <<B>load the<br/>topography</B>>;
-            topo -> ncdata -> vartopo [weight=99];
-        };
-    
-        //-----------------------------------
-        extgrid [
-            label="external ICON\ngrid"
-            ];
-
-        readdat [
-            label="src.io.ncdata.read_dat",
-            fontcolor=red, 
-            URL="modules/src.io.html#src.io.ncdata.read_dat", target="_top"
-            ];
-
-        vargrid [
-            label="src.var.grid",
-            fontcolor=red, 
-            URL="modules/src.var.html#src.var.grid"
-            target="_top"
-            ];
-
-        delaunay [
-            label=<regional Delaunay<br/>triangulation:<br/><font color="red">src.delaunay</font>>, 
-            URL="modules/src.delaunay.html#src.delaunay.get_decomposition", 
-            target="_top"
-            ];
-
-        isosceles [
-            label=<idealised:<br/><font color="red">src.utils.isosceles<br/>src.utils.delaunay</font>>, 
-            URL="modules/src.utils.html#src.utils.isosceles", 
-            target="_top"
-            ];
-        
-        subgraph cluster_grid {
-            margin=0;
-            label = <<B>define the grid</B>>;
-            extgrid -> readdat;
-            readdat -> vargrid;
-            delaunay -> vargrid [weight=1];
-            isosceles -> vargrid;
-        };
-        
-        //-----------------------------------
-        inputs [
-            label=<user-defined<br/>inputs:<br/><font color="red">inputs</font>>,
-            URL="modules/inputs.html",
-            target="_top"
-            ];
-
-        params [
-            label=<<font color="red">src.var.params</font>>,
-            URL="modules/src.var.html#src.var.params",
-            target="_top"
-            ];
-        
-        subgraph cluster_input {
-            margin=0;
-            label = <<B>define run<br/>parameters</B>>;
-            inputs -> params;
+        subgraph cluster_inputs {
+            margin=8;
+            label = <<B>building blocks</B>>;
+            data; config; core; compute;
         }
 
-        //-----------------------------------
-
-        runs [
-            label=<assemble the components<br/>in a run script:<br/><font color="red">runs</font>>, 
-            color=black,
-            URL="modules/runs.html",
-            target="_top"
-            ];
-        
-        vartopo:s -> runs:w [ltail=cluster_topo];
-        params:s -> runs:e [ltail=cluster_input];
-        vargrid:s -> runs:n [ltail=cluster_grid];
-       
-        nodepoint [shape=point, color=black, width=0.02];
-        runs:s -> nodepoint:n [style=invis];
-        nodepoint:n -> runs:s [weight=999];
-
-        //-----------------------------------
-        
-        wrappers [
-            label=<interface modules:<br/><font color="red">wrappers</font>>, 
-            color=black,
-            URL="modules/wrappers.html",
-            target="_top"
-            ];
-
-        nodepoint:e -> wrappers [style=invis,weight=0];
-        wrappers:n -> nodepoint:s [arrowhead=none];
-        
-        exp [
-            label="use the wrapper components as\nbuilding blocks to interface\nwith the core components"
-            ];
-        
-        {rank=same; exp ; nodepoint};
-
-        //-----------------------------------
-
-        src [
-            label=<core modules:<br/><font color="red">src</font>>, 
-            color=black,
-            URL="modules/src.html"
-            target="_top"
-            ];
-
-        vis [
-            label=<visualisation modules:<br/><font color="red">vis</font>>, 
-            color=black,
-            URL="modules/vis.html"
-            target="_top"
-            ];
-    
-        nodepoint1 [shape=point, style=invis, width=0.01];
-        
-        wrappers:s -> nodepoint1:n [style=invis];
-        {rank=same; src; nodepoint1; vis};
-        
-        src:n -> wrappers:w [weight=-10];
-        vis:n -> wrappers:e;
+        data     -> wrappers;
+        config   -> wrappers;
+        core     -> wrappers;
+        compute  -> wrappers;
+        core     -> plotting [style=dashed];
+        wrappers -> runs;
+        plotting -> runs;
     }
 
 A first run
 ^^^^^^^^^^^
 
-To reproduce the coarse grid study (*Coarse Delaunay triangulation (approximately R2B4)* in the manuscript):
-
-1. Make the changes in the user-defined input file, :mod:`inputs.lam_run`. Specifically, enable the switch:
-
-.. code-block:: python
-
-    run_case = "R2B4"
-
-2. Make sure to import the correct user-defined input file. Then execute the run script :mod:`runs.delaunay_runs`:
+The quickest way to see the method end-to-end is the bundled idealised
+isosceles experiment. After ``pip install -e .`` it is a single command via the
+``pycsa-idealised`` console script:
 
 .. code-block:: console
 
-    python3 ./runs/delaunay_runs.py
+    pycsa-idealised
 
-Alternatively, the run script could be executed via ``ipython``.
+The equivalent direct invocations also work:
+
+.. code-block:: console
+
+    python -m runs.idealised_isosceles
+    python3 ./runs/idealised_isosceles.py
+
+See the :doc:`tutorial` for a step-by-step walkthrough of this experiment, and
+:doc:`hpc_reproducibility` for the global ICON+ETOPO pipeline.
 
 .. note::
 
-    The development of the CSA codebase frontend is currently ongoing. The current design approach of the program structure aims to simplify debugging and diagnostics using an ``ipython`` environment.
+    Run parameters are assembled programmatically in the run scripts under
+    ``runs/`` and ``examples/`` (using :class:`pycsa.config.params.params`),
+    rather than via a separate input module. The design favours debugging and
+    diagnostics in an interactive ``ipython`` environment.

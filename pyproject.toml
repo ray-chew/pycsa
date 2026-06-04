@@ -75,6 +75,8 @@ include = ["pycsa*", "runs*"]
 
 
 [tool.towncrier]
+name = "pyCSA"
+package = "pycsa"
 directory = "changelog.d"
 filename = "CHANGELOG.rst"
 underlines = ["-", "^"]

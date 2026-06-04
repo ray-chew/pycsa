@@ -2,7 +2,7 @@ Tutorial: Idealised isosceles experiment
 ========================================
 
 This walkthrough follows the canonical idealised CSA experiment in
-:mod:`runs.idealised_isosceles`. It generates a synthetic terrain whose
+``runs/idealised_isosceles.py``. It generates a synthetic terrain whose
 spectrum is known a priori, then runs four ways of recovering that
 spectrum from the (masked) topography:
 
@@ -58,7 +58,7 @@ that triangle:
     cell.gen_mgrids()
 
     # paint the sum of basis functions
-    cell.topo = sum(Ak[i] * basis(nk[i], nl[i], …) for i in range(22))
+    cell.topo = sum(Ak[i] * basis(nk[i], nl[i], ...) for i in range(22))
 
     triangle = utils.gen_triangle(lon_v, lat_v)
     cell.get_masked(triangle=triangle)
@@ -161,15 +161,16 @@ regLSFF / subCSA spectra:
 The L2 errors against the reference for the default seed::
 
     reference   : 0.00
-    pLSFF       : 164397.86   (broken — see Step 3)
+    pLSFF       : 163750.14   (broken — see Step 3)
     regLSFF     :    115.71
     optCSA      :     85.68
     subCSA      :    111.37
-    pLSFF_quad  : 164397.86
+    pLSFF_quad  : 163750.14
 
 Reproducibility: the four CSA-family rows are bit-identical across
-platforms. pLSFF drifts ~0.2% across LAPACK builds and is pinned at
-``rtol=1e-2`` in the reproducibility suite.
+platforms. pLSFF drifts sub-1% across LAPACK builds (so its exact value
+here will differ slightly on your machine) and is pinned at ``rtol=1e-2``
+in the reproducibility suite.
 
 
 Running it yourself
@@ -189,12 +190,12 @@ get on stdout.
 Where to go next
 ----------------
 
-* **Real data, laptop-sized:** :mod:`examples.icon_regional_minimal`
+* **Real data, laptop-sized:** ``examples/icon_regional_minimal.py``
   runs the full pipeline on a real ICON cell (Aleutians, ~52°N) using
   a bundled MERIT slice. ~10 s end-to-end, no manual data setup.
 
 * **Production HPC runs:** see :doc:`hpc_reproducibility` for the
-  global ICON+ETOPO pipeline (:mod:`runs.icon_etopo_global`) —
+  global ICON+ETOPO pipeline (``runs/icon_etopo_global.py``) —
   SLURM submission, memory batching, restart story, and tile-cache
   lifecycle.
 

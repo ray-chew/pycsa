@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://ray-chew.github.io/pyCSA/index.html">
-  <img alt="CSA Logo" src="https://ray-chew.github.io/pyCSA/_static/logo.png">
+  <img alt="CSA Logo" src="https://ray-chew.github.io/pyCSA/_static/logo.png" width="180">
   </a>
 </p>
 
@@ -43,22 +43,22 @@ This method is primarily used to represent terrain for weather forecasting purpo
 
 See [`requirements.txt`](https://github.com/ray-chew/pyCSA/blob/main/requirements.txt)
 
-> **NOTE:**  The Sphinx dependencies can be found in [`docs/conf.py`](https://github.com/ray-chew/pyCSA/blob/main/docs/source/conf.py).
+> **NOTE:**  The Sphinx dependencies can be found in [`docs/source/conf.py`](https://github.com/ray-chew/pyCSA/blob/main/docs/source/conf.py).
 
 
 ## Usage
 
 ### Installation
 
-Fork this repository and clone your remote fork.
+Fork this repository and clone your remote fork, then `pip install -e .`.
 
 ### Configuration
 
-The user-defined input parameters are in the [`inputs`](https://github.com/ray-chew/pyCSA/tree/main/inputs) subpackage. These parameters are imported into the run scripts in [`runs`](https://github.com/ray-chew/pyCSA/tree/main/runs).
+Run parameters are assembled programmatically inside the run scripts using the [`pycsa.config.params`](https://github.com/ray-chew/pyCSA/blob/main/pycsa/config/params.py) dataclass. Example experiment scripts live in [`runs/`](https://github.com/ray-chew/pyCSA/tree/main/runs) and [`examples/`](https://github.com/ray-chew/pyCSA/tree/main/examples); the reusable building blocks are in the [`pycsa`](https://github.com/ray-chew/pyCSA/tree/main/pycsa) package (`pycsa.core`, `pycsa.wrappers`, `pycsa.plotting`, `pycsa.data`, `pycsa.compute`).
 
 ### Execution
 
-A simple setup can be found in [`runs.idealised_isosceles`](https://github.com/ray-chew/pyCSA/blob/main/runs/idealised_isosceles.py). After `pip install -e .` the easiest way to run it is via the console script:
+A simple setup can be found in [`runs/idealised_isosceles.py`](https://github.com/ray-chew/pyCSA/blob/main/runs/idealised_isosceles.py). After `pip install -e .` the easiest way to run it is via the console script:
 
 ```console
 pycsa-idealised

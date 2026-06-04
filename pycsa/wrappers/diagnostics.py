@@ -18,11 +18,11 @@ class delaunay_metrics(object):
 
         Parameters
         ----------
-        params : :class:`src.var.params`
+        params : :class:`pycsa.config.params.params`
             instance of the user-defined parameter class
-        tri : :class:`scipy.spatial.qhull.Delaunay`
+        tri : :class:`scipy.spatial.Delaunay`
             instance of the scipy Delaunay triangulation class
-        writer : :class:`src.io.writer`, optional
+        writer : :class:`pycsa.core.io.writer`, optional
             metric will be written to a HDF5 file if writer object is provided, by default None
         """
         self.params = params
@@ -219,7 +219,7 @@ class diag_plotter(object):
 
         Parameters
         ----------
-        params : :class:`src.var.params`
+        params : :class:`pycsa.config.params.params`
             instance of the user-defined parameter class
         nhi : int
             number of harmonics in the first horizontal direction
@@ -253,7 +253,7 @@ class diag_plotter(object):
             index of the quadrilateral grid cell
         sols : tuple
             contains the data for plotting:
-               | (:class:`src.var.topo_cell` instance,
+               | (:class:`pycsa.data.cell.topo_cell` instance,
                | computed CSA spectrum,
                | computed idealised pseudo-momentum fluxes,
                | the reconstructed physical data)

@@ -57,6 +57,16 @@ def compute_split_EW(lon_verts: np.ndarray) -> bool:
     converting to the [0, 360) representation reduces the span AND the original
     span exceeds 180°. This avoids the false positives that plagued cells in
     the western hemisphere near the dateline (e.g. Aleutian cells).
+
+    Parameters
+    ----------
+    lon_verts : array-like
+        Cell longitude vertices (1-D), in [-180, 180).
+
+    Returns
+    -------
+    bool
+        True if the cell truly crosses the dateline, False otherwise.
     """
     lon_verts = np.asarray(lon_verts)
     lon_span = lon_verts.max() - lon_verts.min()
@@ -201,11 +211,20 @@ class TopographyTileCache:
         Returns
         -------
         lat : ndarray
-            Latitude coordinates
+            Latitude coordinates. When ``merit_cg > 1`` these are the
+            windowed means of the sorted source coordinates.
         lon : ndarray
-            Longitude coordinates
+            Longitude coordinates. When the cell crosses the dateline the
+            extent is shifted into [0, 360); when ``merit_cg > 1`` these are
+            the windowed means of the sorted source coordinates.
         topo : ndarray
-            Topography data (2D array)
+            Topography data (2D array).
+
+        Notes
+        -----
+        For high-southern-latitude cells (``lat_max < -85.0``) the effective
+        coarse-graining stride is ``iint = merit_cg * 5`` (a 5× multiplier)
+        to compensate for the convergence of meridians near the pole.
         """
         lat_min = float(np.min(lat_extent))
         lat_max = float(np.max(lat_extent))
@@ -407,7 +426,7 @@ class TopographyTileCache:
     ) -> int:
         """Look up which ETOPO tile-boundary index encloses ``vert``.
 
-        Mirrors pycsa.core.io.read_etopo_topo.__compute_idx (io.py:834-870).
+        Mirrors ``pycsa.core.io.read_etopo_topo.__compute_idx``.
         """
         fn_int = _ETOPO_FN_LON if direction == "lon" else _ETOPO_FN_LAT
         where_idx = int(np.argmin(np.abs(fn_int - vert)))
@@ -432,7 +451,7 @@ class TopographyTileCache:
     ) -> Tuple[List[str], int, int]:
         """Build ETOPO filenames for a rectangular tile range.
 
-        Mirrors pycsa.core.io.read_etopo_topo.__get_fns (io.py:872-898).
+        Mirrors ``pycsa.core.io.read_etopo_topo.__get_fns``.
         Returns (filenames, lon_cnt, lat_cnt) where the counts are the
         zero-based last enumerations (for __load_topo's row/col arithmetic).
         """
@@ -456,7 +475,7 @@ class TopographyTileCache:
     ) -> Tuple[int, int]:
         """Compute per-tile longitude slice indices.
 
-        Mirrors pycsa.core.io.read_etopo_topo.__get_lon_idxs (io.py:1052-1104).
+        Mirrors ``pycsa.core.io.read_etopo_topo.__get_lon_idxs``.
         """
         l_lon_bound = _ETOPO_FN_LON[lon_idx_rng[n_col]]
         r_idx = lon_idx_rng[n_col] + 1
@@ -512,7 +531,7 @@ class TopographyTileCache:
     ) -> Tuple[List[float], List[float], np.ndarray]:
         """Assemble the regional topography array from per-tile slices.
 
-        Mirrors pycsa.core.io.read_etopo_topo.__load_topo (io.py:900-1050)
+        Mirrors ``pycsa.core.io.read_etopo_topo.__load_topo``
         as a two-pass over ``fns`` — first pass computes the output shape,
         second pass populates the array. Returns (lat_list, lon_list, topo).
         """
@@ -609,8 +628,8 @@ class TopographyTileCache:
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Load ETOPO topography for a cell's lat/lon vertex extent.
 
-        Byte-equivalent to pycsa.core.io.read_etopo_topo.get_topo + __load_topo
-        (io.py:720-1050), but uses this cache's persistent file handles so the
+        Byte-equivalent to ``pycsa.core.io.read_etopo_topo.get_topo`` +
+        ``__load_topo``, but uses this cache's persistent file handles so the
         same tile isn't re-opened across cells within a worker.
 
         Parameters
@@ -620,8 +639,7 @@ class TopographyTileCache:
         lon_extent : array-like
             Cell longitude vertices (1-D), in [-180, 180).
         etopo_cg : int, optional
-            Coarse-graining factor (stride). High southern latitudes
-            (lat_max < -85°) implicitly multiply this by 5 — see below.
+            Coarse-graining factor (stride).
 
         Returns
         -------
@@ -701,7 +719,8 @@ class TopographyTileCache:
         lon_sorted = lon_arr[lon_sort_idx]
         topo_sorted = topo_arr[np.ix_(lat_sort_idx, lon_sort_idx)]
 
-        # Coarse-graining — io.py picks up a 5× multiplier for very-southern cells.
+        # Coarse-graining stride (no high-latitude 5× multiplier here; only
+        # the MERIT path in get_data_for_region applies that).
         iint = etopo_cg
         if iint > 1:
             try:

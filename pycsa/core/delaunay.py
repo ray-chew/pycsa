@@ -1,3 +1,15 @@
+"""Delaunay decomposition and land-cell selection.
+
+Partitions a lat-lon topography domain into Delaunay triangles whose
+vertices sit on a coarse regular grid (:func:`get_decomposition`), and
+selects the subset of triangles that contain enough above-threshold
+topography to be treated as land cells (:func:`get_land_cells`). The
+``scipy.spatial.Delaunay`` object returned by :func:`get_decomposition`
+is augmented in place with ``.tri_lat_verts`` / ``.tri_lon_verts`` (and
+centroid arrays) that downstream consumers, including
+:func:`get_land_cells`, rely on.
+"""
+
 import logging
 
 import numpy as np
@@ -25,8 +37,10 @@ def get_decomposition(topo, xnp=11, ynp=6, padding=0):
 
     Returns
     -------
-    :class:`scipy.spatial.qhull.Delaunay` instance
-        scipy Delaunary triangulation instance
+    :class:`scipy.spatial.Delaunay` instance
+        scipy Delaunay triangulation instance, augmented in place with
+        ``tri_lat_verts``/``tri_lon_verts`` (per-triangle vertex
+        coordinates) and ``tri_clats``/``tri_clons`` (centroids).
     """
 
     xlen = len(topo.lon) - padding
@@ -73,19 +87,29 @@ def get_land_cells(tri, topo, height_tol=0.5, percent_tol=0.95):
 
     Parameters
     ----------
-    tri : instance containing tuples of the three vertice coordinates of a triangle
-        E.g., :class:`scipy.spatial.qhull.Delaunay`
+    tri : :class:`scipy.spatial.Delaunay`
+        Triangulation as returned by :func:`get_decomposition`. Must
+        carry the ``.tri_lat_verts`` / ``.tri_lon_verts`` per-triangle
+        vertex-coordinate arrays that :func:`get_decomposition` attaches.
     topo : array-like
         2D topographic data
     height_tol : float, optional
-        elevation above `height_tol` are considered as land, by default 0.5 [m]
+        elevation above `height_tol` is considered land, by default 0.5 [m]
     percent_tol : float, optional
-        cut-off percentage of topography in the given grid cell below `height_tol`. By default 0.95, i.e., at least 5% of the grid cell has to be above `heigh_tol` to be considered a land cell.
+        Maximum fraction of a cell that may sit at or below `height_tol`
+        before the cell is rejected as ocean, by default 0.95. The cell
+        is dropped when more than `percent_tol` of its grid points are at
+        or below `height_tol`
+        (``(topo <= height_tol).sum() / size > percent_tol``) and kept as
+        a land cell otherwise.
 
     Returns
     -------
     list
-        list of land cell indices
+        list of land cell indices. Only even-indexed triangles
+        (``range(n_tri)[::2]``) are evaluated; odd-indexed triangles are
+        skipped because each grid quad is split into two triangles and
+        the pair shares the same topography footprint.
     """
     rect_set = []
     n_tri = len(tri.tri_lat_verts)

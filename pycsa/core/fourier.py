@@ -71,7 +71,7 @@ class f_trans(object):
         self.components = "imag"
 
     def __get_IJ(self, cell):
-        """
+        r"""
         Private method to compute :math:`x / \Delta x`.
         """
         if self.grad:
@@ -133,7 +133,7 @@ class f_trans(object):
         k_rng : list
             list containing the selected k-wavenumber indices
         l_rng : list
-            list containing the selected k-wavenumber indices
+            list containing the selected l-wavenumber indices
         recompute_nhij : bool, optional
             resets ``nhar_i`` and ``nhar_j``, by default True
         components : str, optional
@@ -163,16 +163,19 @@ class f_trans(object):
 
     def do_full(self, cell, grad=False):
         r"""
-        Assembles the sine and cosine terms that make up the Fourier coefficients in the ``M`` matrix required in the :func:`linear regression <src.lin_reg.do>` computation:
+        Assembles the sine and cosine terms that make up the Fourier coefficients in the ``M`` matrix required in the :func:`linear regression <pycsa.core.lin_reg.do>` computation:
 
         .. math:: M a_m =h
 
         Parameters
         ----------
-        cell : :class:`src.var.topo_cell` instance
+        cell : :class:`pycsa.data.cell.topo_cell` instance
             cell object instance
         grad : bool, optional
-            deprecated argument, by default False
+            if True, assemble the terms over the cell's gradient
+            coordinates (``grad_lon``/``grad_lat``) instead of the
+            plain coordinates, selecting the gradient spectral terms;
+            by default False
         """
         self.typ = "full"
 
@@ -297,6 +300,13 @@ class f_trans(object):
         ----------
         a_m : list
             list of (sparse) Fourier amplitudes
+
+        Returns
+        -------
+        np.ndarray
+            complex 2-D array of shape ``(nhar_j, nhar_i)`` holding the
+            dense Fourier coefficients. The same array is also cached on
+            the instance as ``self.ampls``.
         """
         nhar_i, nhar_j = self.nhar_i, self.nhar_j
 

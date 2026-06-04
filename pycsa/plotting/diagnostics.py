@@ -31,12 +31,13 @@ def get_topo_colormap():
     Transition occurs exactly at sea level (0m) with smooth blending.
 
     For TwoSlopeNorm to work correctly, we need equal colors on each side:
-    128 colors for ocean (< 0m) + 128 colors for land (> 0m) = 256 total
+    120 colors for ocean (< 0m) + 16 transition colors + 120 colors for
+    land (> 0m) = 256 total
     """
     # Ocean colors (blue shades from deep to shallow)
     ocean_colors = plt.cm.Blues_r(np.linspace(0.4, 0.95, 120))
 
-    # Smooth transition zone around sea level (8 colors on each side)
+    # Smooth transition zone around sea level (16 colors blending ocean to land)
     # Get the last ocean color and first land color
     last_ocean = plt.cm.Blues_r(0.95)
     first_land = plt.cm.terrain(0.25)
@@ -95,7 +96,7 @@ def plot_cell_diagnostics(
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
     # Get elevation extent for consistent color scaling
-    vmin = -200.0  # Always fix ocean floor at -500m (blue portion)
+    vmin = -200.0  # Always fix ocean floor at -200m (blue portion)
     vmax = np.nanmax(cell_sa.topo)
 
     # Ensure vmax is positive (land)

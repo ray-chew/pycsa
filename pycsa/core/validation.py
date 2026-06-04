@@ -14,7 +14,7 @@ the most under-specified piece. The implementation here:
 - Takes per-row coordinates as a ``(n_points, 2)`` array (any
   metric — local Cartesian, (lon, lat), whatever the caller's
   cell uses). When ``coords`` is ``None`` we fall back to
-  ``cell.lon_m``-style row-index ordering — that is, we treat
+  row-index (``np.arange``) ordering — that is, we treat
   the points as already in scan-line order and split by index.
   That's the only setting where the fallback is correct; the
   caller is responsible for providing real coordinates when the
@@ -156,8 +156,12 @@ def spatial_cv_score(
         Per-row 2D coordinates for spatial fold construction. If
         ``None``, falls back to a strided index split — only
         appropriate when rows are already in scan-line order.
-    n_folds, buffer_fraction, rng_seed
+    n_folds, buffer_fraction
         See module docstring.
+    rng_seed
+        Seed for the RNG that shuffles the tile assignment order so
+        the chosen folds are spatially spread rather than packed in
+        one corner. ``None`` leaves the order unseeded.
 
     Returns
     -------
@@ -168,13 +172,21 @@ def spatial_cv_score(
             Mean of ``per_fold_mse``.
         ``fold_sizes``
             ndarray of shape ``(n_folds, 2)`` — (n_train, n_eval) per fold.
+
+    Raises
+    ------
+    ValueError
+        If ``coords`` rows do not match ``design_matrix`` rows, or if
+        ``_build_spatial_folds`` cannot tile the points (fewer than
+        ``2 * n_folds`` points, zero extent in an axis, or a fold tile
+        ending up with no eval points / fewer than two train points).
     """
     M = np.asarray(design_matrix, dtype=float)
     y = np.asarray(data, dtype=float).reshape(-1)
     n = M.shape[0]
     if coords is None:
         # Strided index split — only correct if rows are scan-line
-        # ordered. Document the assumption in the result.
+        # ordered.
         coords_array = np.column_stack([np.arange(n), np.zeros(n)])
     else:
         coords_array = np.asarray(coords, dtype=float)

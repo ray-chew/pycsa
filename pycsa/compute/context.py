@@ -42,10 +42,10 @@ class ComputeContext:
         preserved scalar-trace branch in ``lin_reg.do`` runs unchanged.
     selector
         Optional :class:`pycsa.core.mode_selection.ModeSelector`
-        carried through to ``interface.second_appx``. Spike scripts
-        thread an alternative selector here without modifying any
-        call site. ``None`` (default) means the preserved inline
-        ``argmax`` loop in ``second_appx`` runs unchanged.
+        carried through to ``pycsa.wrappers.interface.second_appx``.
+        Spike scripts thread an alternative selector here without
+        modifying any call site. ``None`` (default) means the preserved
+        inline ``argmax`` loop in ``second_appx`` runs unchanged.
     """
 
     buffer_pool: BufferPool = field(default_factory=BufferPool)

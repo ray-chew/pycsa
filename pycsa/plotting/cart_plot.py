@@ -23,12 +23,17 @@ def lat_lon(topo, fs=(10, 6), int=1, colorbar_margins=None):
 
     Parameters
     ----------
-    topo : array-like
-        2D topography data
+    topo : topo object exposing `lon_grid`/`lat_grid`/`topo`
+        topography container; ``lon_grid`` and ``lat_grid`` hold the
+        coordinate grids and ``topo`` holds the 2D elevation array
     fs : tuple, optional
         figure size, by default (10,6)
     int : int, optional
         for high-resolution datasets, do we only plot every `int` pixel? By default 1, i.e., everything is plotted.
+    colorbar_margins : list, optional
+        ``[left, bottom, width, height]`` axes rectangle for the colorbar,
+        passed to :meth:`matplotlib.figure.Figure.add_axes`. By default None,
+        in which case ``[0.99, 0.22, 0.025, 0.55]`` is used.
     """
 
     fig = plt.figure(figsize=fs)
@@ -110,14 +115,30 @@ def lat_lon_delaunay(
 
     Parameters
     ----------
-    topo : array-like
-        2D topography data
-    tri : :class:`scipy.spatial.qhull.Delaunay`
+    topo : topo object exposing `lon_grid`/`lat_grid`/`topo`
+        topography container; ``lon_grid`` and ``lat_grid`` hold the
+        coordinate grids and ``topo`` holds the 2D elevation array
+    tri : :class:`scipy.spatial.Delaunay`
         instance of the scipy Delaunay triangulation object containing tuples of the three vertice coordinates of a triangle
     levels : list
         user-defined elevation levels for the plot
     fs : tuple, optional
         figure size, by default (8,4)
+    label_idxs : bool, optional
+        toggles triangle index labels, by default False
+    highlight_indices : list, optional
+        triangle indices to highlight (drawn bold in red) when
+        `label_idxs` is True, by default [44, 45, 88, 89, 16, 17]
+    fn : str, optional
+        path to write the output figure, by default "../output/delaunay.pdf"
+    output_fig : bool, optional
+        toggles writing of the output figure, by default False
+    int : int, optional
+        plot only every `int` pixel of the topography, by default 1
+        (full resolution)
+    raster : bool, optional
+        rasterize the filled-contour topography for smaller vector
+        output, by default False
     """
 
     plt.figure(figsize=fs)
@@ -194,9 +215,10 @@ def error_delaunay(
 
     Parameters
     ----------
-    topo : array-like
-        2D topography data
-    tri : :class:`scipy.spatial.qhull.Delaunay` object
+    topo : topo object exposing `lon_grid`/`lat_grid`/`topo`
+        topography container; ``lon_grid`` and ``lat_grid`` hold the
+        coordinate grids and ``topo`` holds the 2D elevation array
+    tri : :class:`scipy.spatial.Delaunay` object
         instance of the scipy Delaunay triangulation object containing tuples of the three vertice coordinates of a triangle
     fs : tuple, optional
         figure size, by default (8,4)
@@ -358,10 +380,29 @@ def lat_lon_icon(
 
     Parameters
     ----------
-    topo : array-like
-        2D topography data
+    topo : topo object exposing `lon_grid`/`lat_grid`/`topo`
+        topography container; ``lon_grid`` and ``lat_grid`` hold the
+        coordinate grids and ``topo`` holds the 2D elevation array
     triangles : list
         list containing tuples of the three vertice coordinates of a triangle
+    fs : tuple, optional
+        figure size, by default (10, 6)
+    annotate_idxs : bool, optional
+        annotate each cell with its index; requires `ncells`, `clon` and
+        `clat` to be supplied via `**kwargs`, by default True
+    title : str, optional
+        figure title, by default ""
+    set_global : bool, optional
+        set the axes to span the whole globe, by default False
+    fn : str, optional
+        path to write the output figure, by default "../output/icon_lam.pdf"
+    output_fig : bool, optional
+        toggles writing of the output figure, by default False
+    **kwargs : dict, optional
+        extra keyword arguments. When `annotate_idxs` is True, the
+        following are required: ``ncells`` (int, number of cells),
+        ``clon`` (array-like, cell-centre longitudes) and ``clat``
+        (array-like, cell-centre latitudes).
 
     Note
     ----

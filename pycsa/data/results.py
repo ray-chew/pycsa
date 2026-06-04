@@ -63,8 +63,26 @@ class analysis:
         self.kks, self.lls = np.meshgrid(kks, lls)
 
     def grid_kk_ll(self, fobj, dat) -> np.ndarray:
-        """
+        """Reshape a flat amplitude vector onto the 2-D wavenumber grid.
+
         .. deprecated:: 0.90.0
+            Retained only for back-compatibility; not used by the
+            production pipeline.
+
+        Parameters
+        ----------
+        fobj : :class:`pycsa.core.fourier.f_trans`
+            Fourier transformer providing the wavenumber index vectors
+            ``m_i`` and ``m_j`` along the two horizontal directions.
+        dat : array-like
+            flat vector of spectral amplitudes to scatter onto the grid,
+            ordered to match the iteration over ``(m_j, m_i)``.
+
+        Returns
+        -------
+        numpy.ndarray
+            2-D amplitude grid of shape ``(len(m_i), len(m_j))`` with the
+            ``kk == 0`` and ``ll <= 0`` entries zeroed out.
         """
         m_i = fobj.m_i
         m_j = fobj.m_j

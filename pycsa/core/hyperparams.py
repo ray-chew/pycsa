@@ -7,12 +7,14 @@ two hyperparameters that ``SpectralPrior`` carries:
   the topography: chosen from the input field's empirical power-law
   slope, or fixed by the user.
 - ``lmbda`` — the overall regularization scale. A data-driven scalar:
-  selected by GCV, marginal likelihood, or spatial cross-validation.
+  selected by spatial cross-validation, GCV, or marginal likelihood.
 
 Two protocols (:class:`AlphaSelector`, :class:`LambdaSelector`) expose
 these as pluggable extension points. Concrete strategies are provided
 with documented defaults: :class:`EmpiricalSpectralSlope` for alpha,
-:class:`GCVSelector` for lambda. The convenience constructor
+and for lambda :class:`SpatialCVSelector` when per-row ``coords`` are
+supplied to :func:`build_spectral_prior`, with :class:`GCVSelector` as
+the coords-absent fallback. The convenience constructor
 :func:`build_spectral_prior` wires them in the canonical order
 (alpha first, then lambda given alpha) and returns an explicit
 :class:`Hyperparams` record — no silent override of the kwarg-level
@@ -22,17 +24,21 @@ with documented defaults: :class:`EmpiricalSpectralSlope` for alpha,
 in the fact that topography spectra are typically well-approximated
 by a power law over a resolved-but-not-aliased wavenumber band; it
 returns the empirical slope plus its standard error, so the
-uncertainty is observable. ``GCVSelector`` is the textbook
-closed-form-LOO surrogate (Golub, Heath, and Wahba, 1979). Neither
+uncertainty is observable. The default lambda selector is
+``SpatialCVSelector``, which respects the spatial correlation of
+topography; ``GCVSelector`` — the textbook closed-form-LOO surrogate
+(Golub, Heath, and Wahba, 1979) — is the fallback used when no per-row
+``coords`` are available to define a spatial split. Neither
 choice has been benchmarked against alternatives on the project's
 reproducibility fixtures yet — a one-script empirical check at
 ``scripts/validate_hyperparam_defaults.py`` performs that comparison
 without being a full sweep.
 
 **Composition with sparse selection (mode_selection.py).** The
-recommended pattern is: tune ``(alpha, lmbda)`` with the FA
-``GreedyArgmax`` selector, then fix the resulting prior and switch
-to a sparsity-inducing selector for SA. Do *not* jointly tune
+recommended pattern is: calibrate ``(alpha, lmbda)`` on the FA basis
+(using the dense ``GreedyArgmax`` mode selector), then fix the
+resulting prior and switch to a sparsity-inducing selector for SA.
+Do *not* jointly tune
 ``(alpha, lmbda, selector)``; the search space explodes and the
 selectors interact with the prior through the SA basis, not the
 FA basis where ``alpha``/``lmbda`` are calibrated.
@@ -174,6 +180,13 @@ class EmpiricalSpectralSlope:
     n_bins
         Number of radial bins for the periodogram. Default 32 trades
         off variance per bin against resolution.
+
+    Raises
+    ------
+    ValueError
+        If ``topography`` is not 2D, if no periodogram samples fall in
+        the requested ``[k_min_frac, k_max_frac]`` band, or if fewer
+        than 3 radial bins end up populated.
     """
 
     k_min_frac: float = 0.02
@@ -239,7 +252,7 @@ class EmpiricalSpectralSlope:
 
 
 def _default_lambda_grid(design_matrix: np.ndarray) -> np.ndarray:
-    """Log-spaced grid scaled by ``trace(MᵀM)/N``.
+    """Log-spaced grid scaled by ``trace(MᵀM)/n_modes``.
 
     Matches the scale of the existing scalar-trace branch so the grid
     spans the regime where ``lin_reg.do`` historically operates.
@@ -282,11 +295,18 @@ class GCVSelector:
     correct; if you don't trust the prior form, use
     :class:`SpatialCVSelector` instead.
 
+    **Diagonal-mean approximation.** ``Λ(lambda)`` is treated as a
+    scalar shift in the eigenbasis of ``MᵀM`` by replacing it with the
+    mean of its unit-lambda diagonal. This is exact for
+    :class:`IsotropicPrior` (whose diagonal is already constant) and a
+    good approximation for :class:`SpectralPrior` on regular Fourier
+    grids, where it makes every candidate lambda cost ``O(N)``.
+
     Parameters
     ----------
     lambda_grid
         Candidate lambdas. If ``None``, falls back to a 41-point
-        log-spaced grid scaled by ``trace(MᵀM)/N``.
+        log-spaced grid scaled by ``trace(MᵀM)/n_modes``.
     """
 
     lambda_grid: Optional[np.ndarray] = None
@@ -361,8 +381,11 @@ class MarginalLikelihoodSelector:
     **Limitation.** ``BayesianRidge`` assumes an isotropic prior on
     the coefficients. For ``SpectralPrior(alpha != 0)`` this selector
     returns the scalar overall scale ``lmbda``; the per-mode shape
-    still comes from the ``Prior`` callable. If you need per-mode
-    marginal likelihood, use :class:`SpatialCVSelector` instead.
+    still comes from the ``Prior`` callable. If the isotropic-prior
+    assumption is a poor fit for your data, use
+    :class:`SpatialCVSelector` instead — it selects a scalar ``lmbda``
+    by spatial k-fold cross-validation rather than evidence
+    maximization, and makes no per-mode isotropy assumption.
 
     Parameters
     ----------
@@ -516,7 +539,7 @@ class JointGCVSelector:
         isotropic GCV, recovered automatically when that's best.
     lambda_grid
         As :class:`GCVSelector`. ``None`` falls back to a 41-point
-        log-spaced grid scaled by ``trace(MᵀM)/N``.
+        log-spaced grid scaled by ``trace(MᵀM)/n_modes``.
     eps
         DC-mode floor passed to :class:`SpectralPrior`.
     """

@@ -52,8 +52,8 @@ class ncdata(object):
         ----------
         fn : str
             filename
-        obj : :class:`src.var.grid` or :class:`src.var.topo` or :class:`src.var.topo_cell`
-            any data object in :mod:`src.var` accepting topography attributes
+        obj : :class:`pycsa.data.cell.grid` or :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
+            any data object in :mod:`pycsa.data.cell` accepting topography attributes
         """
         df = nc.Dataset(fn, "r")
 
@@ -82,16 +82,18 @@ class ncdata(object):
 
         Parameters
         ----------
-        topo : :class:`src.var.topo` or :class:`src.var.topo_cell`
-            instance of a topography class containing the full regional or global topography loaded via :func:`src.io.read_dat`.
-        cell : :class:`src.var.topo_cell`
+        topo : :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
+            instance of a topography class containing the full regional or global topography loaded via :func:`pycsa.core.io.ncdata.read_dat`.
+        cell : :class:`pycsa.data.cell.topo_cell`
             instance of a cell object
         lon_vert : list
             extent of the longitudinal coordinates encompassing the region to be loaded
         lat_vert : list
             extent of the latitudinal coordinates encompassing the region to be loaded
 
-        .. note:: Loading the global topography in the ``topo`` argument may not be memory efficient. The notebook ``nc_compactifier.ipynb`` contains a script to extract a region of interest from the global GMTED 2010 dataset.
+        .. note::
+
+            Loading the global topography in the ``topo`` argument may not be memory efficient. The notebook ``nc_compactifier.ipynb`` contains a script to extract a region of interest from the global GMTED 2010 dataset.
         """
         lon, lat, z = topo.lon, topo.lat, topo.topo
 
@@ -150,12 +152,14 @@ class ncdata(object):
 
             Parameters
             ----------
-            cell : :class:`src.var.topo` or :class:`src.var.topo_cell`
+            cell : :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
                 instance of an object with topograhy attribute
-            params : :class:`src.var.params`
+            params : :class:`pycsa.config.params.params`
                 user-defined run parameters
             verbose : bool, optional
                 prints loading progression, by default False
+            is_parallel : bool, optional
+                flag for parallel processing, by default False
             """
             self.dir = params.path_merit
             self.verbose = verbose
@@ -232,6 +236,19 @@ class ncdata(object):
                 self._thread_local.file_cache.clear()
 
         def get_topo(self, cell):
+            """Load MERIT topography spanning the configured lat-lon extent.
+
+            Determines which MERIT (or REMA, for the Antarctic band) tiles
+            cover the requested region, handles the east-west split for
+            extents wider than 180 degrees, and loads the assembled
+            topography into ``cell``.
+
+            Parameters
+            ----------
+            cell : :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
+                instance whose ``lat``, ``lon`` and ``topo`` attributes are
+                populated in place with the loaded data
+            """
 
             # if lat_verts
 
@@ -324,7 +341,7 @@ class ncdata(object):
             return where_idx
 
         def __get_fns(self, lat_idx_rng, lon_idx_rng):
-            """Construct the full filenames required for the loading of the topographic data from the indices identified in :func:`src.io.ncdata.read_merit_topo.__compute_idx`"""
+            """Construct the full filenames required for the loading of the topographic data from the indices identified in ``read_merit_topo.__compute_idx``"""
             fns = []
             dirs = []
 
@@ -391,7 +408,7 @@ class ncdata(object):
 
             However, this full regional array is assembled from an array of block arrays. Each block array is loaded from a separated MERIT data file and varies in shape that is not known beforehand.
 
-            Therefore, the ``get_topo`` method is run recursively:
+            Therefore, this ``__load_topo`` method is run recursively:
                 1. The first run determines the shape of each constituting block array and subsequently the shape of the full regional array. An empty array in initialised.
                 2. The second run populates the empty array with the information of the block arrays obtained in the first run.
             """
@@ -673,6 +690,11 @@ class ncdata(object):
             return lon_low, lon_high
 
         def close_all(self):
+            """Close every NetCDF dataset opened during loading.
+
+            Iterates over the handles accumulated in ``self.opened_dfs`` and
+            closes each one to release the underlying file descriptors.
+            """
             for df in self.opened_dfs:
                 df.close()
 
@@ -700,9 +722,9 @@ class ncdata(object):
 
             Parameters
             ----------
-            cell : :class:`src.var.topo` or :class:`src.var.topo_cell`
+            cell : :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
                 instance of an object with topography attribute
-            params : :class:`src.var.params`
+            params : :class:`pycsa.config.params.params`
                 user-defined run parameters
             verbose : bool, optional
                 prints loading progression, by default False
@@ -767,6 +789,13 @@ class ncdata(object):
 
             Uses global lock because HDF5 is not thread-safe on this system.
             Even opening different files from different threads causes crashes.
+            Opening a missing or corrupt file is retried with exponential
+            backoff before giving up.
+
+            Raises
+            ------
+            RuntimeError
+                If the file cannot be opened after ``max_retries`` attempts.
             """
             # Get or create thread-local file cache
             if not hasattr(self._thread_local, "file_cache"):
@@ -1428,7 +1457,7 @@ class writer(object):
 
         Parameters
         ----------
-        obj : :class:`src.var.params`
+        obj : :class:`pycsa.config.params.params`
             write all user-defined parameters to the HDF5 file for reproducibility of the output
         """
         file = h5py.File(self.OUTPUT_FULLPATH + self.SUFFIX + self.FORMAT, "r+")
@@ -1497,8 +1526,37 @@ def _cell_group_is_complete(grp):
 
 
 class nc_writer(object):
+    """Write per-cell CSA results to a chunked NetCDF4 output file.
+
+    Each cell is stored as its own NetCDF group keyed by cell id, holding
+    the land mask, centre coordinates and (for land cells) the picked
+    spectral amplitudes and wavenumbers. The writer is safe to
+    re-instantiate against an existing chunk file: completed cell groups
+    are skipped on resume rather than overwritten.
+    """
 
     def __init__(self, params, sfx=""):
+        """Build the output filename and initialise the NetCDF file.
+
+        The output path is derived from ``params.fn_output`` with the
+        optional ``sfx`` suffix appended and a ``.nc`` extension ensured,
+        placed under a ``datasets/`` subdirectory of ``params.path_output``
+        (created if absent). If the target file already exists the method
+        returns early without truncating it, so re-instantiating the writer
+        for a later memory batch preserves cells written by earlier batches.
+        Otherwise a fresh ``NETCDF4`` file is created, every non-``None``
+        attribute of ``params`` is written as a global attribute (Booleans
+        coerced to ``int``), and the ``nspec`` dimension is added.
+
+        Parameters
+        ----------
+        params : :class:`pycsa.config.params.params`
+            user-defined run parameters supplying output paths, mode count
+            and writer settings
+        sfx : str or int, optional
+            suffix appended to the base output filename to distinguish
+            chunk files, by default ``""``
+        """
 
         self.fn = params.fn_output + str(sfx)
 
@@ -1544,6 +1602,37 @@ class nc_writer(object):
         rootgrp.close()
 
     def output(self, id, clat, clon, is_land, analysis=None, topo_mean=None):
+        """Write a single cell's result to its NetCDF group.
+
+        Creates (or opens) the group named ``id`` and stores the land mask
+        and centre coordinates, the mean elevation when ``topo_mean`` is
+        given, and the zero-padded spectral amplitudes and wavenumbers when
+        an ``analysis`` is given. If a complete group already exists the
+        method returns without rewriting it.
+
+        Parameters
+        ----------
+        id : int or str
+            cell id used as the NetCDF group name
+        clat : float
+            cell-centre latitude
+        clon : float
+            cell-centre longitude
+        is_land : int or bool
+            land mask flag for the cell
+        analysis : :class:`pycsa.data.results.analysis`, optional
+            spectral analysis result supplying ``dk``, ``dl``, ``ampls``,
+            ``kks`` and ``lls``; if None only mask and coordinates are
+            written, by default None
+        topo_mean : float, optional
+            mean cell elevation subtracted before analysis, by default None
+
+        Raises
+        ------
+        RuntimeError
+            If the cell group already exists but fails the completeness
+            check, indicating a partial write from a previous run.
+        """
 
         rootgrp = nc.Dataset(self.path + self.fn, "a", format="NETCDF4")
 
@@ -1597,6 +1686,28 @@ class nc_writer(object):
         rootgrp.close()
 
     def duplicate(self, id, struct):
+        """Write one cell to its NetCDF group from a ``grp_struct`` record.
+
+        Like :meth:`output`, but reads all fields from a pre-assembled
+        ``struct`` instead of individual arguments, and additionally writes
+        ``cell_area`` when the struct carries it. Completed groups are
+        skipped on resume.
+
+        Parameters
+        ----------
+        id : int or str
+            cell id used as the NetCDF group name
+        struct : :class:`pycsa.core.io.nc_writer.grp_struct`
+            record holding the cell's mask, coordinates, optional
+            ``cell_area`` / ``topo_mean`` and, for land cells, the spectral
+            fields ``dk``, ``dl``, ``ampls``, ``kks`` and ``lls``
+
+        Raises
+        ------
+        RuntimeError
+            If the cell group already exists but fails the completeness
+            check, indicating a partial write from a previous run.
+        """
 
         rootgrp = nc.Dataset(self.path + self.fn, "a", format="NETCDF4")
 
@@ -1657,6 +1768,21 @@ class nc_writer(object):
         rootgrp.close()
 
     def duplicate_all(self, data):
+        """Write a whole sequence of cell records to the output file.
+
+        Iterates over ``data`` (with a progress bar) and writes each record
+        to a NetCDF group keyed by its enumeration index, storing the mask,
+        coordinates, optional mean elevation and, for land cells, the
+        zero-padded spectral fields. Unlike :meth:`duplicate`, no
+        completeness check is performed and groups are written
+        unconditionally.
+
+        Parameters
+        ----------
+        data : sequence of :class:`pycsa.core.io.nc_writer.grp_struct`
+            ordered collection of cell records; each record's position in
+            the sequence becomes its NetCDF group name
+        """
 
         rootgrp = nc.Dataset(self.path + self.fn, "a", format="NETCDF4")
 
@@ -1700,6 +1826,30 @@ class nc_writer(object):
 
     @staticmethod
     def read_dat(path, fn, id, struct):
+        """Populate ``struct`` from one cell group in a NetCDF chunk file.
+
+        Opens the file ``path + fn``, reads the land mask and centre
+        coordinates of group ``id`` into ``struct``, and for land cells also
+        reads the spectral fields ``dk``, ``dl``, ``H_spec``, ``kks`` and
+        ``lls``.
+
+        Parameters
+        ----------
+        path : str
+            directory containing the chunk file
+        fn : str
+            chunk filename appended to ``path``
+        id : int or str
+            cell id naming the NetCDF group to read
+        struct : :class:`pycsa.core.io.nc_writer.grp_struct`
+            record populated in place with the cell's data
+
+        Returns
+        -------
+        bool
+            ``False`` if the file could not be opened, otherwise ``True``
+            once ``struct`` has been populated.
+        """
         try:
             rootgrp = nc.Dataset(path + fn, "a", format="NETCDF4")
         except:
@@ -1724,6 +1874,13 @@ class nc_writer(object):
         return True
 
     class grp_struct(object):
+        """Lightweight container holding one cell's writable result fields.
+
+        Bundles the per-cell metadata and spectral results so that a whole
+        run can be assembled in memory and later written out via
+        :meth:`nc_writer.duplicate` or :meth:`nc_writer.duplicate_all`.
+        """
+
         def __init__(
             self,
             c_idx,
@@ -1734,6 +1891,32 @@ class nc_writer(object):
             cell_area=None,
             topo_mean=None,
         ):
+            """Store cell metadata and copy across any analysis results.
+
+            The spectral attributes (``dk``, ``dl``, ``ampls``, ``kks``,
+            ``lls``) default to ``None`` and are overwritten by copying
+            every attribute of ``analysis`` onto this instance when an
+            ``analysis`` is supplied.
+
+            Parameters
+            ----------
+            c_idx : int or str
+                cell index identifying this record
+            clat : float
+                cell-centre latitude
+            clon : float
+                cell-centre longitude
+            is_land : int or bool
+                land mask flag for the cell
+            analysis : :class:`pycsa.data.results.analysis`, optional
+                spectral analysis result whose attributes are copied onto
+                this struct, by default None
+            cell_area : float, optional
+                area of the ICON grid cell, by default None
+            topo_mean : float, optional
+                mean cell elevation subtracted before analysis, by default
+                None
+            """
             self.c_idx = c_idx
             self.clat = clat
             self.clon = clon
@@ -1764,7 +1947,7 @@ class nc_writer(object):
 
 
 class reader(object):
-    """Simple reader class to read HDF5 output written by :class:`src.io.writer`"""
+    """Simple reader class to read HDF5 output written by :class:`pycsa.core.io.writer`"""
 
     def __init__(self, fn):
         """
@@ -1788,7 +1971,7 @@ class reader(object):
 
         Parameters
         ----------
-        params : :class:`src.var.params`
+        params : :class:`pycsa.config.params.params`
             empty instance of the user-defined parameters class to be populated
         """
         file = h5py.File(self.fn)
@@ -1820,13 +2003,13 @@ class reader(object):
         return np.array(dat)
 
     def read_all(self, idx, cell):
-        """Populate ``cell`` with all datasets in a group ``idx``
+        """Populate ``cell`` with the datasets listed in ``self.names`` from a group ``idx``
 
         Parameters
         ----------
         idx : int or str
             the group name
-        cell : :class:`src.var.topo_cell`
+        cell : :class:`pycsa.data.cell.topo_cell`
             empty instance of a cell object to be populated
         """
         file = h5py.File(self.fn)
@@ -1839,11 +2022,11 @@ class reader(object):
 
 
 def fn_gen(params):
-    """Automatically generates HDF5 output filename from :class:`src.var.params`.
+    """Automatically generates HDF5 output filename from :class:`pycsa.config.params.params`.
 
     Parameters
     ----------
-    params : :class:`src.var.params`
+    params : :class:`pycsa.config.params.params`
         instance of the user parameter class
 
     Returns

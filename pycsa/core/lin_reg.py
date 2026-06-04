@@ -11,11 +11,11 @@ from scipy.sparse.linalg import spsolve
 
 
 def get_coeffs(fobj, ctx=None, buffer_pool=None):
-    """Assembles the Fourier coefficients from the sine and cosine terms generated in the :class:`Fourier transformer class <src.fourier.f_trans>`.
+    """Assembles the Fourier coefficients from the sine and cosine terms generated in the :class:`Fourier transformer class <pycsa.core.fourier.f_trans>`.
 
     Parameters
     ----------
-    fobj : :class:`src.fourier.f_trans` instance
+    fobj : :class:`pycsa.core.fourier.f_trans` instance
         instance of the Fourier transformer class.
     ctx : ComputeContext, optional
         Compute context bundling the buffer pool. If absent, defaults to
@@ -86,9 +86,9 @@ def do(
 
     Parameters
     ----------
-    fobj : :class:`src.fourier.f_trans` instance
+    fobj : :class:`pycsa.core.fourier.f_trans` instance
         instance of the Fourier transformer class.
-    cell : :class:`src.var.topo_cell` instance
+    cell : :class:`pycsa.data.cell.topo_cell` instance
         cell object instance
     lmbda : float, optional
         regularisation parameter, by default 0.0
@@ -114,10 +114,20 @@ def do(
 
     Returns
     -------
-    a_m : list
-        list of Fourier amplitudes corresponding to the unknown vector in the linear problem
-    data_recons : like
-        vector-like topography reconstructed from ``a_m``
+    a_m : ndarray
+        Fourier amplitudes corresponding to the unknown vector in the
+        linear problem. When ``save_coeffs=True`` the regression is
+        skipped and ``(None, None)`` is returned instead.
+    data_recons : ndarray
+        vector-like topography reconstructed from ``a_m`` (``None`` when
+        ``save_coeffs=True``).
+
+    Raises
+    ------
+    ValueError
+        If the supplied ``prior`` returns a diagonal whose shape does
+        not match ``E_tilda_lm`` (checked in both the sparse and dense
+        solver branches).
     """
     from pycsa.compute.context import _resolve_ctx
 

@@ -1,7 +1,7 @@
 """Pluggable mode selectors for the FA -> SA bridge.
 
 The default selection step in :class:`pycsa.wrappers.interface.second_appx`
-is a greedy ``argmax`` loop on the FA spectrum (lines 556-571): pick the
+is a greedy ``argmax`` loop on the FA spectrum: pick the
 largest amplitude, zero it, repeat ``n_modes`` times. That loop is
 preserved unchanged — it is what every existing call site hits and
 what the reproducibility fixtures pin down.
@@ -29,7 +29,7 @@ import numpy as np
 
 # k_idxs and l_idxs are passed to ``fobj.set_kls`` which currently
 # accepts list-like inputs; we keep the return type as lists to
-# match the existing call convention at interface.py:570-571.
+# match the existing call convention in ``second_appx``.
 IndexPair = Tuple[list, list]
 
 
@@ -41,7 +41,7 @@ class ModeSelector(Protocol):
     fa_spectrum
         2D real array of FA amplitudes, shape ``(nhar_j, nhar_i)`` —
         the same array currently passed to the inline ``argmax``
-        loop at interface.py:556-571. Indexing matches the existing
+        loop in ``second_appx``. Indexing matches the existing
         convention: ``axis 0 == l``, ``axis 1 == k``.
     n_modes
         Number of modes to select.
@@ -64,7 +64,7 @@ class ModeSelector(Protocol):
     Returns
     -------
     (k_idxs, l_idxs)
-        Two lists of length ``n_modes`` ready to feed
+        Two lists of up to ``n_modes`` entries ready to feed
         ``fobj.set_kls(k_idxs, l_idxs, ...)``.
     """
 
@@ -88,7 +88,7 @@ class GreedyArgmax:
     repeat. The recorded pairs are then split as
     ``k_idxs = [pair[1] for pair in indices]`` and
     ``l_idxs = [pair[0] for pair in indices]`` to match the
-    convention at interface.py:570-571.
+    convention in ``second_appx``.
 
     This is the default selector. Passing ``selector=GreedyArgmax()``
     to a wrapped ``second_appx`` should produce bit-identical output
@@ -130,15 +130,16 @@ class OMPSelector:
     the residual. Repeats until ``n_modes`` columns are selected.
 
     Requires ``design_matrix`` and ``data``. Raises ``ValueError``
-    if either is missing.
+    if either is missing, or if the ``design_matrix`` row count and
+    ``data`` length disagree.
 
     Parameters
     ----------
     batch_size
         Number of correlations selected per step. ``batch_size=1``
         is canonical OMP. Larger values (e.g. 5) trade some
-        optimality for cost — only one ``do_full`` + active-set
-        solve per batch.
+        optimality for cost — only one active-set least-squares
+        re-fit per batch.
     column_offset
         Index into ``design_matrix`` columns to skip (e.g. the DC
         mode if the caller prefers OMP to ignore it). Defaults to
@@ -204,8 +205,10 @@ class LassoSelector:
     """L1-penalised regression via coordinate descent.
 
     Wraps ``sklearn.linear_model.Lasso``. Selects the ``n_modes``
-    largest-magnitude non-zero coefficients (pads with zeros if
-    Lasso returns fewer non-zeros than ``n_modes``).
+    columns with the largest-magnitude coefficients ``|coef|``. If
+    Lasso returns fewer non-zeros than ``n_modes``, the remaining
+    slots are filled with the next-largest coefficients (which may
+    be zero).
 
     Parameters
     ----------
@@ -213,7 +216,8 @@ class LassoSelector:
         Lasso penalty strength. ``None`` triggers a small k-fold CV
         over a log-spaced grid (left to the spike-script layer in
         phase 1; in the protocol layer here, ``alpha=None`` falls
-        back to a sensible default of ``1e-3 * ‖Mᵀ y‖∞``).
+        back to a sensible default of
+        ``1e-3 * ‖subᵀ y‖∞ / n_points``).
     column_offset
         See :class:`OMPSelector`.
     max_iter

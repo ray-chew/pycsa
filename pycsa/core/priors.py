@@ -62,9 +62,10 @@ class IsotropicPrior:
     """Parallel implementation of the current scalar-trace diagonal.
 
     Returns ``lmbda * trace(E) / N * ones(N)``. Equivalent to the
-    inline branch at ``lin_reg.do`` L193-195 (within reassociation
-    noise — the inline branch computes one scalar and broadcasts;
-    this returns an array). Provided so spike scripts can compose
+    inline scalar-trace branch in ``lin_reg.do`` (the dense and sparse
+    ``prior is None`` paths), within reassociation noise —
+    the inline branch computes one scalar and broadcasts; this
+    returns an array. Provided so spike scripts can compose
     it as an explicit baseline alongside other priors.
 
     Not the default path. ``lin_reg.do(prior=None)`` continues to
@@ -129,7 +130,7 @@ def _wavenumber_weights(fobj, n_modes: int) -> np.ndarray:
 
     The design matrix produced by ``f_trans.do_full`` has columns
     laid out as ``[cos_columns | sin_columns]`` after the slicing
-    at fourier.py L215-231. For the spike, we accept a small
+    in ``f_trans.do_full``. For the spike, we accept a small
     simplification: we compute the wavenumber norm per ``(m_i, m_j)``
     pair from ``fobj.m_i`` and ``fobj.m_j``, then duplicate across
     cos/sin columns. If the column count doesn't divide cleanly,
@@ -147,8 +148,11 @@ def _wavenumber_weights(fobj, n_modes: int) -> np.ndarray:
 
     if getattr(fobj, "pick_kls", False) and hasattr(fobj, "k_idx"):
         # Sparse mode set: each selected (k_idx[i], l_idx[i]) is one mode.
-        # The design matrix lays cos columns first then sin columns, so the
-        # weights repeat across that split.
+        # The selected indices are remapped into the ``m_i``/``m_j`` axes
+        # via modulo (``k_idx % len(m_i)``, ``l_idx % len(m_j)``) so an
+        # out-of-range pick still lands on a valid wavenumber slot; the
+        # per-mode norm is computed from those remapped values FIRST, then
+        # duplicated across the cos/sin column halves below.
         k_idx = np.asarray(fobj.k_idx)
         l_idx = np.asarray(fobj.l_idx)
         mi_sel = np.asarray(m_i)[k_idx % len(m_i)]

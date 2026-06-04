@@ -56,14 +56,43 @@ class get_pmf(object):
 
         Parameters
         ----------
-        cell : :class:`src.var.topo_cell`
+        cell : :class:`pycsa.data.cell.topo_cell`
             instance of the cell object
         lmbda : float, optional
             regulariser factor, by default 0.1
         scale : float, optional
             scales the amplitudes for debugging purposes, by default 1.0
+        **kwargs : dict, optional
+            Additional options forwarded to the regression and analysis
+            steps:
+
+            iter_solve : bool
+                use the iterative least-squares solver, by default True
+            save_coeffs : bool
+                retain the regression coefficient matrix, by default False
+            use_sparse : bool
+                use the sparse solver path, by default False
+            save_am : bool
+                store the solved amplitudes on ``self.fobj.a_m``, by
+                default False
+            refine : bool
+                perform a second regression pass on the residual
+                topography and accumulate the amplitudes, by default
+                False
+            updt_analysis : bool
+                attach the resulting analysis object to ``cell.analysis``
+            summed : bool
+                sum the idealised pseudo-momentum fluxes over modes, by
+                default False
+
+        Returns
+        -------
+        tuple
+            returns tuple containing:
+                | (the CSA spectral amplitudes,
+                | computed idealised pseudo-momentum fluxes,
+                | the reconstructed physical data)
         """
-        #   summed=False, updt_analysis=False, scale=1.0, refine=False, iter_solve=False):
         self.fobj.do_full(cell)
 
         am, data_recons = lin_reg.do(
@@ -122,12 +151,12 @@ class get_pmf(object):
 
         Parameters
         ----------
-        cell : :class:`src.var.topo_cell`
+        cell : :class:`pycsa.data.cell.topo_cell`
             instance of the cell object
         summed : bool, optional
             toggles whether to sum the spectral components, by default False
         updt_analysis : bool, optional
-            toggles update of the <analysis :class:`src.var.analysis`>, by default False
+            toggles update of the <analysis :class:`pycsa.data.results.analysis`>, by default False
 
         Returns
         -------
@@ -136,7 +165,8 @@ class get_pmf(object):
                 | (FFT-computed spectrum,
                 | computed idealised pseudo-momentum fluxes,
                 | the reconstructed physical data,
-                | list containing the range of horizontal wavenumbers :math:`[\vec{n},\vec{m}]`)
+                | list ``[kks, lls]`` of the rFFT frequency vectors along
+                |   the two horizontal directions)
         """
         ampls = np.fft.rfft2(cell.topo - cell.topo.mean())
         ampls /= ampls.size
@@ -191,6 +221,36 @@ class get_pmf(object):
         """Method to perform a coarse-graining of spectral space
 
         .. deprecated:: 0.90.0
+            This coarse-graining path is no longer used by the production
+            pipeline and is retained only for back-compatibility.
+
+        Parameters
+        ----------
+        cell : :class:`pycsa.data.cell.topo_cell`
+            instance of the cell object
+        freqs : array-like
+            spectral amplitudes to coarse-grain
+        kklls : sequence
+            two-element sequence ``[m_i, m_j]`` of the coarse-grained
+            wavenumber indices along the two horizontal directions
+        dat_2D : array-like
+            the reconstructed physical (2D) data
+        summed : bool, optional
+            sum the idealised pseudo-momentum fluxes over modes, by
+            default False
+        updt_analysis : bool, optional
+            attach the resulting analysis object to ``cell.analysis``, by
+            default False
+        scale : float, optional
+            scales the amplitudes for debugging purposes, by default 1.0
+
+        Returns
+        -------
+        tuple
+            returns tuple containing:
+                | (the scaled CSA spectral amplitudes,
+                | computed idealised pseudo-momentum fluxes,
+                | the reconstructed physical data)
         """
         self.fobj.do_cg_spsp(cell)
 
@@ -216,9 +276,9 @@ class get_pmf(object):
 
         Parameters
         ----------
-        cell : :class:`src.var.topo_cell`
+        cell : :class:`pycsa.data.cell.topo_cell`
             instance of the cell object
-        fobj : :class:`src.fourier.f_trans`
+        fobj : :class:`pycsa.core.fourier.f_trans`
             instance of the Fourier transformer class
         lmbda : float, optional
             regularisation factor, by default 0.1
@@ -227,7 +287,8 @@ class get_pmf(object):
         -------
         tuple
             returns tuple containing:
-                | (FFT-computed spectrum,
+                | (the CSA spectral amplitude grid recomputed from the
+                |   supplied amplitudes ``fobj.a_m``,
                 | computed idealised pseudo-momentum fluxes,
                 | the reconstructed physical data)
         """
@@ -268,15 +329,15 @@ def taper_quad(params, simplex_lat, simplex_lon, cell, topo):
 
     Parameters
     ----------
-    params : :class:`src.var.params`
+    params : :class:`pycsa.config.params.params`
         instance of the user-defined parameters class
     simplex_lat : list
         list of latitudinal coordinates of the vertices
     simplex_lon : list
         list of longitudinal coordinates of the vertices
-    cell : :class:`src.var.topo_cell`
+    cell : :class:`pycsa.data.cell.topo_cell`
         instance of a cell object
-    topo : :class:`src.var.topo` or :class:`src.var.topo_cell`
+    topo : :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
         instance of an object with topography attribute
     """
     # get quadrilateral mask
@@ -303,15 +364,15 @@ def taper_nonquad(params, simplex_lat, simplex_lon, cell, topo, res_topo=None):
 
     Parameters
     ----------
-    params : :class:`src.var.params`
+    params : :class:`pycsa.config.params.params`
         instance of the user-defined parameters class
     simplex_lat : list
         list of latitudinal coordinates of the vertices
     simplex_lon : list
         list of longitudinal coordinates of the vertices
-    cell : :class:`src.var.topo_cell`
+    cell : :class:`pycsa.data.cell.topo_cell`
         instance of a cell object
-    topo : :class:`src.var.topo` or :class:`src.var.topo_cell`
+    topo : :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
         instance of an object with topography attributes
     res_topo : array-like, optional
         residual orography, only required in iterative refinement, by default None
@@ -372,9 +433,9 @@ class first_appx(object):
             number of harmonics in the first horizontal direction
         nhj : int
             number of harmonics in the second horizontal direction
-        params : :class:`src.var.params`
+        params : :class:`pycsa.config.params.params`
             instance of the user-defined parameters class
-        topo : :class:`src.var.topo` or :class:`src.var.topo_cell`
+        topo : :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
             instance of an object with topography attribute
         ctx : ComputeContext, optional
             Compute context shared with the inner ``get_pmf`` call.
@@ -394,7 +455,6 @@ class first_appx(object):
             list of latitudinal coordinates of the vertices
         simplex_lon : list
             list of longitudinal coordinates of the vertices
-            _description_
         res_topo : array-like, optional
             residual orography, only required in iterative refinement, by default None
         use_center : bool, optional
@@ -405,7 +465,7 @@ class first_appx(object):
         tuple
             contains the data for plotting:
 
-               | (:class:`src.var.topo_cell` instance,
+               | (:class:`pycsa.data.cell.topo_cell` instance,
                | computed CSA spectrum,
                | computed idealised pseudo-momentum fluxes,
                | the reconstructed physical data)
@@ -463,11 +523,11 @@ class second_appx(object):
             number of harmonics in the first horizontal direction
         nhj : int
             number of harmonics in the second horizontal direction
-        params : :class:`src.var.params`
+        params : :class:`pycsa.config.params.params`
             instance of the user-defined parameters class
-        topo : :class:`src.var.topo` or :class:`src.var.topo_cell`
+        topo : :class:`pycsa.data.cell.topo` or :class:`pycsa.data.cell.topo_cell`
             instance of an object with topography attribute
-        tri : :class:`scipy.spatial.qhull.Delaunay`
+        tri : :class:`scipy.spatial.Delaunay`
             instance of the scipy Delaunay triangulation class
         ctx : ComputeContext, optional
             Compute context shared with the inner ``get_pmf`` call.
@@ -511,7 +571,7 @@ class second_appx(object):
         tuple
             contains the data for plotting:
 
-               | (:class:`src.var.topo_cell` instance,
+               | (:class:`pycsa.data.cell.topo_cell` instance,
                | computed CSA spectrum,
                | computed idealised pseudo-momentum fluxes,
                | the reconstructed physical data)

@@ -7,18 +7,20 @@ class ideal_pmf(object):
     """
 
     def __init__(self, **kwarg):
-        """
+        r"""
         Sets up the default values
 
         Parameters
         ----------
-        \*\*kwargs : any
-            user-defined values to replace default background wind (``U``, ``V``), Earth's radius (``AE``), and Brunt-Väisälä frequency (``N``)
+        \*\*kwarg : any
+            user-defined values to replace the default background wind
+            (``U`` zonal, ``V`` meridional), Earth's radius (``AE``), and
+            Brunt-Väisälä frequency (``N``)
 
         """
         self.N = 0.02  # reference brunt-väisälä frequnecy [s^{-1}]
-        self.U = -10.0  # reference horizontal wind [m s^{-1}]
-        self.V = 2.0  # reference vertical wind [m s^{-1}]
+        self.U = -10.0  # reference zonal (horizontal) wind [m s^{-1}]
+        self.V = 2.0  # reference meridional (horizontal) wind [m s^{-1}]
         self.AE = 6371.0008 * 1e3  # Earth's radius in [m]
 
         # If keyword arguments are specified, we use those values...
@@ -31,10 +33,12 @@ class ideal_pmf(object):
 
         Parameters
         ----------
-        analysis : :class:`src.var.analysis`
+        analysis : :class:`pycsa.data.results.analysis`
             instance of the `analysis` class.
         summed : bool, optional
-            by default True, i.e., returns a sum of the spectrum. Other, return a 2D-like array of the spectrum.
+            by default True, i.e., returns the scalar sum of the spectrum.
+            Otherwise, returns the per-mode array ``uw_pmf`` (2-D, shaped
+            like the ``kks``/``lls`` wavenumber meshgrids).
 
         Returns
         -------

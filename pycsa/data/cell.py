@@ -104,7 +104,18 @@ class topo_cell(topo):
 
     def __get_lat_lon_points(self, grad: bool = False) -> np.ndarray:
         """Stack the 2-D grids into a flat ``(N, 2)`` ``(lon, lat)``
-        point array, rescaled."""
+        point array, rescaled.
+
+        .. note::
+
+            The ``grad=True`` branch is a deprecated, non-functional
+            gradient path. It reads ``self.grad_lat_grid`` /
+            ``self.grad_lon_grid``, but :meth:`gen_mgrids` never assigns
+            those attributes (its gradient branch produces the
+            differently-named ``grad_lat_lon_grid`` etc.), so calling
+            this method with ``grad=True`` raises ``AttributeError``.
+            Only the default ``grad=False`` path is supported.
+        """
         if not grad:
             lat_grid, lon_grid = self.lat_grid, self.lon_grid
         else:

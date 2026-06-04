@@ -133,12 +133,14 @@ class fig_obj(object):
             2D (abs.) spectral data
         nhi : int, optional
             number of harmonics in the first horizontal direction, by default None
-        nhj : _type_, optional
+        nhj : int, optional
             number of harmonics in the second horizontal direction, by default None
         title : str, optional
             user-defined panel title, by default "Power spectrum"
-        v_extent : _type_, optional
+        v_extent : list, optional
             [h0,h1]; vertical extent of the data, by default None
+        show_edge : bool, optional
+            toggle the cell-edge outline on the colour mesh, by default False
 
         Returns
         -------
@@ -207,6 +209,15 @@ class fig_obj(object):
             list of first horizontal wavenumbers
         lls : list
             list of second horizontal wavenumbers
+        title : str, optional
+            user-defined panel title, by default "FFT power spectrum"
+        interval : int, optional
+            half-width (in wavenumber indices) of the spectral window
+            cropped around the centre before plotting, by default 20
+        typ : {"imag", "real"}, optional
+            spectral representation to plot; "imag" crops a symmetric
+            window about the spectral centre, "real" keeps the positive
+            first-wavenumber half, by default "imag"
 
         Returns
         -------
@@ -285,7 +296,7 @@ def error_bar_plot(
         labels of the error plots, e.g., cell index
     pmf_diff : list
         list containing the errors. Same size as `idx_name`.
-    params : :class:`src.var.params`
+    params : :class:`pycsa.config.params.params`
         user parameter class
     comparison : list, optional
         a second error list to be compared to `pmf_diff`. Same size as `pmf_diff`, by default None
@@ -394,6 +405,28 @@ def error_bar_split_plot(
     """
     Function to generate error bar plots with a split in the middle, e.g., when space in limited on a presentation slide or poster.
 
+    Parameters
+    ----------
+    errs : list
+        list of error values, one per bar (rounded to 2 d.p. internally)
+    lbls : list
+        bar labels, used as the x-axis tick labels. Same size as `errs`.
+    bs : float
+        upper limit of the lower (bottom) axis; the y-axis break occurs here
+    ts : list
+        ``[t0, t1]`` y-limits of the upper (top) axis above the break
+    ts_ticks : list
+        explicit y-tick locations for the upper axis
+    color : color or list
+        bar colour(s) passed to :meth:`matplotlib.axes.Axes.bar`
+    fs : tuple, optional
+        figure size, by default (3.5, 3.5)
+    title : str, optional
+        figure title, by default ""
+    output_fig : bool, optional
+        toggle writing figure output, by default False
+    fn : str, optional
+        path to write output figure, by default "output/errors.pdf"
     """
     errs = [np.around(err, 2) for err in errs]
     print(errs)
@@ -461,6 +494,30 @@ def error_bar_abs_plot(
     ylims=None,
     fontsize=10,
 ):
+    """
+    Bar plot of absolute error values without a y-axis break.
+
+    Parameters
+    ----------
+    errs : list
+        list of error values, one per bar (rounded to 2 d.p. internally)
+    lbls : list
+        bar labels, used as the x-axis tick labels. Same size as `errs`.
+    fs : tuple, optional
+        figure size, by default (3.5, 3.5)
+    title : str, optional
+        figure title, by default ""
+    output_fig : bool, optional
+        toggle writing figure output, by default False
+    fn : str, optional
+        path to write output figure, by default "output/errors.pdf"
+    color : color or list, optional
+        bar colour(s) passed to :meth:`matplotlib.axes.Axes.bar`, by default None
+    ylims : list, optional
+        ``[y0, y1]`` y-axis limits; left unset when None, by default None
+    fontsize : int, optional
+        title font size, by default 10
+    """
     errs = [np.around(err, 2) for err in errs]
     print(errs)
 
@@ -490,7 +547,7 @@ class plot_3d(object):
 
         Parameters
         ----------
-        cell : :class:`src.var.topo_cell`
+        cell : :class:`pycsa.data.cell.topo_cell`
             instance of a cell object
         ele : int, optional
             elevation angle, by default 5
@@ -521,7 +578,9 @@ class plot_3d(object):
         output_fig : bool, optional
             toggles output of figure, by default True
         output_fn : str, optional
-            output filnemae, by default "plot_3D"
+            output filename, by default "plot_3D". The figure is always
+            written to ``./outputs/<output_fn>.pdf`` (the ``./outputs/``
+            directory and ``.pdf`` suffix are hardcoded).
         lbls : list, optional
             list of axis labels containing ``[x_label, y_label, z_label]``, by default None
         fs : tuple, optional

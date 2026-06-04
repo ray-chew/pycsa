@@ -33,11 +33,11 @@ machines:
 
 .. code-block:: text
 
-   generic_laptop       12 cores / 12 GB / chunks of 100 cells
-   laptop_performance   20 cores / 80 GB / chunks of 100 cells
-   dkrz_hpc             250 cores / 240 GB / chunks of 100 cells
+   generic_laptop       12 cores /  12 GB / chunks of 100 cells
+   laptop_performance   20 cores /  80 GB / chunks of 100 cells
+   dkrz_hpc             52 cores / 256 GB / chunks of 100 cells
 
-To add a new preset, edit the ``CONFIGS`` dict near line 479 of
+To add a new preset, edit the ``CONFIGS`` dict in
 ``runs/icon_etopo_global.py``.
 
 
@@ -89,11 +89,11 @@ Configure
 Open ``runs/icon_etopo_global.py`` and set two things near the top of
 the ``if __name__ == "__main__"`` block:
 
-1. **System preset** (around line 456)::
+1. **System preset** (the ``SYSTEM_CONFIG = ...`` line)::
 
        SYSTEM_CONFIG = "dkrz_hpc"   # or "laptop_performance" / "generic_laptop"
 
-2. **Cell range** (around line 646)::
+2. **Cell range** (the ``cell_start`` / ``cell_end`` block)::
 
        cell_start = 0          # first cell, inclusive
        cell_end   = None       # last cell, exclusive; None = run to the end
@@ -240,7 +240,7 @@ Troubleshooting
 
 **OOM / "KilledWorker" in logs.** The memory batch underestimated
 per-cell footprint. Either raise the safety factor in
-``pycsa.scheduling.group_cells_by_memory`` (default 1.0) or pick a
+``pycsa.scheduling.group_cells_by_memory`` (default 1.5) or pick a
 preset with more memory per worker.
 
 **"Too many open files."** Raise the descriptor limit before

@@ -73,6 +73,14 @@ python3 ./runs/idealised_isosceles.py
 
 However, the codebase is structured such that the user can easily assemble a run script to define their own experiments. Refer to the documentation for the [available APIs](https://ray-chew.github.io/pyCSA/api.html).
 
+### Examples
+
+Three self-contained examples ship with bundled data (no download needed):
+
+- **Idealised** — `pycsa-idealised` (synthetic terrain with a known spectrum; see the [tutorial](https://ray-chew.github.io/pyCSA/tutorial.html)).
+- **Aleutians / MERIT** — [`examples/icon_regional_minimal.py`](https://github.com/ray-chew/pyCSA/blob/main/examples/icon_regional_minimal.py) (real ICON cell, ~10 s).
+- **Andes / ETOPO** — [`examples/icon_etopo_andes.py`](https://github.com/ray-chew/pyCSA/blob/main/examples/icon_etopo_andes.py) (real ETOPO cell with ocean-aware masking; see the [showcase](https://ray-chew.github.io/pyCSA/showcase.html)).
+
 ## License
 
 GNU GPL v3 (tentative)

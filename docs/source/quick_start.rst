@@ -79,8 +79,9 @@ The equivalent direct invocations also work:
     python -m runs.idealised_isosceles
     python3 ./runs/idealised_isosceles.py
 
-See the :doc:`tutorial` for a step-by-step walkthrough of this experiment, and
-:doc:`hpc_reproducibility` for the global ICON+ETOPO pipeline.
+See the :doc:`tutorial` for a step-by-step walkthrough of this experiment, the
+:doc:`showcase` for a real-data ETOPO example over the Andes (bundled data, runs
+in seconds), and :doc:`hpc_reproducibility` for the global ICON+ETOPO pipeline.
 
 .. note::
 

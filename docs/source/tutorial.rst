@@ -194,6 +194,11 @@ Where to go next
   runs the full pipeline on a real ICON cell (Aleutians, ~52°N) using
   a bundled MERIT slice. ~10 s end-to-end, no manual data setup.
 
+* **Real data with ocean-aware masking:** the :doc:`showcase` runs the
+  pipeline on a central-Andes cell using bundled **ETOPO** data and the
+  production diagnostic plot — the same data path and masking as the
+  global HPC run, on one cell.
+
 * **Production HPC runs:** see :doc:`hpc_reproducibility` for the
   global ICON+ETOPO pipeline (``runs/icon_etopo_global.py``) —
   SLURM submission, memory batching, restart story, and tile-cache

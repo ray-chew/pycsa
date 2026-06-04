@@ -7,6 +7,7 @@ CSA's Home
    self
    quick_start
    tutorial
+   showcase
    hpc_reproducibility
    api
    changelog

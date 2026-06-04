@@ -170,18 +170,18 @@ def lat_lon_delaunay(
         tri_indices = np.arange(len(tri.tri_lat_verts))
 
         for idx in tri_indices:
-            colour = "C7"
+            color = "C7"
             fw = None
 
             if (idx in highlight_indices) or (idx in highlight_indices + 1):
-                colour = "C3"
+                color = "C3"
                 fw = "bold"
 
             plt.annotate(
                 tri_indices[idx],
                 (tri.tri_clons[idx], tri.tri_clats[idx]),
                 (tri.tri_clons[idx] - 0.3, tri.tri_clats[idx] - 0.2),
-                c=colour,
+                c=color,
                 fontweight=fw,
                 alpha=0.8,
                 fontsize=12,
@@ -295,18 +295,18 @@ def error_delaunay(
         tri_indices = np.arange(len(tri.tri_clats))
 
         for idx in tri_indices:
-            colour = "C7"
+            color = "C7"
             fw = None
 
             if (idx in highlight_indices) or (idx in highlight_indices + 1):
-                colour = "C0"
+                color = "C0"
                 fw = "bold"
 
             ax.annotate(
                 tri_indices[idx],
                 (tri.tri_clons[idx], tri.tri_clats[idx]),
                 (tri.tri_clons[idx] - 0.3, tri.tri_clats[idx] - 0.2),
-                c=colour,
+                c=color,
                 fontweight=fw,
             )
 
@@ -401,8 +401,8 @@ def lat_lon_icon(
     **kwargs : dict, optional
         extra keyword arguments. When `annotate_idxs` is True, the
         following are required: ``ncells`` (int, number of cells),
-        ``clon`` (array-like, cell-centre longitudes) and ``clat``
-        (array-like, cell-centre latitudes).
+        ``clon`` (array-like, cell-center longitudes) and ``clat``
+        (array-like, cell-center latitudes).
 
     Note
     ----
@@ -456,14 +456,14 @@ def lat_lon_icon(
         cidx = np.arange(ncells)
 
         for idx in cidx:
-            colour = "r"
+            color = "r"
             fw = 2
 
             plt.annotate(
                 cidx[idx],
                 (clon[idx], clat[idx]),
                 (clon[idx] - 0.3, clat[idx] - 0.2),
-                c=colour,
+                c=color,
                 fontweight=fw,
             )
 

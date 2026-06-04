@@ -409,7 +409,7 @@ class ncdata(object):
             However, this full regional array is assembled from an array of block arrays. Each block array is loaded from a separated MERIT data file and varies in shape that is not known beforehand.
 
             Therefore, this ``__load_topo`` method is run recursively:
-                1. The first run determines the shape of each constituting block array and subsequently the shape of the full regional array. An empty array in initialised.
+                1. The first run determines the shape of each constituting block array and subsequently the shape of the full regional array. An empty array in initialized.
                 2. The second run populates the empty array with the information of the block arrays obtained in the first run.
             """
             if (cell.topo is None) and (init):
@@ -1529,14 +1529,14 @@ class nc_writer(object):
     """Write per-cell CSA results to a chunked NetCDF4 output file.
 
     Each cell is stored as its own NetCDF group keyed by cell id, holding
-    the land mask, centre coordinates and (for land cells) the picked
+    the land mask, center coordinates and (for land cells) the picked
     spectral amplitudes and wavenumbers. The writer is safe to
     re-instantiate against an existing chunk file: completed cell groups
     are skipped on resume rather than overwritten.
     """
 
     def __init__(self, params, sfx=""):
-        """Build the output filename and initialise the NetCDF file.
+        """Build the output filename and initialize the NetCDF file.
 
         The output path is derived from ``params.fn_output`` with the
         optional ``sfx`` suffix appended and a ``.nc`` extension ensured,
@@ -1574,7 +1574,7 @@ class nc_writer(object):
 
         self.n_modes = params.n_modes
 
-        # Only initialise the file if it doesn't already exist. The run script
+        # Only initialize the file if it doesn't already exist. The run script
         # re-instantiates nc_writer once per (memory_batch × netcdf_chunk); if we
         # opened with mode='w' every time, each new memory batch would truncate
         # the chunk file and wipe cells written by earlier batches that targeted
@@ -1605,7 +1605,7 @@ class nc_writer(object):
         """Write a single cell's result to its NetCDF group.
 
         Creates (or opens) the group named ``id`` and stores the land mask
-        and centre coordinates, the mean elevation when ``topo_mean`` is
+        and center coordinates, the mean elevation when ``topo_mean`` is
         given, and the zero-padded spectral amplitudes and wavenumbers when
         an ``analysis`` is given. If a complete group already exists the
         method returns without rewriting it.
@@ -1615,9 +1615,9 @@ class nc_writer(object):
         id : int or str
             cell id used as the NetCDF group name
         clat : float
-            cell-centre latitude
+            cell-center latitude
         clon : float
-            cell-centre longitude
+            cell-center longitude
         is_land : int or bool
             land mask flag for the cell
         analysis : :class:`pycsa.data.results.analysis`, optional
@@ -1828,7 +1828,7 @@ class nc_writer(object):
     def read_dat(path, fn, id, struct):
         """Populate ``struct`` from one cell group in a NetCDF chunk file.
 
-        Opens the file ``path + fn``, reads the land mask and centre
+        Opens the file ``path + fn``, reads the land mask and center
         coordinates of group ``id`` into ``struct``, and for land cells also
         reads the spectral fields ``dk``, ``dl``, ``H_spec``, ``kks`` and
         ``lls``.
@@ -1903,9 +1903,9 @@ class nc_writer(object):
             c_idx : int or str
                 cell index identifying this record
             clat : float
-                cell-centre latitude
+                cell-center latitude
             clon : float
-                cell-centre longitude
+                cell-center longitude
             is_land : int or bool
                 land mask flag for the cell
             analysis : :class:`pycsa.data.results.analysis`, optional

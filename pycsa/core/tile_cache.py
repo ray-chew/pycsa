@@ -142,7 +142,7 @@ class TopographyTileCache:
         self.tile_lons: Dict[str, np.ndarray] = {}
 
         # ETOPO with empty tile list = lazy mode: tiles open on first access via
-        # get_etopo_data. MERIT keeps the existing eager pre-load behaviour.
+        # get_etopo_data. MERIT keeps the existing eager pre-load behavior.
         if dataset_type == "ETOPO" and len(tile_filenames) == 0:
             return
 
@@ -908,7 +908,7 @@ _WORKER_CACHE: Optional[TopographyTileCache] = None
 
 
 def init_worker_cache(data_dir: str, dataset_type: str = "ETOPO") -> bool:
-    """Initialise a lazy tile cache in the current worker process.
+    """Initialize a lazy tile cache in the current worker process.
 
     Intended to be called via `client.run(init_worker_cache, path_etopo)` at
     the start of each memory batch. Idempotent: a second call with the same
@@ -932,7 +932,7 @@ def get_worker_cache() -> TopographyTileCache:
     """Return this worker's tile cache; raise if init_worker_cache wasn't called."""
     if _WORKER_CACHE is None:
         raise RuntimeError(
-            "TopographyTileCache not initialised on this worker. "
+            "TopographyTileCache not initialized on this worker. "
             "Call init_worker_cache(data_dir) via client.run(...) first."
         )
     return _WORKER_CACHE

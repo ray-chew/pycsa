@@ -14,7 +14,7 @@ class fig_obj(object):
 
     def __init__(self, fig, nhi, nhj, cbar=True, set_label=True):
         """
-        Initialises the figure object and the methods fill the axes.
+        Initializes the figure object and the methods fill the axes.
 
         Parameters
         ----------
@@ -140,7 +140,7 @@ class fig_obj(object):
         v_extent : list, optional
             [h0,h1]; vertical extent of the data, by default None
         show_edge : bool, optional
-            toggle the cell-edge outline on the colour mesh, by default False
+            toggle the cell-edge outline on the color mesh, by default False
 
         Returns
         -------
@@ -213,10 +213,10 @@ class fig_obj(object):
             user-defined panel title, by default "FFT power spectrum"
         interval : int, optional
             half-width (in wavenumber indices) of the spectral window
-            cropped around the centre before plotting, by default 20
+            cropped around the center before plotting, by default 20
         typ : {"imag", "real"}, optional
             spectral representation to plot; "imag" crops a symmetric
-            window about the spectral centre, "real" keeps the positive
+            window about the spectral center, "real" keeps the positive
             first-wavenumber half, by default "imag"
 
         Returns
@@ -418,7 +418,7 @@ def error_bar_split_plot(
     ts_ticks : list
         explicit y-tick locations for the upper axis
     color : color or list
-        bar colour(s) passed to :meth:`matplotlib.axes.Axes.bar`
+        bar color(s) passed to :meth:`matplotlib.axes.Axes.bar`
     fs : tuple, optional
         figure size, by default (3.5, 3.5)
     title : str, optional
@@ -512,7 +512,7 @@ def error_bar_abs_plot(
     fn : str, optional
         path to write output figure, by default "output/errors.pdf"
     color : color or list, optional
-        bar colour(s) passed to :meth:`matplotlib.axes.Axes.bar`, by default None
+        bar color(s) passed to :meth:`matplotlib.axes.Axes.bar`, by default None
     ylims : list, optional
         ``[y0, y1]`` y-axis limits; left unset when None, by default None
     fontsize : int, optional
@@ -554,7 +554,7 @@ class plot_3d(object):
         azi : int, optional
             azimuthal angle, by default 230
         cpad : float, optional
-            colour bar padding, by default 0.01
+            color bar padding, by default 0.01
         """
         from matplotlib import cm
 

@@ -31,7 +31,7 @@ def pick_cell(
     Returns
     -------
     int
-        index of the picked grid cell (the cell centre closest to the
+        index of the picked grid cell (the cell center closest to the
         reference location) into the grid's ``clat``/``clon`` arrays.
     """
     clat, clon = grid.clat, grid.clon
@@ -42,7 +42,7 @@ def pick_cell(
     if len(index) == 0:
         return pick_cell(lat_ref, lon_ref, grid, radius=2.0 * radius)
     else:
-        # pick the centre closest to the reference location
+        # pick the center closest to the reference location
         dist = np.abs(clat[index] - lat_ref) + np.abs(clon[index] - lon_ref)
         ind = np.argmin(dist)
 
@@ -807,7 +807,7 @@ class taper(object):
     def __init__(
         self, cell, padding, stencil_typ="OP", scale_fac=1.0, art_dt=0.5, art_it=800
     ):
-        """Initialises an artificial diffusion scenario
+        """Initializes an artificial diffusion scenario
 
         Parameters
         ----------
@@ -971,7 +971,7 @@ def handle_latlon_expansion(
 ):
     """Outward-pad a cell's vertex bounding box, wrapping at the poles/dateline.
 
-    Rounds the vertex coordinates to 5 decimals, normalises ambiguous
+    Rounds the vertex coordinates to 5 decimals, normalizes ambiguous
     ``±180`` longitudes so the extremes share a consistent sign, then pushes
     the extreme vertices outward: the max latitude/longitude vertex is grown
     by ``lat_expand``/``lon_expand`` and the min vertex shrunk by the same

@@ -265,7 +265,7 @@ class FixedLambda:
 
 @dataclass
 class GCVSelector:
-    """Documented default lambda selector. Generalized cross-validation.
+    """Cheap closed-form lambda selector. Generalized cross-validation.
 
     For each candidate lambda on a log-spaced grid, computes::
 
@@ -408,14 +408,19 @@ class SpatialCVSelector:
     on the held-out patch's rows. The lambda with the smallest mean
     held-out MSE wins.
 
-    **Why this matters even when GCV is the default.** GCV's
-    optimality depends on the prior form being approximately correct.
-    Spatial CV is the only selector here that *detects* misspecified
-    priors — if GCV and SpatialCV pick wildly different ``lmbda``
-    values, the prior form is doing more work than it should be, and
-    the user should revisit the choice of ``alpha`` (or pick a
-    different prior altogether). Run it as a diagnostic against GCV's
-    output even when GCV is what runs in production.
+    **Why this is the recommended selector for topography.** Real
+    topography residuals are spatially correlated, which breaks the
+    i.i.d. assumption GCV / marginal likelihood rely on — those
+    selectors then under-regularize. Spatial CV evaluates held-out
+    *patches*, so its notion of "out-of-sample" matches how the fit is
+    actually used on a constrained cell, and it is the only selector
+    here that *detects* misspecified priors: if GCV and SpatialCV pick
+    wildly different ``lmbda`` values, the prior form is doing more
+    work than it should be, and the user should revisit ``alpha`` (or
+    pick a different prior altogether). It is the default in
+    :func:`build_spectral_prior` whenever per-row ``coords`` are
+    supplied. (Note pyCSA's production runs do not invoke this
+    selection API at all — they use a hand-tuned ``lmbda`` baseline.)
 
     Parameters
     ----------
@@ -587,6 +592,7 @@ def build_spectral_prior(
     design_matrix: np.ndarray,
     data: np.ndarray,
     *,
+    coords: Optional[np.ndarray] = None,
     alpha_selector: Optional[AlphaSelector] = None,
     lambda_selector: Optional[LambdaSelector] = None,
     joint_selector: Optional[JointGCVSelector] = None,
@@ -600,7 +606,8 @@ def build_spectral_prior(
       ``topography`` field), then lambda selected given alpha (from
       ``design_matrix``, ``data``). Pass ``alpha_selector`` and/or
       ``lambda_selector`` to override the defaults
-      (``EmpiricalSpectralSlope`` + ``GCVSelector``).
+      (``EmpiricalSpectralSlope`` + ``SpatialCVSelector`` when ``coords``
+      are supplied, else ``GCVSelector``).
     - **Joint:** pass ``joint_selector=JointGCVSelector(...)`` to
       pick both alpha and lambda from one held-out-error
       optimization on ``(design_matrix, data)``. Overrides any
@@ -618,6 +625,14 @@ def build_spectral_prior(
     data
         Target vector that the LSQ fit targets. Typically
         ``cell.topo_m``.
+    coords
+        Per-row ``(n_points, 2)`` spatial coordinates of the
+        ``design_matrix`` rows — typically
+        ``np.column_stack([cell.lon_m, cell.lat_m])``. When supplied,
+        the default lambda selector is :class:`SpatialCVSelector`
+        (spatial k-fold CV, the recommended choice for spatially-
+        correlated topography); when omitted it falls back to
+        :class:`GCVSelector`. Ignored if ``lambda_selector`` is given.
     alpha_selector, lambda_selector
         Sequential-mode selector overrides. Pass ``FixedAlpha`` /
         ``FixedLambda`` to short-circuit either step. Ignored when
@@ -647,7 +662,15 @@ def build_spectral_prior(
         )
 
     alpha_selector = alpha_selector or EmpiricalSpectralSlope()
-    lambda_selector = lambda_selector or GCVSelector()
+    if lambda_selector is None:
+        # Default to spatial CV when per-row coords are available — it is the
+        # only selector here that respects spatial correlation in the residual
+        # (GCV / marginal likelihood assume i.i.d. rows and under-regularize
+        # spatially-correlated topography). Without coords a spatial split is
+        # meaningless, so fall back to the closed-form GCV surrogate.
+        lambda_selector = (
+            SpatialCVSelector(coords=coords) if coords is not None else GCVSelector()
+        )
 
     alpha_result = alpha_selector(topography)
     if isinstance(alpha_result, SlopeFit):

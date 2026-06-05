@@ -1601,7 +1601,9 @@ class nc_writer(object):
 
         rootgrp.close()
 
-    def output(self, id, clat, clon, is_land, analysis=None, topo_mean=None):
+    def output(
+        self, id, clat, clon, is_land, analysis=None, topo_mean=None, topo_peak=None
+    ):
         """Write a single cell's result to its NetCDF group.
 
         Creates (or opens) the group named ``id`` and stores the land mask
@@ -1664,6 +1666,15 @@ class nc_writer(object):
             mean_elev_var.units = "m"
             mean_elev_var.long_name = (
                 "Mean cell elevation subtracted before spectral analysis"
+            )
+
+        if topo_peak is not None:
+            peak_elev_var = grp.createVariable("cell_peak_elevation", "f8")
+            peak_elev_var[:] = topo_peak
+            peak_elev_var.units = "m"
+            peak_elev_var.long_name = (
+                "Peak cell elevation above the cell mean (obstacle height "
+                "for the MS-GWaM Long number)"
             )
 
         if analysis is not None:
@@ -1748,6 +1759,15 @@ class nc_writer(object):
                 "Mean cell elevation subtracted before spectral analysis"
             )
 
+        if getattr(struct, "topo_peak", None) is not None:
+            peak_elev_var = grp.createVariable("cell_peak_elevation", "f8")
+            peak_elev_var[:] = struct.topo_peak
+            peak_elev_var.units = "m"
+            peak_elev_var.long_name = (
+                "Peak cell elevation above the cell mean (obstacle height "
+                "for the MS-GWaM Long number)"
+            )
+
         if struct.is_land:
             dk_var = grp.createVariable("dk", "f8")
             dk_var[:] = struct.dk
@@ -1803,6 +1823,15 @@ class nc_writer(object):
                 mean_elev_var.units = "m"
                 mean_elev_var.long_name = (
                     "Mean cell elevation subtracted before spectral analysis"
+                )
+
+            if getattr(struct, "topo_peak", None) is not None:
+                peak_elev_var = grp.createVariable("cell_peak_elevation", "f8")
+                peak_elev_var[:] = struct.topo_peak
+                peak_elev_var.units = "m"
+                peak_elev_var.long_name = (
+                    "Peak cell elevation above the cell mean (obstacle height "
+                    "for the MS-GWaM Long number)"
                 )
 
             if struct.is_land:
@@ -1890,6 +1919,7 @@ class nc_writer(object):
             analysis=None,
             cell_area=None,
             topo_mean=None,
+            topo_peak=None,
         ):
             """Store cell metadata and copy across any analysis results.
 
@@ -1916,6 +1946,9 @@ class nc_writer(object):
             topo_mean : float, optional
                 mean cell elevation subtracted before analysis, by default
                 None
+            topo_peak : float, optional
+                peak cell elevation above the cell mean (obstacle height for
+                the MS-GWaM Long number), by default None
             """
             self.c_idx = c_idx
             self.clat = clat
@@ -1923,6 +1956,7 @@ class nc_writer(object):
             self.is_land = is_land
             self.cell_area = cell_area
             self.topo_mean = topo_mean
+            self.topo_peak = topo_peak
 
             self.dk = None
             self.dl = None

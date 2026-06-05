@@ -262,6 +262,7 @@ def do_cell(
             cell_sa.analysis,
             grid.cell_area[c_idx],
             topo_mean=getattr(cell_sa, "topo_mean", None),
+            topo_peak=getattr(cell_sa, "topo_peak", None),
         )
 
         # Generate 3-panel plot

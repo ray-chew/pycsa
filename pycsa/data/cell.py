@@ -155,6 +155,9 @@ class topo_cell(topo):
 
         self.topo_mean = float(self.topo_m.mean())
         self.topo_m -= self.topo_mean
+        # Peak obstacle height above the cell mean (datum matches cell_mean_elevation,
+        # subtracted just above). Used as h in the MS-GWaM Long number N*h/U.
+        self.topo_peak = float(self.topo_m.max())
 
     def get_grad_topo(self, triangle) -> None:
         """Compute the topographic gradient.

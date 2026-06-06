@@ -16,14 +16,11 @@ else
     OUTPUT_DIR="${1:-./data/etopo_15s}"
 fi
 
-DATA_TYPE="${ETOPO_DATA_TYPE:-surface}"
-if [ "$DATA_TYPE" = "bed" ]; then
-    BASE_URL="https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/15s/15s_bed_elev_netcdf"
-    FILE_SUFFIX="bed"
-else
-    BASE_URL="https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/15s/15s_surface_elev_netcdf"
-    FILE_SUFFIX="surface"
-fi
+# pyCSA's ETOPO reader hard-codes the "_surface" tile suffix (see
+# pycsa/core/io.py), so only the surface-elevation product is usable here.
+DATA_TYPE="surface"
+BASE_URL="https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/15s/15s_surface_elev_netcdf"
+FILE_SUFFIX="surface"
 
 mkdir -p "$OUTPUT_DIR"
 

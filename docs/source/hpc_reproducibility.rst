@@ -79,8 +79,18 @@ Verify a file::
 
    ncdump -h $HOME/data/etopo_15s/ETOPO_2022_v1_15s_N45W120_surface.nc
 
-Then point ``pycsa.local_paths.paths.etopo`` (or your edited config) at
-``$HOME/data/etopo_15s/``.
+Then tell pyCSA where the data lives. The run scripts read their paths from
+``pycsa.local_paths`` (copied from ``pycsa/local_paths.py.template``), which in
+turn reads the ``SPEC_APPX_*`` environment variables::
+
+   export SPEC_APPX_DATA_DIR=$PWD/data             # directory containing the ICON grid
+   export SPEC_APPX_ETOPO_DIR=$PWD/data/etopo_15s
+   export SPEC_APPX_MERIT_DIR=$PWD/data/MERIT       # MERIT runs only
+   export SPEC_APPX_REMA_DIR=$PWD/data/REMA         # MERIT runs only
+   export SPEC_APPX_OUTPUT_DIR=$PWD/outputs
+
+or run ``source setup_paths.sh`` (which also creates ``local_paths.py`` from the
+template). You can also edit ``pycsa/local_paths.py`` directly.
 
 
 Configure

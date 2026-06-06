@@ -56,6 +56,18 @@ Fork this repository and clone your remote fork, then `pip install -e .`.
 
 Run parameters are assembled programmatically inside the run scripts using the [`pycsa.config.params`](https://github.com/ray-chew/pyCSA/blob/main/pycsa/config/params.py) dataclass. Example experiment scripts live in [`runs/`](https://github.com/ray-chew/pyCSA/tree/main/runs) and [`examples/`](https://github.com/ray-chew/pyCSA/tree/main/examples); the reusable building blocks are in the [`pycsa`](https://github.com/ray-chew/pyCSA/tree/main/pycsa) package (`pycsa.core`, `pycsa.wrappers`, `pycsa.plotting`, `pycsa.data`, `pycsa.compute`).
 
+Runs that read on-disk data (e.g. the global ICON+ETOPO pipeline) locate it through `SPEC_APPX_*` environment variables, which are read by `pycsa/local_paths.py` (copied from `local_paths.py.template`):
+
+```bash
+export SPEC_APPX_DATA_DIR=/path/to/data          # directory containing the ICON grid
+export SPEC_APPX_ETOPO_DIR=/path/to/data/etopo_15s
+export SPEC_APPX_MERIT_DIR=/path/to/MERIT        # MERIT runs only
+export SPEC_APPX_REMA_DIR=/path/to/REMA          # MERIT runs only
+export SPEC_APPX_OUTPUT_DIR=/path/to/outputs
+```
+
+Set these directly or with `source setup_paths.sh`. The bundled [`examples/`](https://github.com/ray-chew/pyCSA/tree/main/examples) need no such setup — their data ships with the repo.
+
 ### Execution
 
 A simple setup can be found in [`runs/idealised_isosceles.py`](https://github.com/ray-chew/pyCSA/blob/main/runs/idealised_isosceles.py). After `pip install -e .` the easiest way to run it is via the console script:

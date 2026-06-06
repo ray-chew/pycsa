@@ -1,11 +1,13 @@
+# Core runtime dependencies; mirror of [project.dependencies] in pyproject.toml.
+# Optional/test extras (pytest, scikit-learn, ...) live in pyproject's [test] extra.
 Cartopy>=0.25.0
+dask[distributed]>=2026.1.2
 h5py>=3.15.1
-ipython>=8.25.0
 matplotlib>=3.10.7
 netCDF4>=1.7.3
 noise>=1.2.2
 numba>=0.62.1
 numpy>=2.2.6
 pandas>=2.3.3
-scikit_learn>=1.7
 scipy>=1.15.3
+tqdm>=4.66.0

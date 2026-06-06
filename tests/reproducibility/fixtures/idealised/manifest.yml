@@ -7,7 +7,7 @@ variables:
     dtype: float64
     shape: [6, 12, 12]
     sha256: ff3b6f5c128b99f66d2bef7df872e0d8f0f591cca5a68d213c6711c0fe03afe6
-    rtol: 0.01
+    rtol: 0.03
     atol: 1.0e-08
     equal_nan: true
     summary: {min: 0.0, max: 41570.62544768897, mean: 2579.296555886628, nan_count: 0,
@@ -16,7 +16,7 @@ variables:
     dtype: float64
     shape: [6]
     sha256: 47002665f8f1668edad2d687ca7cfc71a60655f90def88f9def884effbd371f2
-    rtol: 0.01
+    rtol: 0.03
     atol: 1.0e-08
     equal_nan: true
     summary: {min: 0.0, max: 164397.86445750235, mean: 54851.41509895603, nan_count: 0,
@@ -25,7 +25,7 @@ variables:
     dtype: float64
     shape: [6]
     sha256: 071c94713e6786f82ce91746122320c2fedcca85841447d309734472ffc5cb4d
-    rtol: 0.01
+    rtol: 0.03
     atol: 1.0e-08
     equal_nan: true
     summary: {min: 1146.82593373569, max: 1111508.5527409802, mean: 371418.7040476746,
@@ -34,7 +34,7 @@ variables:
     dtype: float64
     shape: [6]
     sha256: ba9ff4faaf31f1eb904a2464a4228488127136d30833844da18973515bbec18b
-    rtol: 0.01
+    rtol: 0.03
     atol: 1.0e-08
     equal_nan: true
     summary: {min: 0.0, max: 893.0010666001867, mean: 297.7628525843572, nan_count: 0,
@@ -63,10 +63,14 @@ notes: 'Idealised isosceles CSA experiment. Deterministic, no external
   runs.idealised_isosceles.EXPERIMENT_LABELS = (''reference'', ''pLSFF'', ''regLSFF'',
   ''optCSA'', ''subCSA'', ''pLSFF_quad'').
 
-  freqs_arr / errs / sums / sum_errs use rtol=1e-2: pLSFF rows
+  freqs_arr / errs / sums / sum_errs use rtol=3e-2: pLSFF rows
 
-  (indices 1, 5) are unregularized and drift ~0.2% across LAPACK
+  (indices 1, 5) are unregularized and drift ~1.3% across the
 
-  builds; reference / regLSFF / optCSA / subCSA rows are bit-equal
+  numpy/scipy/LAPACK versions admitted by the >= dependency floors;
 
-  regardless.'
+  reference / regLSFF / optCSA / subCSA rows are bit-equal regardless.
+
+  num_modes stays exact and freqs_ref stays at rtol=1e-5 to catch
+
+  genuine structural regressions.'

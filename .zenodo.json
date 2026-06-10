@@ -1,0 +1,34 @@
+{
+  "title": "pyCSA",
+  "description": "Python package for constrained spectral approximation (CSA) of subgrid topography on ICON grids, with ETOPO and MERIT input support.",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "GPL-3.0-or-later",
+  "version": "1.0.0",
+  "creators": [
+    {
+      "name": "Chew, Ray",
+      "affiliation": "California Institute of Technology",
+      "orcid": "0000-0001-6454-8401"
+    }
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.1029/2024MS004361",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-article",
+      "scheme": "doi"
+    }
+  ],
+  "keywords": [
+    "spectral approximation",
+    "constrained spectral approximation",
+    "topography",
+    "subgrid orography",
+    "ICON",
+    "ETOPO",
+    "MERIT",
+    "gravity waves",
+    "atmospheric science"
+  ]
+}

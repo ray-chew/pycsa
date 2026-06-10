@@ -9,6 +9,8 @@ authors:
   - family-names: Chew
     given-names: Ray
     email: chew@caltech.edu
+    affiliation: California Institute of Technology
+    orcid: "https://orcid.org/0000-0001-6454-8401"
 version: 1.0.0
 license: GPL-3.0-or-later
 repository-code: https://github.com/ray-chew/pyCSA

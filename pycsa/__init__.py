@@ -4,7 +4,7 @@ pyCSA: Constrained Spectral Approximation Method
 A Python package for spectral approximation methods applied to topographic analysis.
 """
 
-__version__ = "1.0.0rc1"
+__version__ = "1.0.0"
 
 # Core modules - commonly used data structures and utilities
 from pycsa.core import (

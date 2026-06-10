@@ -9,7 +9,7 @@ authors:
   - family-names: Chew
     given-names: Ray
     email: chew@caltech.edu
-version: 0.95.1
+version: 1.0.0
 license: GPL-3.0-or-later
 repository-code: https://github.com/ray-chew/pyCSA
 url: https://ray-chew.github.io/pyCSA

@@ -87,7 +87,7 @@ def capture(out_dir: Path) -> None:
     print(f"  amplitudes: {result.sums}")
 
 
-def _render_figure(result, path: Path, labels) -> None:
+def _render_figure(result, path: Path, labels, dpi: int = 120) -> None:
     """2-row figure using the common pyCSA plotting routines.
 
     Row 1 (physical domain, ``plotter.fig_obj.phys_panel``): original masked
@@ -139,7 +139,7 @@ def _render_figure(result, path: Path, labels) -> None:
         fontsize=11,
     )
     fig.tight_layout()
-    fig.savefig(path, dpi=120, bbox_inches="tight")
+    fig.savefig(path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
 

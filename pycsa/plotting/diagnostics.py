@@ -65,6 +65,7 @@ def plot_cell_diagnostics(
     params,
     out_path=None,
     cell_label=None,
+    dpi=150,
 ):
     """
     Create 3-panel diagnostic plot for a single cell.
@@ -91,6 +92,9 @@ def plot_cell_diagnostics(
         Explicit output path; overrides ``output_dir / f"cell_{c_idx:05d}.png"``.
     cell_label : str, optional
         Title prefix for panel 1; defaults to ``f"Cell {c_idx}"``.
+    dpi : int, optional
+        Resolution of the saved figure, by default 150 (the HPC per-cell
+        default). Pass 300 for publication-quality output.
     """
     # Create figure with 3 panels
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
@@ -166,7 +170,7 @@ def plot_cell_diagnostics(
         else (output_dir / f"cell_{c_idx:05d}.png")
     )
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.savefig(output_path, dpi=dpi, bbox_inches="tight")
     plt.close(fig)
 
     # Explicit memory cleanup - delete ALL objects to prevent memory leaks

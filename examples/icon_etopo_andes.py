@@ -147,6 +147,7 @@ def main() -> int:
         result["params"],
         out_path=out,
         cell_label="Central Andes (ICON cell %d)" % C_IDX,
+        dpi=300,
     )
     print(f"  figure written:        {out}")
     return 0

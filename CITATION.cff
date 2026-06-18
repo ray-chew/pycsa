@@ -11,8 +11,11 @@ authors:
     email: chew@caltech.edu
     affiliation: California Institute of Technology
     orcid: "https://orcid.org/0000-0001-6454-8401"
-version: 1.0.0
-doi: 10.5281/zenodo.20634759
+version: 1.0.1
+# Concept (all-versions) DOI — always resolves to the latest archived release,
+# so this line does not need updating on future releases. The per-version DOI
+# for this specific version lives on its Zenodo record.
+doi: 10.5281/zenodo.10877090
 license: GPL-3.0-or-later
 repository-code: https://github.com/ray-chew/pyCSA
 url: https://ray-chew.github.io/pyCSA

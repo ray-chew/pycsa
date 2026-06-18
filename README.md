@@ -20,8 +20,8 @@
 <a href="https://github.com/psf/black">
 <img alt="Code style: black" src=https://img.shields.io/badge/code%20style-black-000000.svg>
 </a>
-<a href="https://doi.org/10.5281/zenodo.20634759">
-<img alt="DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.20634759.svg">
+<a href="https://doi.org/10.5281/zenodo.10877090">
+<img alt="DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.10877090.svg">
 </a>
 </p>
 

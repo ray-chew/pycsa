@@ -2,6 +2,27 @@
 
 .. towncrier release notes start
 
+1.0.1 (2026-06-17)
+------------------
+
+Changed
+^^^^^^^
+
+- First release to PyPI, distributed as ``pycsa-specappx`` (the bare ``pycsa``
+  name was already taken by an unrelated project). The import name is
+  unchanged: ``import pycsa``. The package version is now single-sourced from
+  ``pycsa.__version__``.
+- The built wheel now ships only the ``pycsa`` package. The ``runs/``
+  experiment scripts remain in the repository and the Zenodo archive but are no
+  longer installed into ``site-packages``.
+
+Removed
+^^^^^^^
+
+- The ``pycsa-idealised`` console script. Run the idealised benchmark directly
+  with ``python -m runs.idealised_isosceles``.
+
+
 1.0.0 (2026-06-09)
 ------------------
 

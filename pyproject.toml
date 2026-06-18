@@ -1,6 +1,6 @@
 [project]
-name = "pyCSA"
-version = "1.0.0"
+name = "pycsa-specappx"
+dynamic = ["version"]
 description = "Python package for spectral approximation methods applied to topographic analysis"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -23,7 +23,7 @@ keywords = [
     "atmospheric science",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
@@ -62,17 +62,17 @@ Documentation = "https://ray-chew.github.io/pyCSA"
 Repository = "https://github.com/ray-chew/pyCSA"
 Issues = "https://github.com/ray-chew/pyCSA/issues"
 
-[project.scripts]
-pycsa-idealised = "pycsa.cli:idealised"
-
 # Packaging
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.dynamic]
+version = { attr = "pycsa.__version__" }
+
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pycsa*", "runs*"]
+include = ["pycsa*"]
 
 
 [tool.towncrier]

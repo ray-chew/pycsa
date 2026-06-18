@@ -53,7 +53,20 @@ See [`requirements.txt`](https://github.com/ray-chew/pyCSA/blob/main/requirement
 
 ### Installation
 
-Fork this repository and clone your remote fork, then `pip install -e .`.
+Install the latest release from PyPI:
+
+```bash
+pip install pycsa-specappx
+```
+
+The distribution is named `pycsa-specappx` (the bare `pycsa` name was already taken on PyPI by an unrelated project), but the import name is unchanged — `import pycsa`.
+
+To run the bundled experiment scripts in [`runs/`](https://github.com/ray-chew/pyCSA/tree/main/runs) / [`examples/`](https://github.com/ray-chew/pyCSA/tree/main/examples), or to contribute, work from a clone instead:
+
+```bash
+git clone https://github.com/ray-chew/pyCSA && cd pyCSA
+pip install -e ".[test]"
+```
 
 ### Configuration
 
@@ -73,13 +86,7 @@ Set these directly or with `source setup_paths.sh`. The bundled [`examples/`](ht
 
 ### Execution
 
-A simple setup can be found in [`runs/idealised_isosceles.py`](https://github.com/ray-chew/pyCSA/blob/main/runs/idealised_isosceles.py). After `pip install -e .` the easiest way to run it is via the console script:
-
-```console
-pycsa-idealised
-```
-
-The equivalent direct invocations also work:
+A simple setup can be found in [`runs/idealised_isosceles.py`](https://github.com/ray-chew/pyCSA/blob/main/runs/idealised_isosceles.py), a fixed-seed idealised benchmark. From a clone, run it directly:
 
 ```console
 python -m runs.idealised_isosceles

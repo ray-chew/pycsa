@@ -1,0 +1,28 @@
+pycsa.compute
+=============
+
+.. automodule:: pycsa.compute
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: autosummary/module.rst
+   :recursive:
+
+   context
+

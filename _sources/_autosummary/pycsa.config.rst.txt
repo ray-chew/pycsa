@@ -1,0 +1,28 @@
+pycsa.config
+============
+
+.. automodule:: pycsa.config
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: autosummary/module.rst
+   :recursive:
+
+   params
+

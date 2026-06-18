@@ -1,0 +1,30 @@
+pycsa.plotting
+==============
+
+.. automodule:: pycsa.plotting
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: autosummary/module.rst
+   :recursive:
+
+   cart_plot
+   diagnostics
+   plotter
+

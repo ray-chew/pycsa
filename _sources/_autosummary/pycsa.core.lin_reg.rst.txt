@@ -1,0 +1,26 @@
+pycsa.core.lin\_reg
+===================
+
+.. automodule:: pycsa.core.lin_reg
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      do
+      get_coeffs
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,1452 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="#"><link rel="search" title="Search" href="search.html">
+        <link rel="prefetch" href="_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="_static/favicon.ico"><!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 --><title>Index - pyCSA 1.0.1 documentation</title>
+<link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">pyCSA 1.0.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyCSA 1.0.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">CSA’s Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial: Idealised isosceles experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="showcase.html">Showcase: ETOPO over the central Andes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hpc_reproducibility.html">HPC reproducibility guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/pycsa.html">pycsa</a><input aria-label="Toggle navigation of pycsa" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.compute.html">pycsa.compute</a><input aria-label="Toggle navigation of pycsa.compute" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.compute.context.html">pycsa.compute.context</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.config.html">pycsa.config</a><input aria-label="Toggle navigation of pycsa.config" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.config.params.html">pycsa.config.params</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.core.html">pycsa.core</a><input aria-label="Toggle navigation of pycsa.core" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.buffer_pool.html">pycsa.core.buffer_pool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.delaunay.html">pycsa.core.delaunay</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.fourier.html">pycsa.core.fourier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.hyperparams.html">pycsa.core.hyperparams</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.io.html">pycsa.core.io</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.lin_reg.html">pycsa.core.lin_reg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.mode_selection.html">pycsa.core.mode_selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.physics.html">pycsa.core.physics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.priors.html">pycsa.core.priors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.reconstruction.html">pycsa.core.reconstruction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.tile_cache.html">pycsa.core.tile_cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.utils.html">pycsa.core.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.validation.html">pycsa.core.validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.var.html">pycsa.core.var</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.data.html">pycsa.data</a><input aria-label="Toggle navigation of pycsa.data" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.data.cell.html">pycsa.data.cell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.data.results.html">pycsa.data.results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/pycsa.logging_config.html">pycsa.logging_config</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.plotting.html">pycsa.plotting</a><input aria-label="Toggle navigation of pycsa.plotting" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.plotting.cart_plot.html">pycsa.plotting.cart_plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.plotting.diagnostics.html">pycsa.plotting.diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.plotting.plotter.html">pycsa.plotting.plotter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/pycsa.scheduling.html">pycsa.scheduling</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.wrappers.html">pycsa.wrappers</a><input aria-label="Toggle navigation of pycsa.wrappers" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.wrappers.diagnostics.html">pycsa.wrappers.diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.wrappers.interface.html">pycsa.wrappers.interface</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="refs.html">References</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/ray-chew/spec_appx">GitHub repo</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          
+<section class="genindex-section">
+  <h1 id="index">Index</h1>
+  <div class="genindex-jumpbox"><a href="#_"><strong>_</strong></a> | <a href="#A"><strong>A</strong></a> | <a href="#B"><strong>B</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#G"><strong>G</strong></a> | <a href="#H"><strong>H</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#J"><strong>J</strong></a> | <a href="#K"><strong>K</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#N"><strong>N</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#P"><strong>P</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#S"><strong>S</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a> | <a href="#W"><strong>W</strong></a></div>
+</section>
+<section id="_" class="genindex-section">
+  <h2>_</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.compute.context.html#pycsa.compute.context.ComputeContext.__init__">__init__() (pycsa.compute.context.ComputeContext method)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.__init__">(pycsa.config.params.params method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.buffer_pool.html#pycsa.core.buffer_pool.BufferPool.__init__">(pycsa.core.buffer_pool.BufferPool method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.fourier.html#pycsa.core.fourier.f_trans.__init__">(pycsa.core.fourier.f_trans method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.AlphaSelector.__init__">(pycsa.core.hyperparams.AlphaSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.EmpiricalSpectralSlope.__init__">(pycsa.core.hyperparams.EmpiricalSpectralSlope method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.FixedAlpha.__init__">(pycsa.core.hyperparams.FixedAlpha method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.FixedLambda.__init__">(pycsa.core.hyperparams.FixedLambda method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.GCVSelector.__init__">(pycsa.core.hyperparams.GCVSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.Hyperparams.__init__">(pycsa.core.hyperparams.Hyperparams method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.JointGCVSelector.__init__">(pycsa.core.hyperparams.JointGCVSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.LambdaSelector.__init__">(pycsa.core.hyperparams.LambdaSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.MarginalLikelihoodSelector.__init__">(pycsa.core.hyperparams.MarginalLikelihoodSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SpatialCVSelector.__init__">(pycsa.core.hyperparams.SpatialCVSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.nc_writer.__init__">(pycsa.core.io.nc_writer method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.nc_writer.grp_struct.__init__">(pycsa.core.io.nc_writer.grp_struct method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.__init__">(pycsa.core.io.ncdata method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_etopo_topo.__init__">(pycsa.core.io.ncdata.read_etopo_topo method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_merit_topo.__init__">(pycsa.core.io.ncdata.read_merit_topo method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.reader.__init__">(pycsa.core.io.reader method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.writer.__init__">(pycsa.core.io.writer method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.GreedyArgmax.__init__">(pycsa.core.mode_selection.GreedyArgmax method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.LassoSelector.__init__">(pycsa.core.mode_selection.LassoSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.ModeSelector.__init__">(pycsa.core.mode_selection.ModeSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.OMPSelector.__init__">(pycsa.core.mode_selection.OMPSelector method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.physics.html#pycsa.core.physics.ideal_pmf.__init__">(pycsa.core.physics.ideal_pmf method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.priors.html#pycsa.core.priors.IsotropicPrior.__init__">(pycsa.core.priors.IsotropicPrior method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.priors.html#pycsa.core.priors.Prior.__init__">(pycsa.core.priors.Prior method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.priors.html#pycsa.core.priors.SpectralPrior.__init__">(pycsa.core.priors.SpectralPrior method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.TopographyTileCache.__init__">(pycsa.core.tile_cache.TopographyTileCache method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.gen_triangle.__init__">(pycsa.core.utils.gen_triangle method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.taper.__init__">(pycsa.core.utils.taper method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.var.html#pycsa.core.var.obj.__init__">(pycsa.core.var.obj method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.__init__">(pycsa.data.cell.grid method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo.__init__">(pycsa.data.cell.topo method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo_cell.__init__">(pycsa.data.cell.topo_cell method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.__init__">(pycsa.data.results.analysis method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.fig_obj.__init__">(pycsa.plotting.plotter.fig_obj method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.plot_3d.__init__">(pycsa.plotting.plotter.plot_3d method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.delaunay_metrics.__init__">(pycsa.wrappers.diagnostics.delaunay_metrics method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.diag_plotter.__init__">(pycsa.wrappers.diagnostics.diag_plotter method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.first_appx.__init__">(pycsa.wrappers.interface.first_appx method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.get_pmf.__init__">(pycsa.wrappers.interface.get_pmf method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.second_appx.__init__">(pycsa.wrappers.interface.second_appx method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="A" class="genindex-section">
+  <h2>A</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.Hyperparams.alpha">alpha (pycsa.core.hyperparams.Hyperparams attribute)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SlopeFit.alpha">(pycsa.core.hyperparams.SlopeFit attribute)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.LassoSelector.alpha">(pycsa.core.mode_selection.LassoSelector attribute)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.priors.html#pycsa.core.priors.SpectralPrior.alpha">(pycsa.core.priors.SpectralPrior attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.JointGCVSelector.alpha_grid">alpha_grid (pycsa.core.hyperparams.JointGCVSelector attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.AlphaSelector">AlphaSelector (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.ampls">ampls (pycsa.data.results.analysis attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis">analysis (class in pycsa.data.results)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo.analysis">(pycsa.data.cell.topo attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.apply_f">apply_f() (pycsa.data.cell.grid method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="B" class="genindex-section">
+  <h2>B</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.OMPSelector.batch_size">batch_size (pycsa.core.mode_selection.OMPSelector attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SpatialCVSelector.buffer_fraction">buffer_fraction (pycsa.core.hyperparams.SpatialCVSelector attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.compute.context.html#pycsa.compute.context.ComputeContext.buffer_pool">buffer_pool (pycsa.compute.context.ComputeContext attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.buffer_pool.html#pycsa.core.buffer_pool.BufferPool">BufferPool (class in pycsa.core.buffer_pool)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.build_spectral_prior">build_spectral_prior() (in module pycsa.core.hyperparams)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="C" class="genindex-section">
+  <h2>C</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.cell_area">cell_area (pycsa.data.cell.grid attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.cg_spsp">cg_spsp (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.get_pmf.cg_spsp">cg_spsp() (pycsa.wrappers.interface.get_pmf method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.check_delaunay">check_delaunay() (pycsa.config.params.params method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.check_init">check_init() (pycsa.config.params.params method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.checker">checker() (pycsa.config.params.params static method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.clat">clat (pycsa.data.cell.grid attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.clat_vertices">clat_vertices (pycsa.data.cell.grid attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.buffer_pool.html#pycsa.core.buffer_pool.BufferPool.clear">clear() (pycsa.core.buffer_pool.BufferPool method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.clon">clon (pycsa.data.cell.grid attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.clon_vertices">clon_vertices (pycsa.data.cell.grid attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_etopo_topo.close_all">close_all() (pycsa.core.io.ncdata.read_etopo_topo method)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_merit_topo.close_all">(pycsa.core.io.ncdata.read_merit_topo method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.TopographyTileCache.close_all">(pycsa.core.tile_cache.TopographyTileCache method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_etopo_topo.close_cached_files">close_cached_files() (pycsa.core.io.ncdata.read_etopo_topo method)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_merit_topo.close_cached_files">(pycsa.core.io.ncdata.read_merit_topo method)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.close_worker_cache">close_worker_cache() (in module pycsa.core.tile_cache)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.LassoSelector.column_offset">column_offset (pycsa.core.mode_selection.LassoSelector attribute)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.OMPSelector.column_offset">(pycsa.core.mode_selection.OMPSelector attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.compute_split_EW">compute_split_EW() (in module pycsa.core.tile_cache)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.physics.html#pycsa.core.physics.ideal_pmf.compute_uw_pmf">compute_uw_pmf() (pycsa.core.physics.ideal_pmf method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.compute.context.html#pycsa.compute.context.ComputeContext">ComputeContext (class in pycsa.compute.context)</a>
+</li>
+        <li><a href="_autosummary/pycsa.logging_config.html#pycsa.logging_config.configure_logging">configure_logging() (in module pycsa.logging_config)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SpatialCVSelector.coords">coords (pycsa.core.hyperparams.SpatialCVSelector attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.create_tile_cache_from_grid">create_tile_cache_from_grid() (in module pycsa.core.tile_cache)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="D" class="genindex-section">
+  <h2>D</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.debug">debug (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.debug_writer">debug_writer (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.compute.context.html#pycsa.compute.context.ComputeContext.default">default() (pycsa.compute.context.ComputeContext class method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.delaunay">delaunay() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.delaunay_metrics">delaunay_metrics (class in pycsa.wrappers.diagnostics)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.delaunay_xnp">delaunay_xnp (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.delaunay_ynp">delaunay_ynp (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.get_pmf.dfft">dfft() (pycsa.wrappers.interface.get_pmf method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.dfft_first_guess">dfft_first_guess (pycsa.config.params.params attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.diag_plotter">diag_plotter (class in pycsa.wrappers.diagnostics)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.lin_reg.html#pycsa.core.lin_reg.do">do() (in module pycsa.core.lin_reg)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.first_appx.do">(pycsa.wrappers.interface.first_appx method)</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.second_appx.do">(pycsa.wrappers.interface.second_appx method)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.core.fourier.html#pycsa.core.fourier.f_trans.do_axial">do_axial() (pycsa.core.fourier.f_trans method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.fourier.html#pycsa.core.fourier.f_trans.do_cg_spsp">do_cg_spsp() (pycsa.core.fourier.f_trans method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.fourier.html#pycsa.core.fourier.f_trans.do_full">do_full() (pycsa.core.fourier.f_trans method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.taper.do_tapering">do_tapering() (pycsa.core.utils.taper method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.nc_writer.duplicate">duplicate() (pycsa.core.io.nc_writer method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.nc_writer.duplicate_all">duplicate_all() (pycsa.core.io.nc_writer method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="E" class="genindex-section">
+  <h2>E</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.EmpiricalSpectralSlope">EmpiricalSpectralSlope (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.enable_merit">enable_merit (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.delaunay_metrics.end">end() (pycsa.wrappers.diagnostics.delaunay_metrics method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.JointGCVSelector.eps">eps (pycsa.core.hyperparams.JointGCVSelector attribute)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.priors.html#pycsa.core.priors.SpectralPrior.eps">(pycsa.core.priors.SpectralPrior attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.error_bar_abs_plot">error_bar_abs_plot() (in module pycsa.plotting.plotter)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.error_bar_plot">error_bar_plot() (in module pycsa.plotting.plotter)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.error_bar_split_plot">error_bar_split_plot() (in module pycsa.plotting.plotter)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.cart_plot.html#pycsa.plotting.cart_plot.error_delaunay">error_delaunay() (in module pycsa.plotting.cart_plot)</a>
+</li>
+        <li><a href="_autosummary/pycsa.scheduling.html#pycsa.scheduling.estimate_cell_memory_gb">estimate_cell_memory_gb() (in module pycsa.scheduling)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="F" class="genindex-section">
+  <h2>F</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.fourier.html#pycsa.core.fourier.f_trans">f_trans (class in pycsa.core.fourier)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.fa_iter_solve">fa_iter_solve (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.fig_obj.fft_freq_panel">fft_freq_panel() (pycsa.plotting.plotter.fig_obj method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.fig_obj">fig_obj (class in pycsa.plotting.plotter)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.first_appx">first_appx (class in pycsa.wrappers.interface)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.FixedAlpha">FixedAlpha (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.FixedLambda">FixedLambda (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.fn_gen">fn_gen() (in module pycsa.core.io)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.fn_output">fn_output (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.fig_obj.freq_panel">freq_panel() (pycsa.plotting.plotter.fig_obj method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="G" class="genindex-section">
+  <h2>G</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.GCVSelector">GCVSelector (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.gen_art_terrain">gen_art_terrain() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo_cell.gen_mgrids">gen_mgrids() (pycsa.data.cell.topo_cell method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.gen_triangle">gen_triangle (class in pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.get_attrs">get_attrs() (pycsa.data.results.analysis method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.get_closest_idx">get_closest_idx() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.lin_reg.html#pycsa.core.lin_reg.get_coeffs">get_coeffs() (in module pycsa.core.lin_reg)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.TopographyTileCache.get_data_for_region">get_data_for_region() (pycsa.core.tile_cache.TopographyTileCache method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.delaunay.html#pycsa.core.delaunay.get_decomposition">get_decomposition() (in module pycsa.core.delaunay)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.get_delaunay_triangulation">get_delaunay_triangulation (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.TopographyTileCache.get_etopo_data">get_etopo_data() (pycsa.core.tile_cache.TopographyTileCache method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.fourier.html#pycsa.core.fourier.f_trans.get_freq_grid">get_freq_grid() (pycsa.core.fourier.f_trans method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo_cell.get_grad_topo">get_grad_topo() (pycsa.data.cell.topo_cell method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.delaunay.html#pycsa.core.delaunay.get_land_cells">get_land_cells() (in module pycsa.core.delaunay)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.get_lat_lon_segments">get_lat_lon_segments() (in module pycsa.core.utils)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo_cell.get_masked">get_masked() (pycsa.data.cell.topo_cell method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.buffer_pool.html#pycsa.core.buffer_pool.BufferPool.get_memory_usage">get_memory_usage() (pycsa.core.buffer_pool.BufferPool method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.buffer_pool.html#pycsa.core.buffer_pool.BufferPool.get_or_create">get_or_create() (pycsa.core.buffer_pool.BufferPool method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.reader.get_params">get_params() (pycsa.core.io.reader method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.get_pmf">get_pmf (class in pycsa.wrappers.interface)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.delaunay_metrics.get_rel_err">get_rel_err() (pycsa.wrappers.diagnostics.delaunay_metrics method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.get_size">get_size() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.buffer_pool.html#pycsa.core.buffer_pool.BufferPool.get_stats">get_stats() (pycsa.core.buffer_pool.BufferPool method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_etopo_topo.get_topo">get_topo() (pycsa.core.io.ncdata.read_etopo_topo method)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_merit_topo.get_topo">(pycsa.core.io.ncdata.read_merit_topo method)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.plotting.diagnostics.html#pycsa.plotting.diagnostics.get_topo_colormap">get_topo_colormap() (in module pycsa.plotting.diagnostics)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.get_worker_cache">get_worker_cache() (in module pycsa.core.tile_cache)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.GreedyArgmax">GreedyArgmax (class in pycsa.core.mode_selection)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid">grid (class in pycsa.data.cell)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.grid_kk_ll">grid_kk_ll() (pycsa.data.results.analysis method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.scheduling.html#pycsa.scheduling.group_cells_by_memory">group_cells_by_memory() (in module pycsa.scheduling)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="H" class="genindex-section">
+  <h2>H</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.handle_latlon_expansion">handle_latlon_expansion() (in module pycsa.core.utils)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.Hyperparams">Hyperparams (class in pycsa.core.hyperparams)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="I" class="genindex-section">
+  <h2>I</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.physics.html#pycsa.core.physics.ideal_pmf">ideal_pmf (class in pycsa.core.physics)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.init_worker_cache">init_worker_cache() (in module pycsa.core.tile_cache)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.writer.io_create_file">io_create_file() (pycsa.core.io.writer method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.is_land">is_land() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.isosceles">isosceles() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.priors.html#pycsa.core.priors.IsotropicPrior">IsotropicPrior (class in pycsa.core.priors)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="J" class="genindex-section">
+  <h2>J</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.JointGCVSelector">JointGCVSelector (class in pycsa.core.hyperparams)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="K" class="genindex-section">
+  <h2>K</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.EmpiricalSpectralSlope.k_max_frac">k_max_frac (pycsa.core.hyperparams.EmpiricalSpectralSlope attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.EmpiricalSpectralSlope.k_min_frac">k_min_frac (pycsa.core.hyperparams.EmpiricalSpectralSlope attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.kks">kks (pycsa.data.results.analysis attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="L" class="genindex-section">
+  <h2>L</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.GCVSelector.lambda_grid">lambda_grid (pycsa.core.hyperparams.GCVSelector attribute)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.JointGCVSelector.lambda_grid">(pycsa.core.hyperparams.JointGCVSelector attribute)</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SpatialCVSelector.lambda_grid">(pycsa.core.hyperparams.SpatialCVSelector attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.LambdaSelector">LambdaSelector (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.LassoSelector">LassoSelector (class in pycsa.core.mode_selection)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo.lat">lat (pycsa.data.cell.topo attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.lat_extent">lat_extent (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.cart_plot.html#pycsa.plotting.cart_plot.lat_lon">lat_lon() (in module pycsa.plotting.cart_plot)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.cart_plot.html#pycsa.plotting.cart_plot.lat_lon_delaunay">lat_lon_delaunay() (in module pycsa.plotting.cart_plot)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.cart_plot.html#pycsa.plotting.cart_plot.lat_lon_icon">lat_lon_icon() (in module pycsa.plotting.cart_plot)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.latlon2m">latlon2m() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.links">links (pycsa.data.cell.grid attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.lls">lls (pycsa.data.results.analysis attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.Hyperparams.lmbda">lmbda (pycsa.core.hyperparams.Hyperparams attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.lmbda_fa">lmbda_fa (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.lmbda_sa">lmbda_sa (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo.lon">lon (pycsa.data.cell.topo attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.lon_extent">lon_extent (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.lxkm">lxkm (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.lykm">lykm (pycsa.config.params.params attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="M" class="genindex-section">
+  <h2>M</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.MarginalLikelihoodSelector">MarginalLikelihoodSelector (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.MarginalLikelihoodSelector.max_iter">max_iter (pycsa.core.hyperparams.MarginalLikelihoodSelector attribute)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.LassoSelector.max_iter">(pycsa.core.mode_selection.LassoSelector attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.merit_cg">merit_cg (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.ModeSelector">ModeSelector (class in pycsa.core.mode_selection)</a>
+</li>
+        <li>
+    module
+
+        <ul>
+          <li><a href="_autosummary/pycsa.html#module-pycsa">pycsa</a>
+</li>
+          <li><a href="_autosummary/pycsa.compute.html#module-pycsa.compute">pycsa.compute</a>
+</li>
+          <li><a href="_autosummary/pycsa.compute.context.html#module-pycsa.compute.context">pycsa.compute.context</a>
+</li>
+          <li><a href="_autosummary/pycsa.config.html#module-pycsa.config">pycsa.config</a>
+</li>
+          <li><a href="_autosummary/pycsa.config.params.html#module-pycsa.config.params">pycsa.config.params</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.html#module-pycsa.core">pycsa.core</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.buffer_pool.html#module-pycsa.core.buffer_pool">pycsa.core.buffer_pool</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.delaunay.html#module-pycsa.core.delaunay">pycsa.core.delaunay</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.fourier.html#module-pycsa.core.fourier">pycsa.core.fourier</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#module-pycsa.core.hyperparams">pycsa.core.hyperparams</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.io.html#module-pycsa.core.io">pycsa.core.io</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.lin_reg.html#module-pycsa.core.lin_reg">pycsa.core.lin_reg</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#module-pycsa.core.mode_selection">pycsa.core.mode_selection</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.physics.html#module-pycsa.core.physics">pycsa.core.physics</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.priors.html#module-pycsa.core.priors">pycsa.core.priors</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.reconstruction.html#module-pycsa.core.reconstruction">pycsa.core.reconstruction</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.tile_cache.html#module-pycsa.core.tile_cache">pycsa.core.tile_cache</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.utils.html#module-pycsa.core.utils">pycsa.core.utils</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.validation.html#module-pycsa.core.validation">pycsa.core.validation</a>
+</li>
+          <li><a href="_autosummary/pycsa.core.var.html#module-pycsa.core.var">pycsa.core.var</a>
+</li>
+          <li><a href="_autosummary/pycsa.data.html#module-pycsa.data">pycsa.data</a>
+</li>
+          <li><a href="_autosummary/pycsa.data.cell.html#module-pycsa.data.cell">pycsa.data.cell</a>
+</li>
+          <li><a href="_autosummary/pycsa.data.results.html#module-pycsa.data.results">pycsa.data.results</a>
+</li>
+          <li><a href="_autosummary/pycsa.logging_config.html#module-pycsa.logging_config">pycsa.logging_config</a>
+</li>
+          <li><a href="_autosummary/pycsa.plotting.html#module-pycsa.plotting">pycsa.plotting</a>
+</li>
+          <li><a href="_autosummary/pycsa.plotting.cart_plot.html#module-pycsa.plotting.cart_plot">pycsa.plotting.cart_plot</a>
+</li>
+          <li><a href="_autosummary/pycsa.plotting.diagnostics.html#module-pycsa.plotting.diagnostics">pycsa.plotting.diagnostics</a>
+</li>
+          <li><a href="_autosummary/pycsa.plotting.plotter.html#module-pycsa.plotting.plotter">pycsa.plotting.plotter</a>
+</li>
+          <li><a href="_autosummary/pycsa.scheduling.html#module-pycsa.scheduling">pycsa.scheduling</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.html#module-pycsa.wrappers">pycsa.wrappers</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#module-pycsa.wrappers.diagnostics">pycsa.wrappers.diagnostics</a>
+</li>
+          <li><a href="_autosummary/pycsa.wrappers.interface.html#module-pycsa.wrappers.interface">pycsa.wrappers.interface</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="N" class="genindex-section">
+  <h2>N</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.EmpiricalSpectralSlope.n_bins">n_bins (pycsa.core.hyperparams.EmpiricalSpectralSlope attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SpatialCVSelector.n_folds">n_folds (pycsa.core.hyperparams.SpatialCVSelector attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.n_modes">n_modes (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.nc_writer">nc_writer (class in pycsa.core.io)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.nc_writer.grp_struct">nc_writer.grp_struct (class in pycsa.core.io)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata">ncdata (class in pycsa.core.io)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_etopo_topo">ncdata.read_etopo_topo (class in pycsa.core.io)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_merit_topo">ncdata.read_merit_topo (class in pycsa.core.io)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.nhi">nhi (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.nhj">nhj (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.no_corrections">no_corrections (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.grid.NON_CONVERTIBLES">NON_CONVERTIBLES (pycsa.data.cell.grid attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="O" class="genindex-section">
+  <h2>O</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.var.html#pycsa.core.var.obj">obj (class in pycsa.core.var)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.mode_selection.html#pycsa.core.mode_selection.OMPSelector">OMPSelector (class in pycsa.core.mode_selection)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.nc_writer.output">output() (pycsa.core.io.nc_writer method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="P" class="genindex-section">
+  <h2>P</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.padding">padding (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params">params (class in pycsa.config.params)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.path_compact_grid">path_compact_grid (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.path_compact_topo">path_compact_topo (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.path_merit">path_merit (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.path_output">path_output (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.fig_obj.phys_panel">phys_panel() (pycsa.plotting.plotter.fig_obj method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.pick_cell">pick_cell() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.plot">plot (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.plot_3d.plot">plot() (pycsa.plotting.plotter.plot_3d method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.plotter.html#pycsa.plotting.plotter.plot_3d">plot_3d (class in pycsa.plotting.plotter)</a>
+</li>
+        <li><a href="_autosummary/pycsa.plotting.diagnostics.html#pycsa.plotting.diagnostics.plot_cell_diagnostics">plot_cell_diagnostics() (in module pycsa.plotting.diagnostics)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.writer.populate">populate() (pycsa.core.io.writer method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.print">print() (pycsa.config.params.params method)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.var.html#pycsa.core.var.obj.print">(pycsa.core.var.obj method)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.core.priors.html#pycsa.core.priors.Prior">Prior (class in pycsa.core.priors)</a>
+</li>
+        <li><a href="_autosummary/pycsa.compute.context.html#pycsa.compute.context.ComputeContext.prior">prior (pycsa.compute.context.ComputeContext attribute)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.Hyperparams.prior">(pycsa.core.hyperparams.Hyperparams attribute)</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa
+
+        <ul>
+          <li><a href="_autosummary/pycsa.html#module-pycsa">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.compute
+
+        <ul>
+          <li><a href="_autosummary/pycsa.compute.html#module-pycsa.compute">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.compute.context
+
+        <ul>
+          <li><a href="_autosummary/pycsa.compute.context.html#module-pycsa.compute.context">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.config
+
+        <ul>
+          <li><a href="_autosummary/pycsa.config.html#module-pycsa.config">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.config.params
+
+        <ul>
+          <li><a href="_autosummary/pycsa.config.params.html#module-pycsa.config.params">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.html#module-pycsa.core">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.buffer_pool
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.buffer_pool.html#module-pycsa.core.buffer_pool">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.delaunay
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.delaunay.html#module-pycsa.core.delaunay">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.fourier
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.fourier.html#module-pycsa.core.fourier">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.hyperparams
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#module-pycsa.core.hyperparams">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.io
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.io.html#module-pycsa.core.io">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.lin_reg
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.lin_reg.html#module-pycsa.core.lin_reg">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    pycsa.core.mode_selection
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.mode_selection.html#module-pycsa.core.mode_selection">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.physics
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.physics.html#module-pycsa.core.physics">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.priors
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.priors.html#module-pycsa.core.priors">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.reconstruction
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.reconstruction.html#module-pycsa.core.reconstruction">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.tile_cache
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.tile_cache.html#module-pycsa.core.tile_cache">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.utils
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.utils.html#module-pycsa.core.utils">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.validation
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.validation.html#module-pycsa.core.validation">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.core.var
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.var.html#module-pycsa.core.var">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.data
+
+        <ul>
+          <li><a href="_autosummary/pycsa.data.html#module-pycsa.data">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.data.cell
+
+        <ul>
+          <li><a href="_autosummary/pycsa.data.cell.html#module-pycsa.data.cell">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.data.results
+
+        <ul>
+          <li><a href="_autosummary/pycsa.data.results.html#module-pycsa.data.results">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.logging_config
+
+        <ul>
+          <li><a href="_autosummary/pycsa.logging_config.html#module-pycsa.logging_config">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.plotting
+
+        <ul>
+          <li><a href="_autosummary/pycsa.plotting.html#module-pycsa.plotting">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.plotting.cart_plot
+
+        <ul>
+          <li><a href="_autosummary/pycsa.plotting.cart_plot.html#module-pycsa.plotting.cart_plot">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.plotting.diagnostics
+
+        <ul>
+          <li><a href="_autosummary/pycsa.plotting.diagnostics.html#module-pycsa.plotting.diagnostics">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.plotting.plotter
+
+        <ul>
+          <li><a href="_autosummary/pycsa.plotting.plotter.html#module-pycsa.plotting.plotter">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.scheduling
+
+        <ul>
+          <li><a href="_autosummary/pycsa.scheduling.html#module-pycsa.scheduling">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.wrappers
+
+        <ul>
+          <li><a href="_autosummary/pycsa.wrappers.html#module-pycsa.wrappers">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.wrappers.diagnostics
+
+        <ul>
+          <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#module-pycsa.wrappers.diagnostics">module</a>
+</li>
+        </ul></li>
+        <li>
+    pycsa.wrappers.interface
+
+        <ul>
+          <li><a href="_autosummary/pycsa.wrappers.interface.html#module-pycsa.wrappers.interface">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="R" class="genindex-section">
+  <h2>R</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SlopeFit.r_squared">r_squared (pycsa.core.hyperparams.SlopeFit attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.rad2deg">rad2deg() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.reader.read_all">read_all() (pycsa.core.io.reader method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.nc_writer.read_dat">read_dat() (pycsa.core.io.nc_writer static method)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_dat">(pycsa.core.io.ncdata method)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.reader.read_data">read_data() (pycsa.core.io.reader method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.ncdata.read_topo">read_topo() (pycsa.core.io.ncdata method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.reader">reader (class in pycsa.core.io)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.recompute_rhs">recompute_rhs (pycsa.config.params.params attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.get_pmf.recompute_rhs">recompute_rhs() (pycsa.wrappers.interface.get_pmf method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.recon">recon (pycsa.data.results.analysis attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.reconstruction.html#pycsa.core.reconstruction.recon_2D">recon_2D() (in module pycsa.core.reconstruction)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.rect">rect (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.rect_set">rect_set (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.refine">refine (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.rescale">rescale() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SpatialCVSelector.rng_seed">rng_seed (pycsa.core.hyperparams.SpatialCVSelector attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.run_case">run_case (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.run_full_land_model">run_full_land_model (pycsa.config.params.params attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="S" class="genindex-section">
+  <h2>S</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.sa_iter_solve">sa_iter_solve (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.get_pmf.sappx">sappx() (pycsa.wrappers.interface.get_pmf method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.second_appx">second_appx (class in pycsa.wrappers.interface)</a>
+</li>
+        <li><a href="_autosummary/pycsa.compute.context.html#pycsa.compute.context.ComputeContext.selector">selector (pycsa.compute.context.ComputeContext attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.self_test">self_test() (pycsa.config.params.params method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.fourier.html#pycsa.core.fourier.f_trans.set_kls">set_kls() (pycsa.core.fourier.f_trans method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.diag_plotter.show">show() (pycsa.wrappers.diagnostics.diag_plotter method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.sliding_window_view">sliding_window_view() (in module pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.Hyperparams.slope_fit">slope_fit (pycsa.core.hyperparams.Hyperparams attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SlopeFit">SlopeFit (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.validation.html#pycsa.core.validation.spatial_cv_score">spatial_cv_score() (in module pycsa.core.validation)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SpatialCVSelector">SpatialCVSelector (class in pycsa.core.hyperparams)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.priors.html#pycsa.core.priors.SpectralPrior">SpectralPrior (class in pycsa.core.priors)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.SlopeFit.stderr">stderr (pycsa.core.hyperparams.SlopeFit attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="T" class="genindex-section">
+  <h2>T</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.taper">taper (class in pycsa.core.utils)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.taper_art_it">taper_art_it (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.taper_fa">taper_fa (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.taper_nonquad">taper_nonquad() (in module pycsa.wrappers.interface)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.interface.html#pycsa.wrappers.interface.taper_quad">taper_quad() (in module pycsa.wrappers.interface)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.taper_ref">taper_ref (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.taper_sa">taper_sa (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.TopographyTileCache.tile_bounds">tile_bounds (pycsa.core.tile_cache.TopographyTileCache attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.compute.context.html#pycsa.compute.context.ComputeContext.tile_cache">tile_cache (pycsa.compute.context.ComputeContext attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.TopographyTileCache.tiles">tiles (pycsa.core.tile_cache.TopographyTileCache attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.MarginalLikelihoodSelector.tol">tol (pycsa.core.hyperparams.MarginalLikelihoodSelector attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo">topo (class in pycsa.data.cell)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo.topo">(pycsa.data.cell.topo attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="_autosummary/pycsa.data.cell.html#pycsa.data.cell.topo_cell">topo_cell (class in pycsa.data.cell)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.tile_cache.html#pycsa.core.tile_cache.TopographyTileCache">TopographyTileCache (class in pycsa.core.tile_cache)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.utils.html#pycsa.core.utils.transfer_attributes">transfer_attributes() (in module pycsa.core.utils)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="U" class="genindex-section">
+  <h2>U</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.U">U (pycsa.config.params.params attribute)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.delaunay_metrics.update_pair">update_pair() (pycsa.wrappers.diagnostics.delaunay_metrics method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.wrappers.diagnostics.html#pycsa.wrappers.diagnostics.delaunay_metrics.update_quad">update_quad() (pycsa.wrappers.diagnostics.delaunay_metrics method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="V" class="genindex-section">
+  <h2>V</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.V">V (pycsa.config.params.params attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.FixedAlpha.value">value (pycsa.core.hyperparams.FixedAlpha attribute)</a>
+
+        <ul>
+          <li><a href="_autosummary/pycsa.core.hyperparams.html#pycsa.core.hyperparams.FixedLambda.value">(pycsa.core.hyperparams.FixedLambda attribute)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.config.params.html#pycsa.config.params.params.verbose">verbose (pycsa.config.params.params attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="W" class="genindex-section">
+  <h2>W</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.wlat">wlat (pycsa.data.results.analysis attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.data.results.html#pycsa.data.results.analysis.wlon">wlon (pycsa.data.results.analysis attribute)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.writer.write_all">write_all() (pycsa.core.io.writer method)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.writer.write_all_attrs">write_all_attrs() (pycsa.core.io.writer method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.writer.write_attr">write_attr() (pycsa.core.io.writer method)</a>
+</li>
+        <li><a href="_autosummary/pycsa.core.io.html#pycsa.core.io.writer">writer (class in pycsa.core.io)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Ray Chew
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=292eb321"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

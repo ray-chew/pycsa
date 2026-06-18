@@ -1,0 +1,41 @@
+pycsa.core
+==========
+
+.. automodule:: pycsa.core
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: autosummary/module.rst
+   :recursive:
+
+   buffer_pool
+   delaunay
+   fourier
+   hyperparams
+   io
+   lin_reg
+   mode_selection
+   physics
+   priors
+   reconstruction
+   tile_cache
+   utils
+   validation
+   var
+

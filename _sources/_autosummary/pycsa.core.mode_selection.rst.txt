@@ -1,0 +1,28 @@
+pycsa.core.mode\_selection
+==========================
+
+.. automodule:: pycsa.core.mode_selection
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      GreedyArgmax
+      LassoSelector
+      ModeSelector
+      OMPSelector
+   
+   
+
+   
+   
+   
+
+
+

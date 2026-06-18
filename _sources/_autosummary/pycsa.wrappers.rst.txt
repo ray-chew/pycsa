@@ -1,0 +1,29 @@
+pycsa.wrappers
+==============
+
+.. automodule:: pycsa.wrappers
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: autosummary/module.rst
+   :recursive:
+
+   diagnostics
+   interface
+

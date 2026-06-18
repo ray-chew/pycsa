@@ -1,0 +1,25 @@
+pycsa.core.var
+==============
+
+.. automodule:: pycsa.core.var
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      obj
+   
+   
+
+   
+   
+   
+
+
+

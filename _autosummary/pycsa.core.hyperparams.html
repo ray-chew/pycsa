@@ -1,0 +1,1024 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="pycsa.core.io" href="pycsa.core.io.html"><link rel="prev" title="pycsa.core.fourier" href="pycsa.core.fourier.html">
+        <link rel="prefetch" href="../_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/favicon.ico"><!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
+        <title>pycsa.core.hyperparams - pyCSA 1.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">pyCSA 1.0.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyCSA 1.0.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">CSA’s Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quick_start.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Tutorial: Idealised isosceles experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../showcase.html">Showcase: ETOPO over the central Andes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hpc_reproducibility.html">HPC reproducibility guide</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">API Reference</a><input aria-label="Toggle navigation of API Reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="pycsa.html">pycsa</a><input aria-label="Toggle navigation of pycsa" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.compute.html">pycsa.compute</a><input aria-label="Toggle navigation of pycsa.compute" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.compute.context.html">pycsa.compute.context</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.config.html">pycsa.config</a><input aria-label="Toggle navigation of pycsa.config" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.config.params.html">pycsa.config.params</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="pycsa.core.html">pycsa.core</a><input aria-label="Toggle navigation of pycsa.core" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.buffer_pool.html">pycsa.core.buffer_pool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.delaunay.html">pycsa.core.delaunay</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.fourier.html">pycsa.core.fourier</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">pycsa.core.hyperparams</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.io.html">pycsa.core.io</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.lin_reg.html">pycsa.core.lin_reg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.mode_selection.html">pycsa.core.mode_selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.physics.html">pycsa.core.physics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.priors.html">pycsa.core.priors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.reconstruction.html">pycsa.core.reconstruction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.tile_cache.html">pycsa.core.tile_cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.utils.html">pycsa.core.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.validation.html">pycsa.core.validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.var.html">pycsa.core.var</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.data.html">pycsa.data</a><input aria-label="Toggle navigation of pycsa.data" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.data.cell.html">pycsa.data.cell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.data.results.html">pycsa.data.results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pycsa.logging_config.html">pycsa.logging_config</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.plotting.html">pycsa.plotting</a><input aria-label="Toggle navigation of pycsa.plotting" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.plotting.cart_plot.html">pycsa.plotting.cart_plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.plotting.diagnostics.html">pycsa.plotting.diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.plotting.plotter.html">pycsa.plotting.plotter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pycsa.scheduling.html">pycsa.scheduling</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.wrappers.html">pycsa.wrappers</a><input aria-label="Toggle navigation of pycsa.wrappers" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.wrappers.diagnostics.html">pycsa.wrappers.diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.wrappers.interface.html">pycsa.wrappers.interface</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../refs.html">References</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/ray-chew/spec_appx">GitHub repo</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/_autosummary/pycsa.core.hyperparams.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-pycsa.core.hyperparams">
+<span id="pycsa-core-hyperparams"></span><h1>pycsa.core.hyperparams<a class="headerlink" href="#module-pycsa.core.hyperparams" title="Link to this heading">¶</a></h1>
+<p>Hyperparameter selection for the structured Tikhonov prior.</p>
+<p>Phase 2 of the kernel-spike work introduces a separation between the
+two hyperparameters that <code class="docutils literal notranslate"><span class="pre">SpectralPrior</span></code> carries:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code> — the spectral decay exponent. A structural belief about
+the topography: chosen from the input field’s empirical power-law
+slope, or fixed by the user.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lmbda</span></code> — the overall regularization scale. A data-driven scalar:
+selected by spatial cross-validation, GCV, or marginal likelihood.</p></li>
+</ul>
+<p>Two protocols (<a class="reference internal" href="#pycsa.core.hyperparams.AlphaSelector" title="pycsa.core.hyperparams.AlphaSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlphaSelector</span></code></a>, <a class="reference internal" href="#pycsa.core.hyperparams.LambdaSelector" title="pycsa.core.hyperparams.LambdaSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">LambdaSelector</span></code></a>) expose
+these as pluggable extension points. Concrete strategies are provided
+with documented defaults: <a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope" title="pycsa.core.hyperparams.EmpiricalSpectralSlope"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code></a> for alpha,
+and for lambda <a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector" title="pycsa.core.hyperparams.SpatialCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpatialCVSelector</span></code></a> when per-row <code class="docutils literal notranslate"><span class="pre">coords</span></code> are
+supplied to <a class="reference internal" href="#pycsa.core.hyperparams.build_spectral_prior" title="pycsa.core.hyperparams.build_spectral_prior"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_spectral_prior()</span></code></a>, with <a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector" title="pycsa.core.hyperparams.GCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">GCVSelector</span></code></a> as
+the coords-absent fallback. The convenience constructor
+<a class="reference internal" href="#pycsa.core.hyperparams.build_spectral_prior" title="pycsa.core.hyperparams.build_spectral_prior"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_spectral_prior()</span></code></a> wires them in the canonical order
+(alpha first, then lambda given alpha) and returns an explicit
+<a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams" title="pycsa.core.hyperparams.Hyperparams"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hyperparams</span></code></a> record — no silent override of the kwarg-level
+<code class="docutils literal notranslate"><span class="pre">lmbda</span></code> that <a class="reference internal" href="pycsa.core.lin_reg.html#pycsa.core.lin_reg.do" title="pycsa.core.lin_reg.do"><code class="xref py py-func docutils literal notranslate"><span class="pre">pycsa.core.lin_reg.do()</span></code></a> already accepts.</p>
+<p><strong>Honest framing on defaults.</strong> <code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code> is grounded
+in the fact that topography spectra are typically well-approximated
+by a power law over a resolved-but-not-aliased wavenumber band; it
+returns the empirical slope plus its standard error, so the
+uncertainty is observable. The default lambda selector is
+<code class="docutils literal notranslate"><span class="pre">SpatialCVSelector</span></code>, which respects the spatial correlation of
+topography; <code class="docutils literal notranslate"><span class="pre">GCVSelector</span></code> — the textbook closed-form-LOO surrogate
+(Golub, Heath, and Wahba, 1979) — is the fallback used when no per-row
+<code class="docutils literal notranslate"><span class="pre">coords</span></code> are available to define a spatial split. Neither
+choice has been benchmarked against alternatives on the project’s
+reproducibility fixtures yet — a one-script empirical check at
+<code class="docutils literal notranslate"><span class="pre">scripts/validate_hyperparam_defaults.py</span></code> performs that comparison
+without being a full sweep.</p>
+<p><strong>Composition with sparse selection (mode_selection.py).</strong> The
+recommended pattern is: calibrate <code class="docutils literal notranslate"><span class="pre">(alpha,</span> <span class="pre">lmbda)</span></code> on the FA basis
+(using the dense <code class="docutils literal notranslate"><span class="pre">GreedyArgmax</span></code> mode selector), then fix the
+resulting prior and switch to a sparsity-inducing selector for SA.
+Do <em>not</em> jointly tune
+<code class="docutils literal notranslate"><span class="pre">(alpha,</span> <span class="pre">lmbda,</span> <span class="pre">selector)</span></code>; the search space explodes and the
+selectors interact with the prior through the SA basis, not the
+FA basis where <code class="docutils literal notranslate"><span class="pre">alpha</span></code>/<code class="docutils literal notranslate"><span class="pre">lmbda</span></code> are calibrated.</p>
+<p class="rubric">Functions</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.build_spectral_prior" title="pycsa.core.hyperparams.build_spectral_prior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_spectral_prior</span></code></a>(topography, ...[, ...])</p></td>
+<td><p>One-call construction of a fully-specified <code class="docutils literal notranslate"><span class="pre">SpectralPrior</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Classes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.AlphaSelector" title="pycsa.core.hyperparams.AlphaSelector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AlphaSelector</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Chooses the spectral decay exponent <code class="docutils literal notranslate"><span class="pre">alpha</span></code> from the input field.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope" title="pycsa.core.hyperparams.EmpiricalSpectralSlope"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code></a>([k_min_frac, ...])</p></td>
+<td><p>Documented default alpha selector.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.FixedAlpha" title="pycsa.core.hyperparams.FixedAlpha"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FixedAlpha</span></code></a>(value)</p></td>
+<td><p>Pass-through alpha selector.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.FixedLambda" title="pycsa.core.hyperparams.FixedLambda"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FixedLambda</span></code></a>(value)</p></td>
+<td><p>Pass-through lambda selector.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector" title="pycsa.core.hyperparams.GCVSelector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GCVSelector</span></code></a>([lambda_grid])</p></td>
+<td><p>Cheap closed-form lambda selector.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams" title="pycsa.core.hyperparams.Hyperparams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Hyperparams</span></code></a>(alpha, lmbda, prior[, slope_fit])</p></td>
+<td><p>Explicit (alpha, lmbda, prior) bundle returned by <code class="docutils literal notranslate"><span class="pre">build_spectral_prior</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.JointGCVSelector" title="pycsa.core.hyperparams.JointGCVSelector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JointGCVSelector</span></code></a>([alpha_grid, lambda_grid, eps])</p></td>
+<td><p>Joint 2-D GCV minimization over (alpha, lmbda) for SpectralPrior.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.LambdaSelector" title="pycsa.core.hyperparams.LambdaSelector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LambdaSelector</span></code></a>(*args, **kwargs)</p></td>
+<td><p>Chooses the regularization scale <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> given the design matrix and alpha.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector" title="pycsa.core.hyperparams.MarginalLikelihoodSelector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MarginalLikelihoodSelector</span></code></a>([max_iter, tol])</p></td>
+<td><p>Empirical-Bayes lambda selector via type-II MLE.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit" title="pycsa.core.hyperparams.SlopeFit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SlopeFit</span></code></a>(alpha, stderr, r_squared)</p></td>
+<td><p>Output of <a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope" title="pycsa.core.hyperparams.EmpiricalSpectralSlope"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector" title="pycsa.core.hyperparams.SpatialCVSelector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpatialCVSelector</span></code></a>([coords, n_folds, ...])</p></td>
+<td><p>Lambda selector via spatial k-fold cross-validation.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SlopeFit">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">SlopeFit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stderr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_squared</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.SlopeFit" title="Link to this definition">¶</a></dt>
+<dd><p>Output of <a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope" title="pycsa.core.hyperparams.EmpiricalSpectralSlope"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code></a>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">alpha</span></code> is the positive power-law slope (<code class="docutils literal notranslate"><span class="pre">power</span> <span class="pre">∝</span> <span class="pre">‖k‖^(-alpha)</span></code>).
+<code class="docutils literal notranslate"><span class="pre">stderr</span></code> is the standard error from the linear regression in
+log-log space. <code class="docutils literal notranslate"><span class="pre">r_squared</span></code> is the regression’s coefficient of
+determination — values much below ~0.9 mean the spectrum is not
+well approximated by a single power law and downstream selectors
+should be re-examined.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SlopeFit.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#pycsa.core.hyperparams.SlopeFit.alpha" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SlopeFit.stderr">
+<span class="sig-name descname"><span class="pre">stderr</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#pycsa.core.hyperparams.SlopeFit.stderr" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SlopeFit.r_squared">
+<span class="sig-name descname"><span class="pre">r_squared</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#pycsa.core.hyperparams.SlopeFit.r_squared" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.Hyperparams">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">Hyperparams</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="pycsa.core.priors.html#pycsa.core.priors.SpectralPrior" title="pycsa.core.priors.SpectralPrior"><span class="pre">SpectralPrior</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">slope_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit" title="pycsa.core.hyperparams.SlopeFit"><span class="pre">SlopeFit</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.Hyperparams" title="Link to this definition">¶</a></dt>
+<dd><p>Explicit (alpha, lmbda, prior) bundle returned by <code class="docutils literal notranslate"><span class="pre">build_spectral_prior</span></code>.</p>
+<p>Use the fields directly when calling <code class="docutils literal notranslate"><span class="pre">lin_reg.do</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">hp</span> <span class="o">=</span> <span class="n">build_spectral_prior</span><span class="p">(</span><span class="n">topography</span><span class="p">,</span> <span class="n">fobj</span><span class="p">)</span>
+<span class="n">a_m</span><span class="p">,</span> <span class="n">recons</span> <span class="o">=</span> <span class="n">lin_reg</span><span class="o">.</span><span class="n">do</span><span class="p">(</span><span class="n">fobj</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">lmbda</span><span class="o">=</span><span class="n">hp</span><span class="o">.</span><span class="n">lmbda</span><span class="p">,</span> <span class="n">prior</span><span class="o">=</span><span class="n">hp</span><span class="o">.</span><span class="n">prior</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Both <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> and <code class="docutils literal notranslate"><span class="pre">prior</span></code> are needed: the prior knows <code class="docutils literal notranslate"><span class="pre">alpha</span></code>
+and the per-mode shape, but <code class="docutils literal notranslate"><span class="pre">lin_reg.do</span></code>’s <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> kwarg is the
+overall scale that the prior multiplies into. Passing one without
+the other defeats the selection.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.Hyperparams.alpha">
+<span class="sig-name descname"><span class="pre">alpha</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#pycsa.core.hyperparams.Hyperparams.alpha" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.Hyperparams.lmbda">
+<span class="sig-name descname"><span class="pre">lmbda</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#pycsa.core.hyperparams.Hyperparams.lmbda" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.Hyperparams.prior">
+<span class="sig-name descname"><span class="pre">prior</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="pycsa.core.priors.html#pycsa.core.priors.SpectralPrior" title="pycsa.core.priors.SpectralPrior"><span class="pre">SpectralPrior</span></a></em><a class="headerlink" href="#pycsa.core.hyperparams.Hyperparams.prior" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.Hyperparams.slope_fit">
+<span class="sig-name descname"><span class="pre">slope_fit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit" title="pycsa.core.hyperparams.SlopeFit"><span class="pre">SlopeFit</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#pycsa.core.hyperparams.Hyperparams.slope_fit" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.Hyperparams.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="pycsa.core.priors.html#pycsa.core.priors.SpectralPrior" title="pycsa.core.priors.SpectralPrior"><span class="pre">SpectralPrior</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">slope_fit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit" title="pycsa.core.hyperparams.SlopeFit"><span class="pre">SlopeFit</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.Hyperparams.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.AlphaSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">AlphaSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.AlphaSelector" title="Link to this definition">¶</a></dt>
+<dd><p>Chooses the spectral decay exponent <code class="docutils literal notranslate"><span class="pre">alpha</span></code> from the input field.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.AlphaSelector.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.AlphaSelector.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.LambdaSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">LambdaSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.LambdaSelector" title="Link to this definition">¶</a></dt>
+<dd><p>Chooses the regularization scale <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> given the design matrix and alpha.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>design_matrix</strong> – Dense <code class="docutils literal notranslate"><span class="pre">M</span></code> matrix, shape <code class="docutils literal notranslate"><span class="pre">(n_points,</span> <span class="pre">n_modes)</span></code>. Most selectors
+operate on the normal-equations form <code class="docutils literal notranslate"><span class="pre">MᵀM</span></code> internally.</p></li>
+<li><p><strong>data</strong> – Target vector, shape <code class="docutils literal notranslate"><span class="pre">(n_points,)</span></code>.</p></li>
+<li><p><strong>alpha</strong> – The chosen <code class="docutils literal notranslate"><span class="pre">alpha</span></code> (used by selectors that build trial priors).</p></li>
+<li><p><strong>prior_factory</strong> – Callable <code class="docutils literal notranslate"><span class="pre">alpha</span> <span class="pre">-&gt;</span> <span class="pre">Prior</span></code> for selectors that need to instantiate
+trial priors at the candidate <code class="docutils literal notranslate"><span class="pre">lmbda</span></code>. The factory should
+produce a prior parameterized only by <code class="docutils literal notranslate"><span class="pre">alpha</span></code>; <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> is
+the kwarg passed at call time by the selector.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lmbda</strong> – The selected regularization scale.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.LambdaSelector.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.LambdaSelector.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.FixedAlpha">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">FixedAlpha</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.FixedAlpha" title="Link to this definition">¶</a></dt>
+<dd><p>Pass-through alpha selector. No default — caller must specify.</p>
+<p>Use this when the user has a principled reason to fix <code class="docutils literal notranslate"><span class="pre">alpha</span></code>
+(e.g. matching a published spectrum estimate, debugging, or
+side-by-side comparison with another tool). The lack of a default
+value is deliberate: if you don’t know what <code class="docutils literal notranslate"><span class="pre">alpha</span></code> should be,
+use <a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope" title="pycsa.core.hyperparams.EmpiricalSpectralSlope"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code></a> instead.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.FixedAlpha.value">
+<span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#pycsa.core.hyperparams.FixedAlpha.value" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.FixedAlpha.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.FixedAlpha.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.EmpiricalSpectralSlope">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">EmpiricalSpectralSlope</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_min_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_max_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope" title="Link to this definition">¶</a></dt>
+<dd><p>Documented default alpha selector. Fits a power law to the
+radially-averaged 2D periodogram of the input topography.</p>
+<p>Returns a <a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit" title="pycsa.core.hyperparams.SlopeFit"><code class="xref py py-class docutils literal notranslate"><span class="pre">SlopeFit</span></code></a> carrying <code class="docutils literal notranslate"><span class="pre">alpha</span></code> plus its standard
+error and R². Downstream callers can inspect the standard error to
+decide whether a single-power-law model is appropriate, or use it
+as a sweep width when building sensitivity tests.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k_min_frac</strong> – Lower and upper bound of the wavenumber band over which the
+power law is fit, expressed as a fraction of Nyquist. Defaults
+exclude the very-low-wavenumber region (poorly resolved on a
+finite cell) and the near-Nyquist region (aliasing-prone).
+These knobs <em>are</em> themselves hyperparameters and the returned
+<code class="docutils literal notranslate"><span class="pre">stderr</span></code> partly reflects sensitivity to them — perturb and
+re-fit if you want to bound that.</p></li>
+<li><p><strong>k_max_frac</strong> – Lower and upper bound of the wavenumber band over which the
+power law is fit, expressed as a fraction of Nyquist. Defaults
+exclude the very-low-wavenumber region (poorly resolved on a
+finite cell) and the near-Nyquist region (aliasing-prone).
+These knobs <em>are</em> themselves hyperparameters and the returned
+<code class="docutils literal notranslate"><span class="pre">stderr</span></code> partly reflects sensitivity to them — perturb and
+re-fit if you want to bound that.</p></li>
+<li><p><strong>n_bins</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of radial bins for the periodogram. Default 32 trades
+off variance per bin against resolution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">topography</span></code> is not 2D, if no periodogram samples fall in
+    the requested <code class="docutils literal notranslate"><span class="pre">[k_min_frac,</span> <span class="pre">k_max_frac]</span></code> band, or if fewer
+    than 3 radial bins end up populated.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.EmpiricalSpectralSlope.k_min_frac">
+<span class="sig-name descname"><span class="pre">k_min_frac</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.02</span></em><a class="headerlink" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope.k_min_frac" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.EmpiricalSpectralSlope.k_max_frac">
+<span class="sig-name descname"><span class="pre">k_max_frac</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></em><a class="headerlink" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope.k_max_frac" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.EmpiricalSpectralSlope.n_bins">
+<span class="sig-name descname"><span class="pre">n_bins</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">32</span></em><a class="headerlink" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope.n_bins" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.EmpiricalSpectralSlope.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k_min_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.02</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_max_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">32</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.FixedLambda">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">FixedLambda</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.FixedLambda" title="Link to this definition">¶</a></dt>
+<dd><p>Pass-through lambda selector. No default — caller must specify.</p>
+<p>Mirrors <a class="reference internal" href="#pycsa.core.hyperparams.FixedAlpha" title="pycsa.core.hyperparams.FixedAlpha"><code class="xref py py-class docutils literal notranslate"><span class="pre">FixedAlpha</span></code></a>. Use when <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> is known a priori
+(e.g. matching the existing scalar default in <code class="docutils literal notranslate"><span class="pre">lin_reg.do</span></code>).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.FixedLambda.value">
+<span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><a class="headerlink" href="#pycsa.core.hyperparams.FixedLambda.value" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.FixedLambda.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.FixedLambda.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.GCVSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">GCVSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lambda_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.GCVSelector" title="Link to this definition">¶</a></dt>
+<dd><p>Cheap closed-form lambda selector. Generalized cross-validation.</p>
+<p>For each candidate lambda on a log-spaced grid, computes:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>GCV(lambda) = || y - M â(lambda) ||² / (n - tr(H(lambda)))²
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">â(lambda)</span></code> solves the regularized normal equations and
+<code class="docutils literal notranslate"><span class="pre">H(lambda)</span> <span class="pre">=</span> <span class="pre">M</span> <span class="pre">(MᵀM</span> <span class="pre">+</span> <span class="pre">Λ(lambda))⁻¹</span> <span class="pre">Mᵀ</span></code> is the hat matrix. Returns
+the lambda that minimizes GCV.</p>
+<p>Closed-form approximation to leave-one-out cross-validation
+(Golub, Heath, Wahba 1979). Cheap, well-behaved on this problem
+class, no held-out machinery required. The implicit assumption is
+that the prior form (the structured <code class="docutils literal notranslate"><span class="pre">Λ</span></code> shape) is approximately
+correct; if you don’t trust the prior form, use
+<a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector" title="pycsa.core.hyperparams.SpatialCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpatialCVSelector</span></code></a> instead.</p>
+<p><strong>Diagonal-mean approximation.</strong> <code class="docutils literal notranslate"><span class="pre">Λ(lambda)</span></code> is treated as a
+scalar shift in the eigenbasis of <code class="docutils literal notranslate"><span class="pre">MᵀM</span></code> by replacing it with the
+mean of its unit-lambda diagonal. This is exact for
+<code class="xref py py-class docutils literal notranslate"><span class="pre">IsotropicPrior</span></code> (whose diagonal is already constant) and a
+good approximation for <code class="xref py py-class docutils literal notranslate"><span class="pre">SpectralPrior</span></code> on regular Fourier
+grids, where it makes every candidate lambda cost <code class="docutils literal notranslate"><span class="pre">O(N)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>lambda_grid</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> | </em><em>None</em>) – Candidate lambdas. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, falls back to a 41-point
+log-spaced grid scaled by <code class="docutils literal notranslate"><span class="pre">trace(MᵀM)/n_modes</span></code>.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.GCVSelector.lambda_grid">
+<span class="sig-name descname"><span class="pre">lambda_grid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#pycsa.core.hyperparams.GCVSelector.lambda_grid" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.GCVSelector.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lambda_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.GCVSelector.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.MarginalLikelihoodSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">MarginalLikelihoodSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector" title="Link to this definition">¶</a></dt>
+<dd><p>Empirical-Bayes lambda selector via type-II MLE.</p>
+<p>Wraps <code class="docutils literal notranslate"><span class="pre">sklearn.linear_model.BayesianRidge</span></code>, which performs the
+standard MacKay-1992 evidence-approximation fixed-point iteration
+jointly over the noise precision <code class="docutils literal notranslate"><span class="pre">α</span></code> and prior precision <code class="docutils literal notranslate"><span class="pre">λ</span></code>
+with weak Gamma hyperpriors. The returned scalar is the effective
+ridge weight <span class="math notranslate nohighlight">\(\lambda_{\text{eff}} = \lambda / \alpha\)</span>
+(sklearn’s convention), which is what <code class="docutils literal notranslate"><span class="pre">lin_reg.do</span></code>’s <code class="docutils literal notranslate"><span class="pre">lmbda</span></code>
+kwarg expects.</p>
+<p><strong>When this differs from GCV.</strong> GCV approximates leave-one-out
+CV under the implicit assumption of homoscedastic Gaussian noise.
+Marginal likelihood agrees with GCV in that regime. The two
+diverge when (a) the residual distribution is heavily non-Gaussian
+(heavy tails, skew — common with topography in coastal/glacial
+cells), or (b) the noise variance varies systematically with
+location (heteroscedasticity from data-source mixing — e.g. MERIT
+coastal masking). Prefer this selector over GCV in those regimes;
+otherwise GCV is cheaper and produces equivalent results.</p>
+<p><strong>Limitation.</strong> <code class="docutils literal notranslate"><span class="pre">BayesianRidge</span></code> assumes an isotropic prior on
+the coefficients. For <code class="docutils literal notranslate"><span class="pre">SpectralPrior(alpha</span> <span class="pre">!=</span> <span class="pre">0)</span></code> this selector
+returns the scalar overall scale <code class="docutils literal notranslate"><span class="pre">lmbda</span></code>; the per-mode shape
+still comes from the <code class="docutils literal notranslate"><span class="pre">Prior</span></code> callable. If the isotropic-prior
+assumption is a poor fit for your data, use
+<a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector" title="pycsa.core.hyperparams.SpatialCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpatialCVSelector</span></code></a> instead — it selects a scalar <code class="docutils literal notranslate"><span class="pre">lmbda</span></code>
+by spatial k-fold cross-validation rather than evidence
+maximization, and makes no per-mode isotropy assumption.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_iter</strong> – Passed through to <code class="docutils literal notranslate"><span class="pre">BayesianRidge</span></code>.</p></li>
+<li><p><strong>tol</strong> – Passed through to <code class="docutils literal notranslate"><span class="pre">BayesianRidge</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.MarginalLikelihoodSelector.max_iter">
+<span class="sig-name descname"><span class="pre">max_iter</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">300</span></em><a class="headerlink" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector.max_iter" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.MarginalLikelihoodSelector.tol">
+<span class="sig-name descname"><span class="pre">tol</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.001</span></em><a class="headerlink" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector.tol" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.MarginalLikelihoodSelector.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SpatialCVSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">SpatialCVSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.SpatialCVSelector" title="Link to this definition">¶</a></dt>
+<dd><p>Lambda selector via spatial k-fold cross-validation.</p>
+<p>Partitions the rows of <code class="docutils literal notranslate"><span class="pre">design_matrix</span></code> into spatial patches with
+a buffer zone (see <a class="reference internal" href="pycsa.core.validation.html#pycsa.core.validation.spatial_cv_score" title="pycsa.core.validation.spatial_cv_score"><code class="xref py py-func docutils literal notranslate"><span class="pre">pycsa.core.validation.spatial_cv_score()</span></code></a>
+for the patch geometry), fits the prior at each candidate
+<code class="docutils literal notranslate"><span class="pre">lmbda</span></code> on the training rows, and evaluates reconstruction MSE
+on the held-out patch’s rows. The lambda with the smallest mean
+held-out MSE wins.</p>
+<p><strong>Why this is the recommended selector for topography.</strong> Real
+topography residuals are spatially correlated, which breaks the
+i.i.d. assumption GCV / marginal likelihood rely on — those
+selectors then under-regularize. Spatial CV evaluates held-out
+<em>patches</em>, so its notion of “out-of-sample” matches how the fit is
+actually used on a constrained cell, and it is the only selector
+here that <em>detects</em> misspecified priors: if GCV and SpatialCV pick
+wildly different <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> values, the prior form is doing more
+work than it should be, and the user should revisit <code class="docutils literal notranslate"><span class="pre">alpha</span></code> (or
+pick a different prior altogether). It is the default in
+<a class="reference internal" href="#pycsa.core.hyperparams.build_spectral_prior" title="pycsa.core.hyperparams.build_spectral_prior"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_spectral_prior()</span></code></a> whenever per-row <code class="docutils literal notranslate"><span class="pre">coords</span></code> are
+supplied. (Note pyCSA’s production runs do not invoke this
+selection API at all — they use a hand-tuned <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> baseline.)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coords</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> | </em><em>None</em>) – Row coordinates as a <code class="docutils literal notranslate"><span class="pre">(n_points,</span> <span class="pre">2)</span></code> array of
+<code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y)</span></code> pairs in any consistent metric — used by
+<code class="xref py py-func docutils literal notranslate"><span class="pre">spatial_cv_score()</span></code> to build patches. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+falls back to row-index splitting (only sensible if rows are
+already in geographic order).</p></li>
+<li><p><strong>n_folds</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of spatial folds. Default 5.</p></li>
+<li><p><strong>buffer_fraction</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Half-width of the buffer zone around each patch as a
+fraction of patch size. Default 0.1.</p></li>
+<li><p><strong>lambda_grid</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> | </em><em>None</em>) – Same fallback as <a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector" title="pycsa.core.hyperparams.GCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">GCVSelector</span></code></a>.</p></li>
+<li><p><strong>rng_seed</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>None</em>) – Seed for reproducible fold assignment.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SpatialCVSelector.coords">
+<span class="sig-name descname"><span class="pre">coords</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#pycsa.core.hyperparams.SpatialCVSelector.coords" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SpatialCVSelector.n_folds">
+<span class="sig-name descname"><span class="pre">n_folds</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">5</span></em><a class="headerlink" href="#pycsa.core.hyperparams.SpatialCVSelector.n_folds" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SpatialCVSelector.buffer_fraction">
+<span class="sig-name descname"><span class="pre">buffer_fraction</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></em><a class="headerlink" href="#pycsa.core.hyperparams.SpatialCVSelector.buffer_fraction" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SpatialCVSelector.lambda_grid">
+<span class="sig-name descname"><span class="pre">lambda_grid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#pycsa.core.hyperparams.SpatialCVSelector.lambda_grid" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SpatialCVSelector.rng_seed">
+<span class="sig-name descname"><span class="pre">rng_seed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#pycsa.core.hyperparams.SpatialCVSelector.rng_seed" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.SpatialCVSelector.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.SpatialCVSelector.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.JointGCVSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">JointGCVSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.hyperparams.JointGCVSelector" title="Link to this definition">¶</a></dt>
+<dd><p>Joint 2-D GCV minimization over (alpha, lmbda) for SpectralPrior.</p>
+<p>Unlike <a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector" title="pycsa.core.hyperparams.GCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">GCVSelector</span></code></a> (which picks <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> only, with <code class="docutils literal notranslate"><span class="pre">alpha</span></code>
+set externally — usually by <code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code> from the
+input periodogram), this selector lets the GCV objective pick
+<em>both</em> hyperparameters. The motivation: the periodogram fit can
+pick an <code class="docutils literal notranslate"><span class="pre">alpha</span></code> that’s too aggressive on real cells (south_pole
+α ≈ 10 over-regularized signal-bearing high-k modes); a
+held-out-error-driven search will usually pick something milder
+or zero, when that’s empirically better.</p>
+<p>The search is a 2-D grid (<code class="docutils literal notranslate"><span class="pre">alpha_grid</span> <span class="pre">×</span> <span class="pre">lambda_grid</span></code>). One
+eigendecomposition of <code class="docutils literal notranslate"><span class="pre">MᵀM</span></code> is reused across all candidates;
+each evaluation is O(N) given the eigenbasis. Cost is therefore
+<code class="docutils literal notranslate"><span class="pre">|alpha_grid|</span></code> × the cost of plain 1-D GCV.</p>
+<p><strong>Approximation note.</strong> Like <a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector" title="pycsa.core.hyperparams.GCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">GCVSelector</span></code></a>, the score is
+computed by treating the prior’s per-mode diagonal in the
+eigenbasis of <code class="docutils literal notranslate"><span class="pre">MᵀM</span></code> (approximated by its mean, exact for
+isotropic priors, good for slowly-varying structured priors on
+regular Fourier grids). The chosen <code class="docutils literal notranslate"><span class="pre">alpha</span></code> still flows through
+properly when the resulting <code class="xref py py-class docutils literal notranslate"><span class="pre">SpectralPrior</span></code> is used in
+<code class="docutils literal notranslate"><span class="pre">lin_reg.do</span></code>, where the full per-mode diagonal IS applied — so
+the GCV ranking is approximate but the post-selection fit is
+exact.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha_grid</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> | </em><em>None</em>) – Candidate exponents. Default <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">0.5,</span> <span class="pre">1,</span> <span class="pre">1.5,</span> <span class="pre">2,</span> <span class="pre">3]</span></code> —
+spans isotropic through “more aggressive than typical
+atmospheric / topographic spectra.” <code class="docutils literal notranslate"><span class="pre">0</span></code> reduces to plain
+isotropic GCV, recovered automatically when that’s best.</p></li>
+<li><p><strong>lambda_grid</strong> (<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><em>numpy.ndarray</em></a><em> | </em><em>None</em>) – As <a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector" title="pycsa.core.hyperparams.GCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">GCVSelector</span></code></a>. <code class="docutils literal notranslate"><span class="pre">None</span></code> falls back to a 41-point
+log-spaced grid scaled by <code class="docutils literal notranslate"><span class="pre">trace(MᵀM)/n_modes</span></code>.</p></li>
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – DC-mode floor passed to <code class="xref py py-class docutils literal notranslate"><span class="pre">SpectralPrior</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.JointGCVSelector.alpha_grid">
+<span class="sig-name descname"><span class="pre">alpha_grid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#pycsa.core.hyperparams.JointGCVSelector.alpha_grid" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.JointGCVSelector.lambda_grid">
+<span class="sig-name descname"><span class="pre">lambda_grid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#pycsa.core.hyperparams.JointGCVSelector.lambda_grid" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.JointGCVSelector.eps">
+<span class="sig-name descname"><span class="pre">eps</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.001</span></em><a class="headerlink" href="#pycsa.core.hyperparams.JointGCVSelector.eps" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.JointGCVSelector.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_grid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.JointGCVSelector.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pycsa.core.hyperparams.build_spectral_prior">
+<span class="sig-prename descclassname"><span class="pre">pycsa.core.hyperparams.</span></span><span class="sig-name descname"><span class="pre">build_spectral_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topography</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">design_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v2.4)"><span class="pre">ndarray</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha_selector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pycsa.core.hyperparams.AlphaSelector" title="pycsa.core.hyperparams.AlphaSelector"><span class="pre">AlphaSelector</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_selector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pycsa.core.hyperparams.LambdaSelector" title="pycsa.core.hyperparams.LambdaSelector"><span class="pre">LambdaSelector</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">joint_selector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#pycsa.core.hyperparams.JointGCVSelector" title="pycsa.core.hyperparams.JointGCVSelector"><span class="pre">JointGCVSelector</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams" title="pycsa.core.hyperparams.Hyperparams"><span class="pre">Hyperparams</span></a></span></span><a class="headerlink" href="#pycsa.core.hyperparams.build_spectral_prior" title="Link to this definition">¶</a></dt>
+<dd><p>One-call construction of a fully-specified <code class="docutils literal notranslate"><span class="pre">SpectralPrior</span></code>.</p>
+<p>Two modes:</p>
+<ul class="simple">
+<li><p><strong>Sequential (default):</strong> alpha selected first (from the
+<code class="docutils literal notranslate"><span class="pre">topography</span></code> field), then lambda selected given alpha (from
+<code class="docutils literal notranslate"><span class="pre">design_matrix</span></code>, <code class="docutils literal notranslate"><span class="pre">data</span></code>). Pass <code class="docutils literal notranslate"><span class="pre">alpha_selector</span></code> and/or
+<code class="docutils literal notranslate"><span class="pre">lambda_selector</span></code> to override the defaults
+(<code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code> + <code class="docutils literal notranslate"><span class="pre">SpatialCVSelector</span></code> when <code class="docutils literal notranslate"><span class="pre">coords</span></code>
+are supplied, else <code class="docutils literal notranslate"><span class="pre">GCVSelector</span></code>).</p></li>
+<li><p><strong>Joint:</strong> pass <code class="docutils literal notranslate"><span class="pre">joint_selector=JointGCVSelector(...)</span></code> to
+pick both alpha and lambda from one held-out-error
+optimization on <code class="docutils literal notranslate"><span class="pre">(design_matrix,</span> <span class="pre">data)</span></code>. Overrides any
+sequential selectors. Recommended when <code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code>
+gives an alpha you don’t trust (e.g., on cells where the
+periodogram fit has low R² or yields very steep slopes).</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topography</strong> – 2D topography field used only for alpha selection in the
+sequential mode. Ignored when <code class="docutils literal notranslate"><span class="pre">joint_selector</span></code> is set.</p></li>
+<li><p><strong>design_matrix</strong> – Dense <code class="docutils literal notranslate"><span class="pre">M</span></code> matrix, shape <code class="docutils literal notranslate"><span class="pre">(n_points,</span> <span class="pre">n_modes)</span></code>.</p></li>
+<li><p><strong>data</strong> – Target vector that the LSQ fit targets. Typically
+<code class="docutils literal notranslate"><span class="pre">cell.topo_m</span></code>.</p></li>
+<li><p><strong>coords</strong> – Per-row <code class="docutils literal notranslate"><span class="pre">(n_points,</span> <span class="pre">2)</span></code> spatial coordinates of the
+<code class="docutils literal notranslate"><span class="pre">design_matrix</span></code> rows — typically
+<code class="docutils literal notranslate"><span class="pre">np.column_stack([cell.lon_m,</span> <span class="pre">cell.lat_m])</span></code>. When supplied,
+the default lambda selector is <a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector" title="pycsa.core.hyperparams.SpatialCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">SpatialCVSelector</span></code></a>
+(spatial k-fold CV, the recommended choice for spatially-
+correlated topography); when omitted it falls back to
+<a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector" title="pycsa.core.hyperparams.GCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">GCVSelector</span></code></a>. Ignored if <code class="docutils literal notranslate"><span class="pre">lambda_selector</span></code> is given.</p></li>
+<li><p><strong>alpha_selector</strong> – Sequential-mode selector overrides. Pass <code class="docutils literal notranslate"><span class="pre">FixedAlpha</span></code> /
+<code class="docutils literal notranslate"><span class="pre">FixedLambda</span></code> to short-circuit either step. Ignored when
+<code class="docutils literal notranslate"><span class="pre">joint_selector</span></code> is set.</p></li>
+<li><p><strong>lambda_selector</strong> – Sequential-mode selector overrides. Pass <code class="docutils literal notranslate"><span class="pre">FixedAlpha</span></code> /
+<code class="docutils literal notranslate"><span class="pre">FixedLambda</span></code> to short-circuit either step. Ignored when
+<code class="docutils literal notranslate"><span class="pre">joint_selector</span></code> is set.</p></li>
+<li><p><strong>joint_selector</strong> – Joint-mode override. Currently <a class="reference internal" href="#pycsa.core.hyperparams.JointGCVSelector" title="pycsa.core.hyperparams.JointGCVSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointGCVSelector</span></code></a> is
+the only implementation.</p></li>
+<li><p><strong>eps</strong> – Passed through to <code class="xref py py-class docutils literal notranslate"><span class="pre">SpectralPrior</span></code> (DC-mode floor).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Bundle of <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">lmbda</span></code>, <code class="docutils literal notranslate"><span class="pre">prior</span></code>, and (only in
+sequential mode with <code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code>)
+<code class="docutils literal notranslate"><span class="pre">slope_fit</span></code>. Thread both <code class="docutils literal notranslate"><span class="pre">lmbda</span></code> and <code class="docutils literal notranslate"><span class="pre">prior</span></code> into
+<code class="docutils literal notranslate"><span class="pre">lin_reg.do</span></code> — passing one without the other defeats the
+selection.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams" title="pycsa.core.hyperparams.Hyperparams">Hyperparams</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="pycsa.core.io.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">pycsa.core.io</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="pycsa.core.fourier.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">pycsa.core.fourier</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Ray Chew
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">pycsa.core.hyperparams</a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit"><code class="docutils literal notranslate"><span class="pre">SlopeFit</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit.alpha"><code class="docutils literal notranslate"><span class="pre">SlopeFit.alpha</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit.stderr"><code class="docutils literal notranslate"><span class="pre">SlopeFit.stderr</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SlopeFit.r_squared"><code class="docutils literal notranslate"><span class="pre">SlopeFit.r_squared</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams"><code class="docutils literal notranslate"><span class="pre">Hyperparams</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams.alpha"><code class="docutils literal notranslate"><span class="pre">Hyperparams.alpha</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams.lmbda"><code class="docutils literal notranslate"><span class="pre">Hyperparams.lmbda</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams.prior"><code class="docutils literal notranslate"><span class="pre">Hyperparams.prior</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams.slope_fit"><code class="docutils literal notranslate"><span class="pre">Hyperparams.slope_fit</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.Hyperparams.__init__"><code class="docutils literal notranslate"><span class="pre">Hyperparams.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.AlphaSelector"><code class="docutils literal notranslate"><span class="pre">AlphaSelector</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.AlphaSelector.__init__"><code class="docutils literal notranslate"><span class="pre">AlphaSelector.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.LambdaSelector"><code class="docutils literal notranslate"><span class="pre">LambdaSelector</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.LambdaSelector.__init__"><code class="docutils literal notranslate"><span class="pre">LambdaSelector.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.FixedAlpha"><code class="docutils literal notranslate"><span class="pre">FixedAlpha</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.FixedAlpha.value"><code class="docutils literal notranslate"><span class="pre">FixedAlpha.value</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.FixedAlpha.__init__"><code class="docutils literal notranslate"><span class="pre">FixedAlpha.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope"><code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope.k_min_frac"><code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope.k_min_frac</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope.k_max_frac"><code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope.k_max_frac</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope.n_bins"><code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope.n_bins</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.EmpiricalSpectralSlope.__init__"><code class="docutils literal notranslate"><span class="pre">EmpiricalSpectralSlope.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.FixedLambda"><code class="docutils literal notranslate"><span class="pre">FixedLambda</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.FixedLambda.value"><code class="docutils literal notranslate"><span class="pre">FixedLambda.value</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.FixedLambda.__init__"><code class="docutils literal notranslate"><span class="pre">FixedLambda.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector"><code class="docutils literal notranslate"><span class="pre">GCVSelector</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector.lambda_grid"><code class="docutils literal notranslate"><span class="pre">GCVSelector.lambda_grid</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.GCVSelector.__init__"><code class="docutils literal notranslate"><span class="pre">GCVSelector.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector"><code class="docutils literal notranslate"><span class="pre">MarginalLikelihoodSelector</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector.max_iter"><code class="docutils literal notranslate"><span class="pre">MarginalLikelihoodSelector.max_iter</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector.tol"><code class="docutils literal notranslate"><span class="pre">MarginalLikelihoodSelector.tol</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.MarginalLikelihoodSelector.__init__"><code class="docutils literal notranslate"><span class="pre">MarginalLikelihoodSelector.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector"><code class="docutils literal notranslate"><span class="pre">SpatialCVSelector</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector.coords"><code class="docutils literal notranslate"><span class="pre">SpatialCVSelector.coords</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector.n_folds"><code class="docutils literal notranslate"><span class="pre">SpatialCVSelector.n_folds</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector.buffer_fraction"><code class="docutils literal notranslate"><span class="pre">SpatialCVSelector.buffer_fraction</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector.lambda_grid"><code class="docutils literal notranslate"><span class="pre">SpatialCVSelector.lambda_grid</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector.rng_seed"><code class="docutils literal notranslate"><span class="pre">SpatialCVSelector.rng_seed</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.SpatialCVSelector.__init__"><code class="docutils literal notranslate"><span class="pre">SpatialCVSelector.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.JointGCVSelector"><code class="docutils literal notranslate"><span class="pre">JointGCVSelector</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.JointGCVSelector.alpha_grid"><code class="docutils literal notranslate"><span class="pre">JointGCVSelector.alpha_grid</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.JointGCVSelector.lambda_grid"><code class="docutils literal notranslate"><span class="pre">JointGCVSelector.lambda_grid</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.JointGCVSelector.eps"><code class="docutils literal notranslate"><span class="pre">JointGCVSelector.eps</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.JointGCVSelector.__init__"><code class="docutils literal notranslate"><span class="pre">JointGCVSelector.__init__()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.hyperparams.build_spectral_prior"><code class="docutils literal notranslate"><span class="pre">build_spectral_prior()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
+</html>

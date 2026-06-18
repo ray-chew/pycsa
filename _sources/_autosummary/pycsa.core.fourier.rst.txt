@@ -1,0 +1,25 @@
+pycsa.core.fourier
+==================
+
+.. automodule:: pycsa.core.fourier
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      f_trans
+   
+   
+
+   
+   
+   
+
+
+

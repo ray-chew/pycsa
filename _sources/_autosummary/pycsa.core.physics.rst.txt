@@ -1,0 +1,25 @@
+pycsa.core.physics
+==================
+
+.. automodule:: pycsa.core.physics
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      ideal_pmf
+   
+   
+
+   
+   
+   
+
+
+

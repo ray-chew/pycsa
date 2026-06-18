@@ -1,0 +1,27 @@
+pycsa.core.priors
+=================
+
+.. automodule:: pycsa.core.priors
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      IsotropicPrior
+      Prior
+      SpectralPrior
+   
+   
+
+   
+   
+   
+
+
+

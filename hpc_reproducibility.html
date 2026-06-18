@@ -1,0 +1,627 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="API Reference" href="api.html"><link rel="prev" title="Showcase: ETOPO over the central Andes" href="showcase.html">
+        <link rel="prefetch" href="_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="_static/favicon.ico"><!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
+        <title>HPC reproducibility guide - pyCSA 1.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">pyCSA 1.0.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyCSA 1.0.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">CSA’s Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick_start.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial: Idealised isosceles experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="showcase.html">Showcase: ETOPO over the central Andes</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">HPC reproducibility guide</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="_autosummary/pycsa.html">pycsa</a><input aria-label="Toggle navigation of pycsa" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.compute.html">pycsa.compute</a><input aria-label="Toggle navigation of pycsa.compute" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.compute.context.html">pycsa.compute.context</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.config.html">pycsa.config</a><input aria-label="Toggle navigation of pycsa.config" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.config.params.html">pycsa.config.params</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.core.html">pycsa.core</a><input aria-label="Toggle navigation of pycsa.core" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.buffer_pool.html">pycsa.core.buffer_pool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.delaunay.html">pycsa.core.delaunay</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.fourier.html">pycsa.core.fourier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.hyperparams.html">pycsa.core.hyperparams</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.io.html">pycsa.core.io</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.lin_reg.html">pycsa.core.lin_reg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.mode_selection.html">pycsa.core.mode_selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.physics.html">pycsa.core.physics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.priors.html">pycsa.core.priors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.reconstruction.html">pycsa.core.reconstruction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.tile_cache.html">pycsa.core.tile_cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.utils.html">pycsa.core.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.validation.html">pycsa.core.validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.core.var.html">pycsa.core.var</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.data.html">pycsa.data</a><input aria-label="Toggle navigation of pycsa.data" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.data.cell.html">pycsa.data.cell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.data.results.html">pycsa.data.results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/pycsa.logging_config.html">pycsa.logging_config</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.plotting.html">pycsa.plotting</a><input aria-label="Toggle navigation of pycsa.plotting" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.plotting.cart_plot.html">pycsa.plotting.cart_plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.plotting.diagnostics.html">pycsa.plotting.diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.plotting.plotter.html">pycsa.plotting.plotter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/pycsa.scheduling.html">pycsa.scheduling</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="_autosummary/pycsa.wrappers.html">pycsa.wrappers</a><input aria-label="Toggle navigation of pycsa.wrappers" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.wrappers.diagnostics.html">pycsa.wrappers.diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="_autosummary/pycsa.wrappers.interface.html">pycsa.wrappers.interface</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="refs.html">References</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/ray-chew/spec_appx">GitHub repo</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/hpc_reproducibility.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="hpc-reproducibility-guide">
+<h1>HPC reproducibility guide<a class="headerlink" href="#hpc-reproducibility-guide" title="Link to this heading">¶</a></h1>
+<p>End-to-end recipe for running the global ICON+ETOPO CSA pipeline:
+download the input data, pick a hardware preset, submit (locally or
+via SLURM), monitor, recover from a crash, and validate the output.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>The global pipeline processes all 20,480 cells of the ICON R02B04 grid.
+For each land cell it loads the bounding ETOPO 15″ tile(s), runs the
+CSA approximation, and writes per-cell spectra into NetCDF chunks (100
+cells per file by default → ~205 files). Ocean cells are detected at
+load-time and skipped cheaply.</p>
+<p>Expected runtime depends on the chosen <code class="docutils literal notranslate"><span class="pre">SYSTEM_CONFIG</span></code> (see below);
+the DKRZ HPC preset finishes ~20 k land cells in roughly 6–8 hours.</p>
+</section>
+<section id="hardware-sizing">
+<h2>Hardware sizing<a class="headerlink" href="#hardware-sizing" title="Link to this heading">¶</a></h2>
+<p>Memory is the limiting factor. Per-cell footprint scales with latitude:
+equatorial cells fit in ~10 GB, polar cells (high lon-density in
+degree-space) can need 25–60 GB. The pipeline groups cells into
+<em>memory batches</em> (see <a class="reference internal" href="#architecture"><span class="std std-ref">Architecture</span></a>) so the worker count adapts
+batch-to-batch.</p>
+<p>The presets in <code class="docutils literal notranslate"><span class="pre">runs/icon_etopo_global.py</span></code> cover three target
+machines:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>generic_laptop       12 cores /  12 GB / chunks of 100 cells
+laptop_performance   20 cores /  80 GB / chunks of 100 cells
+dkrz_hpc             52 cores / 256 GB / chunks of 100 cells
+</pre></div>
+</div>
+<p>To add a new preset, edit the <code class="docutils literal notranslate"><span class="pre">CONFIGS</span></code> dict in
+<code class="docutils literal notranslate"><span class="pre">runs/icon_etopo_global.py</span></code>.</p>
+</section>
+<section id="download-etopo-2022-15-arc-second">
+<h2>Download ETOPO 2022 (15 arc-second)<a class="headerlink" href="#download-etopo-2022-15-arc-second" title="Link to this heading">¶</a></h2>
+<p>The pipeline uses <strong>surface</strong> elevation (ice surface where ice exists,
+bedrock elsewhere) — that’s the global product. The <em>bedrock-only</em>
+product exists only for polar regions and isn’t what this pipeline
+expects.</p>
+<ul class="simple">
+<li><p>Source: NOAA NCEI, DOI <code class="docutils literal notranslate"><span class="pre">10.25921/fd45-gt74</span></code>.</p></li>
+<li><p>Resolution: 15″ (~450 m at equator).</p></li>
+<li><p>Coverage: global; 288 tiles at 15° × 15° each.</p></li>
+<li><p>Total dataset: ~50–100 GB.</p></li>
+</ul>
+<p>Single tile (example: 45°N, 120°W — US west coast):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span>https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/15s/15s_surface_elev_netcdf
+wget<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BASE</span><span class="s2">/ETOPO_2022_v1_15s_N45W120_surface.nc&quot;</span>
+</pre></div>
+</div>
+<p>Full global download (run from a SLURM job — bandwidth-limited):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">BASE</span><span class="o">=</span>https://www.ngdc.noaa.gov/thredds/fileServer/global/ETOPO2022/15s/15s_surface_elev_netcdf
+<span class="nv">OUT</span><span class="o">=</span><span class="nv">$HOME</span>/data/etopo_15s
+mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OUT</span><span class="s2">&quot;</span>
+<span class="k">for</span><span class="w"> </span>lat<span class="w"> </span><span class="k">in</span><span class="w"> </span>N90<span class="w"> </span>N75<span class="w"> </span>N60<span class="w"> </span>N45<span class="w"> </span>N30<span class="w"> </span>N15<span class="w"> </span>N00<span class="w"> </span>S15<span class="w"> </span>S30<span class="w"> </span>S45<span class="w"> </span>S60<span class="w"> </span>S75<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span>lon<span class="w"> </span><span class="k">in</span><span class="w"> </span>W180<span class="w"> </span>W165<span class="w"> </span>W150<span class="w"> </span>W135<span class="w"> </span>W120<span class="w"> </span>W105<span class="w"> </span>W090<span class="w"> </span>W075<span class="w"> </span>W060<span class="w"> </span>W045<span class="w"> </span>W030<span class="w"> </span>W015<span class="w"> </span><span class="se">\</span>
+<span class="w">               </span>E000<span class="w"> </span>E015<span class="w"> </span>E030<span class="w"> </span>E045<span class="w"> </span>E060<span class="w"> </span>E075<span class="w"> </span>E090<span class="w"> </span>E105<span class="w"> </span>E120<span class="w"> </span>E135<span class="w"> </span>E150<span class="w"> </span>E165<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">        </span>wget<span class="w"> </span>-c<span class="w"> </span>-P<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$OUT</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BASE</span><span class="s2">/ETOPO_2022_v1_15s_</span><span class="si">${</span><span class="nv">lat</span><span class="si">}${</span><span class="nv">lon</span><span class="si">}</span><span class="s2">_surface.nc&quot;</span>
+<span class="w">    </span><span class="k">done</span>
+<span class="k">done</span>
+</pre></div>
+</div>
+<p>Verify a file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ncdump -h $HOME/data/etopo_15s/ETOPO_2022_v1_15s_N45W120_surface.nc
+</pre></div>
+</div>
+<p>Then tell pyCSA where the data lives. The run scripts read their paths from
+<code class="docutils literal notranslate"><span class="pre">pycsa.local_paths</span></code> (copied from <code class="docutils literal notranslate"><span class="pre">pycsa/local_paths.py.template</span></code>), which in
+turn reads the <code class="docutils literal notranslate"><span class="pre">SPEC_APPX_*</span></code> environment variables:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export SPEC_APPX_DATA_DIR=$PWD/data             # directory containing the ICON grid
+export SPEC_APPX_ETOPO_DIR=$PWD/data/etopo_15s
+export SPEC_APPX_MERIT_DIR=$PWD/data/MERIT       # MERIT runs only
+export SPEC_APPX_REMA_DIR=$PWD/data/REMA         # MERIT runs only
+export SPEC_APPX_OUTPUT_DIR=$PWD/outputs
+</pre></div>
+</div>
+<p>or run <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">setup_paths.sh</span></code> (which also creates <code class="docutils literal notranslate"><span class="pre">local_paths.py</span></code> from the
+template). You can also edit <code class="docutils literal notranslate"><span class="pre">pycsa/local_paths.py</span></code> directly.</p>
+</section>
+<section id="configure">
+<h2>Configure<a class="headerlink" href="#configure" title="Link to this heading">¶</a></h2>
+<p>Open <code class="docutils literal notranslate"><span class="pre">runs/icon_etopo_global.py</span></code> and set two things near the top of
+the <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">__name__</span> <span class="pre">==</span> <span class="pre">&quot;__main__&quot;</span></code> block:</p>
+<ol class="arabic">
+<li><p><strong>System preset</strong> (the <code class="docutils literal notranslate"><span class="pre">SYSTEM_CONFIG</span> <span class="pre">=</span> <span class="pre">...</span></code> line):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SYSTEM_CONFIG</span> <span class="o">=</span> <span class="s2">&quot;dkrz_hpc&quot;</span>   <span class="c1"># or &quot;laptop_performance&quot; / &quot;generic_laptop&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Cell range</strong> (the <code class="docutils literal notranslate"><span class="pre">cell_start</span></code> / <code class="docutils literal notranslate"><span class="pre">cell_end</span></code> block):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cell_start</span> <span class="o">=</span> <span class="mi">0</span>          <span class="c1"># first cell, inclusive</span>
+<span class="n">cell_end</span>   <span class="o">=</span> <span class="kc">None</span>       <span class="c1"># last cell, exclusive; None = run to the end</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>To regenerate a single chunk (cells 2900–2999) after a crash:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cell_start</span> <span class="o">=</span> <span class="mi">2900</span>
+<span class="n">cell_end</span>   <span class="o">=</span> <span class="mi">3000</span>
+</pre></div>
+</div>
+</section>
+<section id="run">
+<h2>Run<a class="headerlink" href="#run" title="Link to this heading">¶</a></h2>
+<p>Direct invocation (on the target node):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">runs</span><span class="o">.</span><span class="n">icon_etopo_global</span>
+</pre></div>
+</div>
+<p>SLURM (recommended on a cluster — see the existing
+<code class="docutils literal notranslate"><span class="pre">runs/submit_etopo_global.sh</span></code> for memory/time limits):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>sbatch runs/submit_etopo_global.sh
+squeue -u $USER
+tail -f logs/icon_etopo_global_*.log
+</pre></div>
+</div>
+</section>
+<section id="monitor">
+<h2>Monitor<a class="headerlink" href="#monitor" title="Link to this heading">¶</a></h2>
+<p>Dask dashboard URL is logged on startup (typically
+<code class="docutils literal notranslate"><span class="pre">http://127.0.0.1:8787/status</span></code>). Tunnel from a workstation if running
+on a remote node:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh<span class="w"> </span>-L<span class="w"> </span><span class="m">8787</span>:localhost:8787<span class="w"> </span>user@hpc-node
+<span class="c1"># then open http://localhost:8787</span>
+</pre></div>
+</div>
+<p>Progress via the filesystem:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># completed NetCDF chunks</span>
+ls<span class="w"> </span>outputs/global_run/datasets/icon_etopo_global_cells_*.nc<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+
+<span class="c1"># diagnostic plots written so far</span>
+find<span class="w"> </span>outputs/icon_etopo_global<span class="w"> </span>-name<span class="w"> </span><span class="s1">&#39;cell_*.png&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+</pre></div>
+</div>
+</section>
+<section id="restart-after-a-crash">
+<h2>Restart after a crash<a class="headerlink" href="#restart-after-a-crash" title="Link to this heading">¶</a></h2>
+<p>The pipeline writes one NetCDF chunk per <code class="docutils literal notranslate"><span class="pre">netcdf_chunk_size</span></code> cells
+and processes memory batches in latitude order (equatorial → mid-lat →
+polar). After a crash the completed chunks are on disk; the
+<code class="docutils literal notranslate"><span class="pre">cell_start</span></code> knob in the script picks the resume point.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># See which chunks finished</span>
+ls<span class="w"> </span>outputs/global_run/datasets/icon_etopo_global_cells_*.nc
+
+<span class="c1"># Identify the first incomplete chunk (e.g. cells 12000-12099 is missing)</span>
+<span class="c1"># Edit runs/icon_etopo_global.py:</span>
+<span class="c1">#   cell_start = 12000</span>
+<span class="c1">#   cell_end   = None</span>
+<span class="c1"># then re-submit.</span>
+</pre></div>
+</div>
+<p>Each <code class="docutils literal notranslate"><span class="pre">do_cell</span></code> call is wrapped in <code class="docutils literal notranslate"><span class="pre">try/except</span></code> that logs the
+traceback before re-raising, so a single bad cell surfaces a stack
+instead of hanging the whole batch.</p>
+</section>
+<section id="architecture">
+<span id="id1"></span><h2>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h2>
+<p><strong>Dual-loop chunking</strong> separates Dask parallelism from on-disk file
+organisation:</p>
+<ul class="simple">
+<li><p><em>Processing batch</em> — how many cells get submitted to the Dask client
+in one <code class="docutils literal notranslate"><span class="pre">client.compute(...)</span></code> call. Sized to keep all workers busy.</p></li>
+<li><p><em>NetCDF chunk</em> — how many cells go into one output file. Independent
+of parallelism; sized for crash recovery and manageability. All
+current presets use <code class="docutils literal notranslate"><span class="pre">netcdf_chunk_size</span> <span class="pre">=</span> <span class="pre">100</span></code>.</p></li>
+</ul>
+<p><strong>Memory batching</strong> groups cells by estimated memory requirement
+(<code class="docutils literal notranslate"><span class="pre">pycsa.scheduling.group_cells_by_memory</span></code>, latitude-driven). Each
+memory batch is processed under its own Dask client with worker count
+sized to fit the batch’s per-cell memory inside the node’s total RAM.
+Polar batches end up with fewer, larger-memory workers; equatorial
+batches with more, smaller-memory workers.</p>
+<p><strong>Tile cache</strong> — <a class="reference internal" href="_autosummary/pycsa.core.tile_cache.html#module-pycsa.core.tile_cache" title="pycsa.core.tile_cache"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pycsa.core.tile_cache</span></code></a> holds a per-Dask-worker
+singleton (<code class="docutils literal notranslate"><span class="pre">_WORKER_CACHE</span></code>) initialised at the start of each memory
+batch via <code class="docutils literal notranslate"><span class="pre">client.run(init_worker_cache,</span> <span class="pre">...)</span></code>. <code class="docutils literal notranslate"><span class="pre">do_cell</span></code> retrieves
+it via <code class="docutils literal notranslate"><span class="pre">ctx.tile_cache()</span></code> (see <a class="reference internal" href="_autosummary/pycsa.compute.context.html#pycsa.compute.context.ComputeContext" title="pycsa.compute.context.ComputeContext"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.compute.context.ComputeContext</span></code></a>)
+so the ETOPO tile handles stay open across cells in the same worker
+instead of being re-opened per cell.</p>
+</section>
+<section id="post-processing">
+<h2>Post-processing<a class="headerlink" href="#post-processing" title="Link to this heading">¶</a></h2>
+<p>After the run finishes (or whenever you want to consolidate):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Sanity-check chunk coverage (no gaps, expected count)</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">runs</span><span class="o">.</span><span class="n">validate_chunks</span>
+
+<span class="c1"># Merge all chunks into one NetCDF file</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">runs</span><span class="o">.</span><span class="n">merge_netcdf_chunks</span>
+<span class="c1"># Optional: --cleanup to delete the per-chunk files after merging</span>
+<span class="c1"># Optional: --output icon_etopo_global_v2.nc to rename</span>
+
+<span class="c1"># Cross-check land/ocean ratio against an ETOPO-derived reference</span>
+<span class="n">python</span> <span class="n">scripts</span><span class="o">/</span><span class="n">verify_icon_etopo_land_ocean</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>The merged file lives at
+<code class="docutils literal notranslate"><span class="pre">outputs/global_run/datasets/icon_etopo_global_FINAL.nc</span></code>
+(~1.8 GB for a full global run).</p>
+</section>
+<section id="output-layout">
+<h2>Output layout<a class="headerlink" href="#output-layout" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>outputs/
+├── icon_etopo_global/                    # diagnostic per-cell plots
+│   ├── cells_00000-00099/
+│   │   ├── cell_00000.png
+│   │   └── ...
+│   └── cells_00100-00199/
+└── global_run/datasets/                  # spectral NetCDF chunks
+    ├── icon_etopo_global_cells_00000-00099.nc
+    ├── icon_etopo_global_cells_00100-00199.nc
+    └── ...
+                                           # (+ icon_etopo_global_FINAL.nc
+                                           #     after merge)
+</pre></div>
+</div>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">¶</a></h2>
+<p><strong>OOM / “KilledWorker” in logs.</strong> The memory batch underestimated
+per-cell footprint. Either raise the safety factor in
+<code class="docutils literal notranslate"><span class="pre">pycsa.scheduling.group_cells_by_memory</span></code> (default 1.5) or pick a
+preset with more memory per worker.</p>
+<p><strong>“Too many open files.”</strong> Raise the descriptor limit before
+launching:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ulimit</span> <span class="o">-</span><span class="n">n</span> <span class="mi">4096</span>
+</pre></div>
+</div>
+<p><strong>Dask processes won’t terminate cleanly.</strong> The tile cache holds
+NetCDF file handles for the worker lifetime; <code class="docutils literal notranslate"><span class="pre">init_worker_cache</span></code> is
+idempotent and the cache is freed when the worker process exits, so
+killing the client and letting workers shut down is the supported
+recovery path.</p>
+<p><strong>Chunks have gaps.</strong> Some cells failed. Run <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span>
+<span class="pre">runs.validate_chunks</span></code> to list missing ranges, then re-run with
+<code class="docutils literal notranslate"><span class="pre">cell_start</span></code> / <code class="docutils literal notranslate"><span class="pre">cell_end</span></code> covering the gaps.</p>
+</section>
+<section id="citation">
+<h2>Citation<a class="headerlink" href="#citation" title="Link to this heading">¶</a></h2>
+<p>When you use ETOPO 2022 data, cite:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NOAA</span> <span class="n">National</span> <span class="n">Centers</span> <span class="k">for</span> <span class="n">Environmental</span> <span class="n">Information</span><span class="o">.</span> <span class="mi">2022</span><span class="p">:</span>
+<span class="n">ETOPO</span> <span class="mi">2022</span> <span class="mi">15</span> <span class="n">Arc</span><span class="o">-</span><span class="n">Second</span> <span class="n">Global</span> <span class="n">Relief</span> <span class="n">Model</span><span class="o">.</span> <span class="n">NOAA</span> <span class="n">NCEI</span><span class="o">.</span>
+<span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">doi</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="mf">10.25921</span><span class="o">/</span><span class="n">fd45</span><span class="o">-</span><span class="n">gt74</span>
+</pre></div>
+</div>
+<p>The pyCSA software citation is in the <code class="docutils literal notranslate"><span class="pre">CITATION.cff</span></code> at the repo root
+(GitHub renders a <em>“Cite this repository”</em> button on the project page).</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="api.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">API Reference</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="showcase.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Showcase: ETOPO over the central Andes</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Ray Chew
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">HPC reproducibility guide</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#hardware-sizing">Hardware sizing</a></li>
+<li><a class="reference internal" href="#download-etopo-2022-15-arc-second">Download ETOPO 2022 (15 arc-second)</a></li>
+<li><a class="reference internal" href="#configure">Configure</a></li>
+<li><a class="reference internal" href="#run">Run</a></li>
+<li><a class="reference internal" href="#monitor">Monitor</a></li>
+<li><a class="reference internal" href="#restart-after-a-crash">Restart after a crash</a></li>
+<li><a class="reference internal" href="#architecture">Architecture</a></li>
+<li><a class="reference internal" href="#post-processing">Post-processing</a></li>
+<li><a class="reference internal" href="#output-layout">Output layout</a></li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+<li><a class="reference internal" href="#citation">Citation</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=292eb321"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

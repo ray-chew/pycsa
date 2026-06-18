@@ -1,0 +1,41 @@
+pycsa.core.hyperparams
+======================
+
+.. automodule:: pycsa.core.hyperparams
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      build_spectral_prior
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      AlphaSelector
+      EmpiricalSpectralSlope
+      FixedAlpha
+      FixedLambda
+      GCVSelector
+      Hyperparams
+      JointGCVSelector
+      LambdaSelector
+      MarginalLikelihoodSelector
+      SlopeFit
+      SpatialCVSelector
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,34 @@
+pycsa.core.io
+=============
+
+.. automodule:: pycsa.core.io
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      fn_gen
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      nc_writer
+      ncdata
+      reader
+      writer
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,29 @@
+pycsa.data
+==========
+
+.. automodule:: pycsa.data
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: autosummary/module.rst
+   :recursive:
+
+   cell
+   results
+

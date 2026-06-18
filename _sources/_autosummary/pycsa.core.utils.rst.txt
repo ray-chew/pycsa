@@ -1,0 +1,45 @@
+pycsa.core.utils
+================
+
+.. automodule:: pycsa.core.utils
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      delaunay
+      gen_art_terrain
+      get_closest_idx
+      get_lat_lon_segments
+      get_size
+      handle_latlon_expansion
+      is_land
+      isosceles
+      latlon2m
+      pick_cell
+      rad2deg
+      rescale
+      sliding_window_view
+      transfer_attributes
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      gen_triangle
+      taper
+   
+   
+
+   
+   
+   
+
+
+

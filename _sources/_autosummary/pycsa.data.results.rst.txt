@@ -1,0 +1,25 @@
+pycsa.data.results
+==================
+
+.. automodule:: pycsa.data.results
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      analysis
+   
+   
+
+   
+   
+   
+
+
+

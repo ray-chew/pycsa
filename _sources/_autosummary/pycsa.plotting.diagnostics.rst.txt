@@ -1,0 +1,26 @@
+pycsa.plotting.diagnostics
+==========================
+
+.. automodule:: pycsa.plotting.diagnostics
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      get_topo_colormap
+      plot_cell_diagnostics
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

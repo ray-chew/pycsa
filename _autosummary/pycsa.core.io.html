@@ -1,0 +1,935 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="pycsa.core.lin_reg" href="pycsa.core.lin_reg.html"><link rel="prev" title="pycsa.core.hyperparams" href="pycsa.core.hyperparams.html">
+        <link rel="prefetch" href="../_static/logo.png" as="image">
+
+    <link rel="shortcut icon" href="../_static/favicon.ico"><!-- Generated with Sphinx 8.1.3 and Furo 2025.12.19 -->
+        <title>pycsa.core.io - pyCSA 1.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">pyCSA 1.0.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">pyCSA 1.0.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">CSA’s Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quick_start.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Tutorial: Idealised isosceles experiment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../showcase.html">Showcase: ETOPO over the central Andes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hpc_reproducibility.html">HPC reproducibility guide</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../api.html">API Reference</a><input aria-label="Toggle navigation of API Reference" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="pycsa.html">pycsa</a><input aria-label="Toggle navigation of pycsa" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.compute.html">pycsa.compute</a><input aria-label="Toggle navigation of pycsa.compute" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.compute.context.html">pycsa.compute.context</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.config.html">pycsa.config</a><input aria-label="Toggle navigation of pycsa.config" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.config.params.html">pycsa.config.params</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="pycsa.core.html">pycsa.core</a><input aria-label="Toggle navigation of pycsa.core" checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.buffer_pool.html">pycsa.core.buffer_pool</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.delaunay.html">pycsa.core.delaunay</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.fourier.html">pycsa.core.fourier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.hyperparams.html">pycsa.core.hyperparams</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">pycsa.core.io</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.lin_reg.html">pycsa.core.lin_reg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.mode_selection.html">pycsa.core.mode_selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.physics.html">pycsa.core.physics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.priors.html">pycsa.core.priors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.reconstruction.html">pycsa.core.reconstruction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.tile_cache.html">pycsa.core.tile_cache</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.utils.html">pycsa.core.utils</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.validation.html">pycsa.core.validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.core.var.html">pycsa.core.var</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.data.html">pycsa.data</a><input aria-label="Toggle navigation of pycsa.data" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.data.cell.html">pycsa.data.cell</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.data.results.html">pycsa.data.results</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pycsa.logging_config.html">pycsa.logging_config</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.plotting.html">pycsa.plotting</a><input aria-label="Toggle navigation of pycsa.plotting" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.plotting.cart_plot.html">pycsa.plotting.cart_plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.plotting.diagnostics.html">pycsa.plotting.diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.plotting.plotter.html">pycsa.plotting.plotter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="pycsa.scheduling.html">pycsa.scheduling</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="pycsa.wrappers.html">pycsa.wrappers</a><input aria-label="Toggle navigation of pycsa.wrappers" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.wrappers.diagnostics.html">pycsa.wrappers.diagnostics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pycsa.wrappers.interface.html">pycsa.wrappers.interface</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Change log</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../refs.html">References</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/ray-chew/spec_appx">GitHub repo</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/_autosummary/pycsa.core.io.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-pycsa.core.io">
+<span id="pycsa-core-io"></span><h1>pycsa.core.io<a class="headerlink" href="#module-pycsa.core.io" title="Link to this heading">¶</a></h1>
+<p>Input/Output routines</p>
+<p class="rubric">Functions</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.io.fn_gen" title="pycsa.core.io.fn_gen"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fn_gen</span></code></a>(params)</p></td>
+<td><p>Automatically generates HDF5 output filename from <a class="reference internal" href="pycsa.config.params.html#pycsa.config.params.params" title="pycsa.config.params.params"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.config.params.params</span></code></a>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Classes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.io.nc_writer" title="pycsa.core.io.nc_writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nc_writer</span></code></a>(params[, sfx])</p></td>
+<td><p>Write per-cell CSA results to a chunked NetCDF4 output file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pycsa.core.io.ncdata" title="pycsa.core.io.ncdata"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ncdata</span></code></a>([read_merit, padding, padding_tol])</p></td>
+<td><p>Helper class to read NetCDF4 topographic data</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#pycsa.core.io.reader" title="pycsa.core.io.reader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reader</span></code></a>(fn)</p></td>
+<td><p>Simple reader class to read HDF5 output written by <a class="reference internal" href="#pycsa.core.io.writer" title="pycsa.core.io.writer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.core.io.writer</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#pycsa.core.io.writer" title="pycsa.core.io.writer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">writer</span></code></a>(fn, idxs[, sfx, debug])</p></td>
+<td><p>HDF5 writer class</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.io.</span></span><span class="sig-name descname"><span class="pre">ncdata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">read_merit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata" title="Link to this definition">¶</a></dt>
+<dd><p>Helper class to read NetCDF4 topographic data</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">read_merit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>read_merit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – toggles between the <a class="reference external" href="https://hydro.iis.u-tokyo.ac.jp/~yamadai/MERIT_DEM/">MERIT DEM</a> and <a class="reference external" href="https://www.usgs.gov/coastal-changes-and-impacts/gmted2010">USGS GMTED 2010</a> data files. By default False, i.e., read USGS GMTED 2010 data files.</p></li>
+<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – number of data points to pad the loaded topography file, by default 0</p></li>
+<li><p><strong>padding_tol</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – padding tolerance is added no matter the user-defined <code class="docutils literal notranslate"><span class="pre">padding</span></code>, by default 50</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_dat">
+<span class="sig-name descname"><span class="pre">read_dat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_dat" title="Link to this definition">¶</a></dt>
+<dd><p>Reads data by attributes defined in the <code class="docutils literal notranslate"><span class="pre">obj</span></code> class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – filename</p></li>
+<li><p><strong>obj</strong> (<a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.grid" title="pycsa.data.cell.grid"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.grid</span></code></a> or <a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo" title="pycsa.data.cell.topo"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo</span></code></a> or <a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo_cell" title="pycsa.data.cell.topo_cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo_cell</span></code></a>) – any data object in <a class="reference internal" href="pycsa.data.cell.html#module-pycsa.data.cell" title="pycsa.data.cell"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pycsa.data.cell</span></code></a> accepting topography attributes</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_topo">
+<span class="sig-name descname"><span class="pre">read_topo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">topo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lon_vert</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lat_vert</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_topo" title="Link to this definition">¶</a></dt>
+<dd><p>Reads USGS GMTED 2010 dataset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>topo</strong> (<a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo" title="pycsa.data.cell.topo"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo</span></code></a> or <a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo_cell" title="pycsa.data.cell.topo_cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo_cell</span></code></a>) – instance of a topography class containing the full regional or global topography loaded via <a class="reference internal" href="#pycsa.core.io.ncdata.read_dat" title="pycsa.core.io.ncdata.read_dat"><code class="xref py py-func docutils literal notranslate"><span class="pre">pycsa.core.io.ncdata.read_dat()</span></code></a>.</p></li>
+<li><p><strong>cell</strong> (<a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo_cell" title="pycsa.data.cell.topo_cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo_cell</span></code></a>) – instance of a cell object</p></li>
+<li><p><strong>lon_vert</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – extent of the longitudinal coordinates encompassing the region to be loaded</p></li>
+<li><p><strong>lat_vert</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – extent of the latitudinal coordinates encompassing the region to be loaded</p></li>
+<li><p><strong>note::</strong> (<em>..</em>) – Loading the global topography in the <code class="docutils literal notranslate"><span class="pre">topo</span></code> argument may not be memory efficient. The notebook <code class="docutils literal notranslate"><span class="pre">nc_compactifier.ipynb</span></code> contains a script to extract a region of interest from the global GMTED 2010 dataset.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_merit_topo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_merit_topo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_merit_topo" title="Link to this definition">¶</a></dt>
+<dd><p>Subclass to read MERIT topographic data</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_merit_topo.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_merit_topo.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Populates <code class="docutils literal notranslate"><span class="pre">cell</span></code> object instance with arguments from <code class="docutils literal notranslate"><span class="pre">params</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell</strong> (<a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo" title="pycsa.data.cell.topo"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo</span></code></a> or <a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo_cell" title="pycsa.data.cell.topo_cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo_cell</span></code></a>) – instance of an object with topograhy attribute</p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="pycsa.config.params.html#pycsa.config.params.params" title="pycsa.config.params.params"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.config.params.params</span></code></a>) – user-defined run parameters</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – prints loading progression, by default False</p></li>
+<li><p><strong>is_parallel</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – flag for parallel processing, by default False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_merit_topo.close_cached_files">
+<span class="sig-name descname"><span class="pre">close_cached_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_merit_topo.close_cached_files" title="Link to this definition">¶</a></dt>
+<dd><p>Close all cached NetCDF files in current thread.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_merit_topo.get_topo">
+<span class="sig-name descname"><span class="pre">get_topo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_merit_topo.get_topo" title="Link to this definition">¶</a></dt>
+<dd><p>Load MERIT topography spanning the configured lat-lon extent.</p>
+<p>Determines which MERIT (or REMA, for the Antarctic band) tiles
+cover the requested region, handles the east-west split for
+extents wider than 180 degrees, and loads the assembled
+topography into <code class="docutils literal notranslate"><span class="pre">cell</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cell</strong> (<a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo" title="pycsa.data.cell.topo"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo</span></code></a> or <a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo_cell" title="pycsa.data.cell.topo_cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo_cell</span></code></a>) – instance whose <code class="docutils literal notranslate"><span class="pre">lat</span></code>, <code class="docutils literal notranslate"><span class="pre">lon</span></code> and <code class="docutils literal notranslate"><span class="pre">topo</span></code> attributes are
+populated in place with the loaded data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_merit_topo.close_all">
+<span class="sig-name descname"><span class="pre">close_all</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_merit_topo.close_all" title="Link to this definition">¶</a></dt>
+<dd><p>Close every NetCDF dataset opened during loading.</p>
+<p>Iterates over the handles accumulated in <code class="docutils literal notranslate"><span class="pre">self.opened_dfs</span></code> and
+closes each one to release the underlying file descriptors.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_etopo_topo">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_etopo_topo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_etopo_topo" title="Link to this definition">¶</a></dt>
+<dd><p>Subclass to read ETOPO 2022 15 arc-second topographic data</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_etopo_topo.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_parallel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_etopo_topo.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Populates <code class="docutils literal notranslate"><span class="pre">cell</span></code> object instance with arguments from <code class="docutils literal notranslate"><span class="pre">params</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cell</strong> (<a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo" title="pycsa.data.cell.topo"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo</span></code></a> or <a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo_cell" title="pycsa.data.cell.topo_cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo_cell</span></code></a>) – instance of an object with topography attribute</p></li>
+<li><p><strong>params</strong> (<a class="reference internal" href="pycsa.config.params.html#pycsa.config.params.params" title="pycsa.config.params.params"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.config.params.params</span></code></a>) – user-defined run parameters</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – prints loading progression, by default False</p></li>
+<li><p><strong>is_parallel</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – flag for parallel processing, by default False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_etopo_topo.close_cached_files">
+<span class="sig-name descname"><span class="pre">close_cached_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_etopo_topo.close_cached_files" title="Link to this definition">¶</a></dt>
+<dd><p>Close all cached NetCDF files in current thread.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_etopo_topo.get_topo">
+<span class="sig-name descname"><span class="pre">get_topo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_etopo_topo.get_topo" title="Link to this definition">¶</a></dt>
+<dd><p>Main method to load ETOPO topography data</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.ncdata.read_etopo_topo.close_all">
+<span class="sig-name descname"><span class="pre">close_all</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.ncdata.read_etopo_topo.close_all" title="Link to this definition">¶</a></dt>
+<dd><p>Close all opened NetCDF files</p>
+</dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.io.writer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.io.</span></span><span class="sig-name descname"><span class="pre">writer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.writer" title="Link to this definition">¶</a></dt>
+<dd><p>HDF5 writer class</p>
+<p>Contains methods to create HDF5 file, create data sets and populate them with output variables.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This class was taken from an I/O routine originally written for the numerical flow solver used in <a class="reference external" href="https://journals.ametsoc.org/view/journals/mwre/150/9/MWR-D-21-0175.1.xml">Chew et al. (2022)</a> and <a class="reference external" href="https://www.cambridge.org/core/journals/journal-of-fluid-mechanics/article/an-unstable-mode-of-the-stratified-atmosphere-under-the-nontraditional-coriolis-acceleration/FFC0AE491BE3425CE829610BCF7A1933">Chew et al. (2023)</a>.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.writer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.writer.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Creates an empty HDF5 file with filename <code class="docutils literal notranslate"><span class="pre">fn</span></code> and a group for each index in <code class="docutils literal notranslate"><span class="pre">idxs</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – filename</p></li>
+<li><p><strong>idxs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – list of cell indices</p></li>
+<li><p><strong>sfx</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – suffixes to the filename, by default ‘’</p></li>
+<li><p><strong>debug</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – debug flag, by default False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.writer.io_create_file">
+<span class="sig-name descname"><span class="pre">io_create_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">paths</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.writer.io_create_file" title="Link to this definition">¶</a></dt>
+<dd><p>Helper function to create file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>paths</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a>) – List of strings containing the name of the groups.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Currently, if the filename of the HDF5 file already exists, this function will append the existing filename with ‘_old’ and create an empty HDF5 file with the same filename in its place.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.writer.write_all">
+<span class="sig-name descname"><span class="pre">write_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.writer.write_all" title="Link to this definition">¶</a></dt>
+<dd><p>Write all attributes and datasets of a given class instance to the group <code class="docutils literal notranslate"><span class="pre">idx</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – group name to write the attributes or datasets</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.writer.write_attr">
+<span class="sig-name descname"><span class="pre">write_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.writer.write_attr" title="Link to this definition">¶</a></dt>
+<dd><p>Write HDF5 attributes for a group</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – group name to write the attributes</p></li>
+<li><p><strong>key</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – attribute name</p></li>
+<li><p><strong>value</strong> (<em>any</em>) – attribute value that is accepted by HDF5</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.writer.write_all_attrs">
+<span class="sig-name descname"><span class="pre">write_all_attrs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.writer.write_all_attrs" title="Link to this definition">¶</a></dt>
+<dd><p>Write all attributes a given class instance to the HDF5 file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<a class="reference internal" href="pycsa.config.params.html#pycsa.config.params.params" title="pycsa.config.params.params"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.config.params.params</span></code></a>) – write all user-defined parameters to the HDF5 file for reproducibility of the output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.writer.populate">
+<span class="sig-name descname"><span class="pre">populate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.writer.populate" title="Link to this definition">¶</a></dt>
+<dd><p>Helper function to write data into HDF5 dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the group</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – The name of the dataset</p></li>
+<li><p><strong>data</strong> (<em>ndarray</em>) – The output data to write to the dataset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.io.nc_writer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.io.</span></span><span class="sig-name descname"><span class="pre">nc_writer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.nc_writer" title="Link to this definition">¶</a></dt>
+<dd><p>Write per-cell CSA results to a chunked NetCDF4 output file.</p>
+<p>Each cell is stored as its own NetCDF group keyed by cell id, holding
+the land mask, center coordinates and (for land cells) the picked
+spectral amplitudes and wavenumbers. The writer is safe to
+re-instantiate against an existing chunk file: completed cell groups
+are skipped on resume rather than overwritten.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.nc_writer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.nc_writer.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Build the output filename and initialize the NetCDF file.</p>
+<p>The output path is derived from <code class="docutils literal notranslate"><span class="pre">params.fn_output</span></code> with the
+optional <code class="docutils literal notranslate"><span class="pre">sfx</span></code> suffix appended and a <code class="docutils literal notranslate"><span class="pre">.nc</span></code> extension ensured,
+placed under a <code class="docutils literal notranslate"><span class="pre">datasets/</span></code> subdirectory of <code class="docutils literal notranslate"><span class="pre">params.path_output</span></code>
+(created if absent). If the target file already exists the method
+returns early without truncating it, so re-instantiating the writer
+for a later memory batch preserves cells written by earlier batches.
+Otherwise a fresh <code class="docutils literal notranslate"><span class="pre">NETCDF4</span></code> file is created, every non-<code class="docutils literal notranslate"><span class="pre">None</span></code>
+attribute of <code class="docutils literal notranslate"><span class="pre">params</span></code> is written as a global attribute (Booleans
+coerced to <code class="docutils literal notranslate"><span class="pre">int</span></code>), and the <code class="docutils literal notranslate"><span class="pre">nspec</span></code> dimension is added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>params</strong> (<a class="reference internal" href="pycsa.config.params.html#pycsa.config.params.params" title="pycsa.config.params.params"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.config.params.params</span></code></a>) – user-defined run parameters supplying output paths, mode count
+and writer settings</p></li>
+<li><p><strong>sfx</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – suffix appended to the base output filename to distinguish
+chunk files, by default <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.nc_writer.output">
+<span class="sig-name descname"><span class="pre">output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_land</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analysis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topo_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topo_peak</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.nc_writer.output" title="Link to this definition">¶</a></dt>
+<dd><p>Write a single cell’s result to its NetCDF group.</p>
+<p>Creates (or opens) the group named <code class="docutils literal notranslate"><span class="pre">id</span></code> and stores the land mask
+and center coordinates, the mean elevation when <code class="docutils literal notranslate"><span class="pre">topo_mean</span></code> is
+given, and the zero-padded spectral amplitudes and wavenumbers when
+an <code class="docutils literal notranslate"><span class="pre">analysis</span></code> is given. If a complete group already exists the
+method returns without rewriting it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – cell id used as the NetCDF group name</p></li>
+<li><p><strong>clat</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – cell-center latitude</p></li>
+<li><p><strong>clon</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – cell-center longitude</p></li>
+<li><p><strong>is_land</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – land mask flag for the cell</p></li>
+<li><p><strong>analysis</strong> (<a class="reference internal" href="pycsa.data.results.html#pycsa.data.results.analysis" title="pycsa.data.results.analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.results.analysis</span></code></a>, optional) – spectral analysis result supplying <code class="docutils literal notranslate"><span class="pre">dk</span></code>, <code class="docutils literal notranslate"><span class="pre">dl</span></code>, <code class="docutils literal notranslate"><span class="pre">ampls</span></code>,
+<code class="docutils literal notranslate"><span class="pre">kks</span></code> and <code class="docutils literal notranslate"><span class="pre">lls</span></code>; if None only mask and coordinates are
+written, by default None</p></li>
+<li><p><strong>topo_mean</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – mean cell elevation subtracted before analysis, by default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If the cell group already exists but fails the completeness
+    check, indicating a partial write from a previous run.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.nc_writer.duplicate">
+<span class="sig-name descname"><span class="pre">duplicate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">struct</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.nc_writer.duplicate" title="Link to this definition">¶</a></dt>
+<dd><p>Write one cell to its NetCDF group from a <code class="docutils literal notranslate"><span class="pre">grp_struct</span></code> record.</p>
+<p>Like <a class="reference internal" href="#pycsa.core.io.nc_writer.output" title="pycsa.core.io.nc_writer.output"><code class="xref py py-meth docutils literal notranslate"><span class="pre">output()</span></code></a>, but reads all fields from a pre-assembled
+<code class="docutils literal notranslate"><span class="pre">struct</span></code> instead of individual arguments, and additionally writes
+<code class="docutils literal notranslate"><span class="pre">cell_area</span></code> when the struct carries it. Completed groups are
+skipped on resume.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – cell id used as the NetCDF group name</p></li>
+<li><p><strong>struct</strong> (<a class="reference internal" href="#pycsa.core.io.nc_writer.grp_struct" title="pycsa.core.io.nc_writer.grp_struct"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.core.io.nc_writer.grp_struct</span></code></a>) – record holding the cell’s mask, coordinates, optional
+<code class="docutils literal notranslate"><span class="pre">cell_area</span></code> / <code class="docutils literal notranslate"><span class="pre">topo_mean</span></code> and, for land cells, the spectral
+fields <code class="docutils literal notranslate"><span class="pre">dk</span></code>, <code class="docutils literal notranslate"><span class="pre">dl</span></code>, <code class="docutils literal notranslate"><span class="pre">ampls</span></code>, <code class="docutils literal notranslate"><span class="pre">kks</span></code> and <code class="docutils literal notranslate"><span class="pre">lls</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – If the cell group already exists but fails the completeness
+    check, indicating a partial write from a previous run.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.nc_writer.duplicate_all">
+<span class="sig-name descname"><span class="pre">duplicate_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.nc_writer.duplicate_all" title="Link to this definition">¶</a></dt>
+<dd><p>Write a whole sequence of cell records to the output file.</p>
+<p>Iterates over <code class="docutils literal notranslate"><span class="pre">data</span></code> (with a progress bar) and writes each record
+to a NetCDF group keyed by its enumeration index, storing the mask,
+coordinates, optional mean elevation and, for land cells, the
+zero-padded spectral fields. Unlike <a class="reference internal" href="#pycsa.core.io.nc_writer.duplicate" title="pycsa.core.io.nc_writer.duplicate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">duplicate()</span></code></a>, no
+completeness check is performed and groups are written
+unconditionally.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (sequence of <a class="reference internal" href="#pycsa.core.io.nc_writer.grp_struct" title="pycsa.core.io.nc_writer.grp_struct"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.core.io.nc_writer.grp_struct</span></code></a>) – ordered collection of cell records; each record’s position in
+the sequence becomes its NetCDF group name</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.nc_writer.read_dat">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">read_dat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">struct</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.nc_writer.read_dat" title="Link to this definition">¶</a></dt>
+<dd><p>Populate <code class="docutils literal notranslate"><span class="pre">struct</span></code> from one cell group in a NetCDF chunk file.</p>
+<p>Opens the file <code class="docutils literal notranslate"><span class="pre">path</span> <span class="pre">+</span> <span class="pre">fn</span></code>, reads the land mask and center
+coordinates of group <code class="docutils literal notranslate"><span class="pre">id</span></code> into <code class="docutils literal notranslate"><span class="pre">struct</span></code>, and for land cells also
+reads the spectral fields <code class="docutils literal notranslate"><span class="pre">dk</span></code>, <code class="docutils literal notranslate"><span class="pre">dl</span></code>, <code class="docutils literal notranslate"><span class="pre">H_spec</span></code>, <code class="docutils literal notranslate"><span class="pre">kks</span></code> and
+<code class="docutils literal notranslate"><span class="pre">lls</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – directory containing the chunk file</p></li>
+<li><p><strong>fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – chunk filename appended to <code class="docutils literal notranslate"><span class="pre">path</span></code></p></li>
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – cell id naming the NetCDF group to read</p></li>
+<li><p><strong>struct</strong> (<a class="reference internal" href="#pycsa.core.io.nc_writer.grp_struct" title="pycsa.core.io.nc_writer.grp_struct"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.core.io.nc_writer.grp_struct</span></code></a>) – record populated in place with the cell’s data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">False</span></code> if the file could not be opened, otherwise <code class="docutils literal notranslate"><span class="pre">True</span></code>
+once <code class="docutils literal notranslate"><span class="pre">struct</span></code> has been populated.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)">bool</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.io.nc_writer.grp_struct">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">grp_struct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_land</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analysis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topo_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topo_peak</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.nc_writer.grp_struct" title="Link to this definition">¶</a></dt>
+<dd><p>Lightweight container holding one cell’s writable result fields.</p>
+<p>Bundles the per-cell metadata and spectral results so that a whole
+run can be assembled in memory and later written out via
+<a class="reference internal" href="#pycsa.core.io.nc_writer.duplicate" title="pycsa.core.io.nc_writer.duplicate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">nc_writer.duplicate()</span></code></a> or <a class="reference internal" href="#pycsa.core.io.nc_writer.duplicate_all" title="pycsa.core.io.nc_writer.duplicate_all"><code class="xref py py-meth docutils literal notranslate"><span class="pre">nc_writer.duplicate_all()</span></code></a>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.nc_writer.grp_struct.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clat</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_land</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analysis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topo_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">topo_peak</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.nc_writer.grp_struct.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Store cell metadata and copy across any analysis results.</p>
+<p>The spectral attributes (<code class="docutils literal notranslate"><span class="pre">dk</span></code>, <code class="docutils literal notranslate"><span class="pre">dl</span></code>, <code class="docutils literal notranslate"><span class="pre">ampls</span></code>, <code class="docutils literal notranslate"><span class="pre">kks</span></code>,
+<code class="docutils literal notranslate"><span class="pre">lls</span></code>) default to <code class="docutils literal notranslate"><span class="pre">None</span></code> and are overwritten by copying
+every attribute of <code class="docutils literal notranslate"><span class="pre">analysis</span></code> onto this instance when an
+<code class="docutils literal notranslate"><span class="pre">analysis</span></code> is supplied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>c_idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – cell index identifying this record</p></li>
+<li><p><strong>clat</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – cell-center latitude</p></li>
+<li><p><strong>clon</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – cell-center longitude</p></li>
+<li><p><strong>is_land</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>) – land mask flag for the cell</p></li>
+<li><p><strong>analysis</strong> (<a class="reference internal" href="pycsa.data.results.html#pycsa.data.results.analysis" title="pycsa.data.results.analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.results.analysis</span></code></a>, optional) – spectral analysis result whose attributes are copied onto
+this struct, by default None</p></li>
+<li><p><strong>cell_area</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – area of the ICON grid cell, by default None</p></li>
+<li><p><strong>topo_mean</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – mean cell elevation subtracted before analysis, by default
+None</p></li>
+<li><p><strong>topo_peak</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em>, </em><em>optional</em>) – peak cell elevation above the cell mean (obstacle height for
+the MS-GWaM Long number), by default None</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pycsa.core.io.reader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pycsa.core.io.</span></span><span class="sig-name descname"><span class="pre">reader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.reader" title="Link to this definition">¶</a></dt>
+<dd><p>Simple reader class to read HDF5 output written by <a class="reference internal" href="#pycsa.core.io.writer" title="pycsa.core.io.writer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.core.io.writer</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.reader.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.reader.__init__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fn</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – filename of the file to be read</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.reader.get_params">
+<span class="sig-name descname"><span class="pre">get_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.reader.get_params" title="Link to this definition">¶</a></dt>
+<dd><p>Get the user-defined parameters from the HDF5 file attributes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>params</strong> (<a class="reference internal" href="pycsa.config.params.html#pycsa.config.params.params" title="pycsa.config.params.params"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.config.params.params</span></code></a>) – empty instance of the user-defined parameters class to be populated</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.reader.read_data">
+<span class="sig-name descname"><span class="pre">read_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.reader.read_data" title="Link to this definition">¶</a></dt>
+<dd><p>Read a particular dataset <code class="docutils literal notranslate"><span class="pre">name</span></code> from a group <code class="docutils literal notranslate"><span class="pre">idx</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – the group name</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – the dataset name</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the dataset</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pycsa.core.io.reader.read_all">
+<span class="sig-name descname"><span class="pre">read_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.reader.read_all" title="Link to this definition">¶</a></dt>
+<dd><p>Populate <code class="docutils literal notranslate"><span class="pre">cell</span></code> with the datasets listed in <code class="docutils literal notranslate"><span class="pre">self.names</span></code> from a group <code class="docutils literal notranslate"><span class="pre">idx</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – the group name</p></li>
+<li><p><strong>cell</strong> (<a class="reference internal" href="pycsa.data.cell.html#pycsa.data.cell.topo_cell" title="pycsa.data.cell.topo_cell"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.data.cell.topo_cell</span></code></a>) – empty instance of a cell object to be populated</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pycsa.core.io.fn_gen">
+<span class="sig-prename descclassname"><span class="pre">pycsa.core.io.</span></span><span class="sig-name descname"><span class="pre">fn_gen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pycsa.core.io.fn_gen" title="Link to this definition">¶</a></dt>
+<dd><p>Automatically generates HDF5 output filename from <a class="reference internal" href="pycsa.config.params.html#pycsa.config.params.params" title="pycsa.config.params.params"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.config.params.params</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>params</strong> (<a class="reference internal" href="pycsa.config.params.html#pycsa.config.params.params" title="pycsa.config.params.params"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycsa.config.params.params</span></code></a>) – instance of the user parameter class</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>automatically generated filename</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="pycsa.core.lin_reg.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">pycsa.core.lin_reg</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="pycsa.core.hyperparams.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">pycsa.core.hyperparams</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Ray Chew
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">pycsa.core.io</a><ul>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata"><code class="docutils literal notranslate"><span class="pre">ncdata</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.__init__"><code class="docutils literal notranslate"><span class="pre">ncdata.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_dat"><code class="docutils literal notranslate"><span class="pre">ncdata.read_dat()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_topo"><code class="docutils literal notranslate"><span class="pre">ncdata.read_topo()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_merit_topo"><code class="docutils literal notranslate"><span class="pre">ncdata.read_merit_topo</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_merit_topo.__init__"><code class="docutils literal notranslate"><span class="pre">ncdata.read_merit_topo.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_merit_topo.close_cached_files"><code class="docutils literal notranslate"><span class="pre">ncdata.read_merit_topo.close_cached_files()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_merit_topo.get_topo"><code class="docutils literal notranslate"><span class="pre">ncdata.read_merit_topo.get_topo()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_merit_topo.close_all"><code class="docutils literal notranslate"><span class="pre">ncdata.read_merit_topo.close_all()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_etopo_topo"><code class="docutils literal notranslate"><span class="pre">ncdata.read_etopo_topo</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_etopo_topo.__init__"><code class="docutils literal notranslate"><span class="pre">ncdata.read_etopo_topo.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_etopo_topo.close_cached_files"><code class="docutils literal notranslate"><span class="pre">ncdata.read_etopo_topo.close_cached_files()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_etopo_topo.get_topo"><code class="docutils literal notranslate"><span class="pre">ncdata.read_etopo_topo.get_topo()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.ncdata.read_etopo_topo.close_all"><code class="docutils literal notranslate"><span class="pre">ncdata.read_etopo_topo.close_all()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.io.writer"><code class="docutils literal notranslate"><span class="pre">writer</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.io.writer.__init__"><code class="docutils literal notranslate"><span class="pre">writer.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.writer.io_create_file"><code class="docutils literal notranslate"><span class="pre">writer.io_create_file()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.writer.write_all"><code class="docutils literal notranslate"><span class="pre">writer.write_all()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.writer.write_attr"><code class="docutils literal notranslate"><span class="pre">writer.write_attr()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.writer.write_all_attrs"><code class="docutils literal notranslate"><span class="pre">writer.write_all_attrs()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.writer.populate"><code class="docutils literal notranslate"><span class="pre">writer.populate()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.io.nc_writer"><code class="docutils literal notranslate"><span class="pre">nc_writer</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.io.nc_writer.__init__"><code class="docutils literal notranslate"><span class="pre">nc_writer.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.nc_writer.output"><code class="docutils literal notranslate"><span class="pre">nc_writer.output()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.nc_writer.duplicate"><code class="docutils literal notranslate"><span class="pre">nc_writer.duplicate()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.nc_writer.duplicate_all"><code class="docutils literal notranslate"><span class="pre">nc_writer.duplicate_all()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.nc_writer.read_dat"><code class="docutils literal notranslate"><span class="pre">nc_writer.read_dat()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.nc_writer.grp_struct"><code class="docutils literal notranslate"><span class="pre">nc_writer.grp_struct</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.io.nc_writer.grp_struct.__init__"><code class="docutils literal notranslate"><span class="pre">nc_writer.grp_struct.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.io.reader"><code class="docutils literal notranslate"><span class="pre">reader</span></code></a><ul>
+<li><a class="reference internal" href="#pycsa.core.io.reader.__init__"><code class="docutils literal notranslate"><span class="pre">reader.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.reader.get_params"><code class="docutils literal notranslate"><span class="pre">reader.get_params()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.reader.read_data"><code class="docutils literal notranslate"><span class="pre">reader.read_data()</span></code></a></li>
+<li><a class="reference internal" href="#pycsa.core.io.reader.read_all"><code class="docutils literal notranslate"><span class="pre">reader.read_all()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pycsa.core.io.fn_gen"><code class="docutils literal notranslate"><span class="pre">fn_gen()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    </body>
+</html>

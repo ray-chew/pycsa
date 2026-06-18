@@ -1,0 +1,26 @@
+pycsa.core.delaunay
+===================
+
+.. automodule:: pycsa.core.delaunay
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      get_decomposition
+      get_land_cells
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,35 @@
+﻿pycsa
+=====
+
+.. automodule:: pycsa
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: autosummary/module.rst
+   :recursive:
+
+   compute
+   config
+   core
+   data
+   logging_config
+   plotting
+   scheduling
+   wrappers
+

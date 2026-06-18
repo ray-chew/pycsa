@@ -1,0 +1,34 @@
+pycsa.plotting.plotter
+======================
+
+.. automodule:: pycsa.plotting.plotter
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      error_bar_abs_plot
+      error_bar_plot
+      error_bar_split_plot
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      fig_obj
+      plot_3d
+   
+   
+
+   
+   
+   
+
+
+

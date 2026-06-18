@@ -1,0 +1,25 @@
+pycsa.core.validation
+=====================
+
+.. automodule:: pycsa.core.validation
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      spatial_cv_score
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
